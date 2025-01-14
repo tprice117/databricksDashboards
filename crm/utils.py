@@ -3,9 +3,13 @@ from crm.models.lead import Lead
 
 
 class LeadUtils:
-    def update_lead_statuses(self):
-        leads = Lead.objects.all()
+    @staticmethod
+    def update_lead_statuses():
         today = timezone.now().date()
+        # Get all Leads that are not JUNK and have an est_conversion_date that was over 7 days ago
+        leads = Lead.objects.exclude(status=Lead.Status.JUNK).filter(
+            est_conversion_date__lte=(today - timezone.timedelta(days=7)),
+        )
         leads_to_update = []
 
         for lead in leads:
