@@ -2,9 +2,15 @@ from django.db import models
 
 from api.models.order.order_line_item_type import OrderLineItemType
 from common.models import BaseModel
+from common.utils.stripe.stripe_utils import StripeUtils
 
 
 class OrderItem(BaseModel):
+    class PaymentStatus(models.TextChoices):
+        NOT_INVOICED = "not_invoiced"
+        INVOICED = "invoiced"
+        PAID = "paid"
+
     order = models.ForeignKey(
         "api.Order",
         models.PROTECT,
@@ -128,3 +134,31 @@ class OrderItem(BaseModel):
         # If the order_line_item_type_code is not set or not found, return the
         # default tax code.
         return "txcd_20030000"
+
+    @property
+    def payment_status(self):
+        if not self.stripe_invoice_line_item_id:
+            # Return None if OrderLineItem is not associated with an Invoice.
+            return self.PaymentStatus.NOT_INVOICED
+        elif self.paid:
+            # Return True if OrderLineItem.Paid == True. See below for how
+            # OrderLineItem.Paid is set.
+            return self.PaymentStatus.PAID
+        else:
+            # If OrderLineItem.StripeInvoiceLineItemId is populated and is
+            # not OrderLineItem.Paid == False, the Order Line Item is
+            # invoiced, but not paid.
+            return self.PaymentStatus.INVOICED
+
+    def get_invoice(self):
+        if self.stripe_invoice_line_item_id:
+            try:
+                invoice_line_item = StripeUtils.InvoiceItem.get(
+                    self.stripe_invoice_line_item_id
+                )
+                return StripeUtils.Invoice.get(invoice_line_item.invoice)
+            except:
+                # Return None if Stripe Invoice or Stripe Invoice Line Item does not exist.
+                return None
+        else:
+            return None

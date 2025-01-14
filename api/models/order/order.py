@@ -431,6 +431,15 @@ class Order(BaseModel):
                 ]
                 for order_line_item in self.order_line_items.all()
             ]
+        ) and all(
+            [
+                order_item.payment_status
+                in [
+                    OrderLineItem.PaymentStatus.INVOICED,
+                    OrderLineItem.PaymentStatus.PAID,
+                ]
+                for order_item in self.order_items
+            ]
         )
 
     def payment_status(self):
