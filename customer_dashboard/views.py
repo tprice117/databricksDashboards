@@ -79,6 +79,7 @@ from cart.utils import CheckoutUtils, QuoteUtils, CartUtils, CardError
 from common.models.choices.user_type import UserType
 from common.utils.generate_code import get_otp
 from common.utils.shade_hex import shade_hex_color
+from common.utils import DistanceUtils
 from communications.intercom.utils.utils import get_json_safe_value
 from crm.models.lead import Lead, UserSelectableLeadStatus
 from matching_engine.matching_engine import MatchingEngine
@@ -1054,6 +1055,19 @@ def new_order_4(request):
     context["default_markup"] = context["product"].main_product.default_take_rate
 
     if request.headers.get("HX-Request"):
+        lat1 = request.GET.get("lat1", None)
+        lon1 = request.GET.get("lon1", None)
+        lat2 = request.GET.get("lat2", None)
+        lon2 = request.GET.get("lon2", None)
+        if lat1 and lon1 and lat2 and lon2:
+            context["distance"] = DistanceUtils.get_driving_distance(
+                lat1, lon1, lat2, lon2
+            )
+            return render(
+                request,
+                "supplier_dashboard/snippets/booking_detail_distance.html",
+                context,
+            )
         # Waste type
         waste_type = None
         waste_type_id = None
@@ -1080,12 +1094,27 @@ def new_order_4(request):
         )
         context["seller_product_seller_locations"] = []
 
+        query_params = request.GET.copy()
+        context["distance_link"] = []
+
         for seller_product_seller_location in seller_product_seller_locations:
             seller_d = {}
             try:
                 # Include because SellerProductSellerLocationSerializer does not include waste types info needed for price_details_modal.
                 seller_d["seller_product_seller_location"] = (
                     seller_product_seller_location
+                )
+                # show distance if they want to do a pickup longitude
+                query_params["lat1"] = (
+                    seller_product_seller_location.seller_location.latitude
+                )
+                query_params["lon1"] = (
+                    seller_product_seller_location.seller_location.longitude
+                )
+                query_params["lat2"] = user_address_obj.latitude
+                query_params["lon2"] = user_address_obj.longitude
+                context["distance_link"].append(
+                    f"{reverse('customer_new_order_4')}?{query_params.urlencode()}"
                 )
 
                 pricing = PricingEngine.get_price(
@@ -2922,14 +2951,14 @@ def locations(request):
                 context[
                     "help_text"
                 ] = f"""Locations that had orders in the previous 30 day period, but no orders in the last 30 day period
-                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
             else:
                 context[
                     "help_text"
                 ] = f"""Churning locations are those with a smaller revenue when compared to the previous
-                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    30 day period (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
         else:
             user_addresses = get_location_objects(
                 request,
@@ -3435,14 +3464,14 @@ def users(request):
                 context[
                     "help_text"
                 ] = f"""Users that had orders in the previous 30 day period, but no orders in the last 30 day period
-                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
             else:
                 context[
                     "help_text"
                 ] = f"""Churning users are those with a smaller revenue when compared to the previous
-                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    30 day period (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
         else:
             users = get_user_group_user_objects(
                 request, context["user"], context["user_group"], search_q=search_q
@@ -3996,14 +4025,14 @@ def companies(request):
                 context[
                     "help_text"
                 ] = f"""Companies that had orders in the previous 30 day period, but no orders in the last 30 day period
-                    (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
             else:
                 context[
                     "help_text"
                 ] = f"""Churning Companies are those with a smaller revenue when compared to the previous
-                    30 day period (old: {churn_date.strftime('%B %d, %Y')} - {cutoff_date.strftime('%B %d, %Y')},
-                    new: {cutoff_date.strftime('%B %d, %Y')} - {datetime.date.today().strftime('%B %d, %Y')})."""
+                    30 day period (old: {churn_date.strftime("%B %d, %Y")} - {cutoff_date.strftime("%B %d, %Y")},
+                    new: {cutoff_date.strftime("%B %d, %Y")} - {datetime.date.today().strftime("%B %d, %Y")})."""
         else:
             user_groups = UserGroup.objects.filter(seller__isnull=True)
             if account_owner_id:

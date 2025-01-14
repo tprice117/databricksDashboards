@@ -16,6 +16,15 @@
             if (!parent) return;
             // Convert the list items into an array
             const itemsArray = Array.from(parent.querySelectorAll(".supplier-item"));
+            if (!itemsArray || itemsArray.length === 0) {
+                // reverse button click
+                document.getElementById("for-delivery-check").checked = false;
+                document.getElementById("for-pickup-check").checked = false;
+                // disable deliveryButton and pickupButton
+                document.getElementById("for-delivery-check").disabled = true;
+                document.getElementById("for-pickup-check").disabled = true;
+                return;
+            }
             // for a test show the item id in their respective elements
             for (let i = 0; i < itemsArray.length; i++) {
                 // get data-seller-product-seller-location from the elements
