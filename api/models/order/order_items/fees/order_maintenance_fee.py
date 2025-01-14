@@ -2,7 +2,7 @@ from api.models.order.common.order_item import OrderItem
 
 
 class OrderMaintenanceFee(OrderItem):
-    pass
+    order_line_item_type_code = "SERVICE"
 
     class Meta:
         verbose_name = "Transaction Maintenance Fee"

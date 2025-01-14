@@ -433,4 +433,4 @@ def order_line_item_post_save(
 ):
     # On every save, call the update_order_insurance method to adjust the
     # OrderInsurance items, if necessary.
-    OrderInsurance.update_order_insurance()
+    OrderInsurance.update_order_insurance(instance.order)

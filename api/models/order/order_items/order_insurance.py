@@ -2,7 +2,7 @@ from api.models.order.common.order_item import OrderItem
 
 
 class OrderInsurance(OrderItem):
-    pass
+    order_line_item_type_code = "RPP"
 
     class Meta:
         verbose_name = "Transaction Insurance"
