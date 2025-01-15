@@ -9,6 +9,7 @@
 {% endblock %}
 {% block javascript %}
     <script>
+        const discountElement = document.getElementById("discount");
         // create a function for updating the supplier list
         function updateSupplierList(is_pickup) {
             // Change the pricing modal One Time Charges
@@ -25,6 +26,15 @@
             if (!parent) return;
             // Convert the list items into an array
             const itemsArray = Array.from(parent.querySelectorAll(".supplier-item"));
+            if (!itemsArray || itemsArray.length === 0) {
+                // reverse button click
+                document.getElementById("for-delivery-check").checked = false;
+                document.getElementById("for-pickup-check").checked = false;
+                // disable deliveryButton and pickupButton
+                document.getElementById("for-delivery-check").disabled = true;
+                document.getElementById("for-pickup-check").disabled = true;
+                return;
+            }
             // for a test show the item id in their respective elements
             for (let i = 0; i < itemsArray.length; i++) {
                 // get data-seller-product-seller-location from the elements
@@ -39,18 +49,41 @@
                 isDeliveryInput.setAttribute("value", "True");
                 // show the total
                 const displayPrice = itemsArray[i].querySelector("#display-price");
-                const price = parseFloat(displayPrice.getAttribute("data-price"));
+                const rawPrice = parseFloat(displayPrice.getAttribute("data-price-with-delivery"));
+                // change the price attribute
+                displayPrice.setAttribute("data-price",rawPrice)
+                price = 0.00;
+                if (rawPrice==NaN) {
+                    price = 0.00
+                } else if (discountElement) {
+                    const discount = discountElement.value
+                    price = rawPrice  * (1 - discount / 100)
+                }
                 const betterPrice = price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 displayPrice.textContent = `$${betterPrice}`;
+                // hide distance
+                const distance = itemsArray[i].querySelector(".distance-element");
+                distance.style.display = "none";
                 if (is_pickup) {
                     // data_allow_pickup is false then remove the element
                     if (data_allow_pickup.toLowerCase() === "false") {
                         itemsArray[i].style.display = "none";
                     } else {
+                        // show distance
+                        distance.style.display = "";
                         // remove a child element with id starts with "freit-section-"
                         freitSection.style.display = "none";
                         // show the total without delivery
-                        const price = parseFloat(displayPrice.getAttribute("data-price")) - parseFloat(displayPrice.getAttribute("data-delivery-price"));
+                        const rawPrice = parseFloat(displayPrice.getAttribute("data-price-with-delivery")) - parseFloat(displayPrice.getAttribute("data-delivery-price"));
+                        // change the price attribute
+                        displayPrice.setAttribute("data-price",rawPrice)
+                        price = 0.00;
+                        if (rawPrice==NaN) {
+                            price = 0.00
+                        } else if (discountElement) {
+                            const discount = discountElement.value
+                            price = rawPrice  * (1 - discount / 100)
+                        }
                         const betterPrice = price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         displayPrice.textContent = `$${betterPrice}`;
                         isDeliveryInput.setAttribute("value", "False");
@@ -73,7 +106,6 @@
                 updateSupplierList(true);
             }
         });
-        const discountElement = document.getElementById("discount");
         
         // Disable the form inputs while htmx request is being sent
         document.body.addEventListener("htmx:beforeSend", function (event) {
