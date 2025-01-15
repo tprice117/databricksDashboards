@@ -6,8 +6,8 @@ class LeadUtils:
     @staticmethod
     def update_lead_statuses():
         today = timezone.now().date()
-        # Get all Leads that are not JUNK and have an est_conversion_date that was over 7 days ago
-        leads = Lead.objects.exclude(status=Lead.Status.JUNK).filter(
+        # Get all Leads that are not CONVERTED/JUNK and have an est_conversion_date that was over 7 days ago
+        leads = Lead.active_leads.filter(
             est_conversion_date__lte=(today - timezone.timedelta(days=7)),
         )
         leads_to_update = []

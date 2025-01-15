@@ -4827,12 +4827,9 @@ def leads_board(request):
                 try:
                     lead.clean()
                     lead.save()
-                    # If status did not update due to expiration, then show user why
-                    if (
-                        status != lead.status
-                        and lead.lost_reason == Lead.LostReason.EXPIRED
-                    ):
-                        messages.error(request, "Lead Conversion Date has passed.")
+                    # If status did not update due to expiration/conversion, then alert user
+                    if status != lead.status and not lead.is_active:
+                        messages.warning(request, "Lead was automatically closed.")
                 except ValidationError as e:
                     messages.error(
                         request, f"Error updating lead: {','.join(e.messages)}"
