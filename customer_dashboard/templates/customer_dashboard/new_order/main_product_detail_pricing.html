@@ -190,6 +190,9 @@
                 case "last_checkout":
                     valueSelector = ".last-checkout";
                     break;
+                case "distance":
+                    valueSelector = ".distance";
+                    break;
                 case "price":
                 default:
                     valueSelector = ".total-price";
@@ -201,6 +204,9 @@
                 if (attr == "last_checkout") {
                     aValue = new Date(a.querySelector(valueSelector).value);
                     bValue = new Date(b.querySelector(valueSelector).value);
+                } else if (attr == "distance") {
+                    aValue = parseFloat(a.querySelector(valueSelector).value);
+                    bValue = parseFloat(b.querySelector(valueSelector).value);
                 } else if (attr == "name") {
                     aValue = a.querySelector(valueSelector).innerText.trim().toLowerCase();
                     bValue = b.querySelector(valueSelector).innerText.trim().toLowerCase();
@@ -244,6 +250,7 @@
                         <label for="sort-attribute" class="form-label mb-0 mr-2 text-nowrap">Sort by:</label>
                         <select id="sort-attribute" class="form-control mr-2" name="sort-attribute">
                             <option value="price">Total Price</option>
+                            <option value="distance">Distance</option>
                             <option value="name">Location Name</option>
                             <option value="rating">Rating</option>
                             {% if request.user.is_staff %}
