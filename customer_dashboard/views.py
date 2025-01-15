@@ -1606,6 +1606,7 @@ def new_order_5(request):
                     sub_obj.delete()
                 for ordr in order_group.orders.all():
                     # del_subtotal += order.customer_price()
+                    ordr.ordermaterialfee_set.all().delete()
                     ordr.delete()
                 order_group.delete()
             elif order:

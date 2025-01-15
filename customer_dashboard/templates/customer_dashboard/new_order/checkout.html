@@ -353,7 +353,7 @@
         {% if contains_pickup_order %}
             <div class="card" style="margin-top: 20px;">
                 <div class="card-body">
-                    <h4 class="card-title">Pickup Orders</h4>
+                    <h4 class="card-title">Pickup Orders<button class="btn btn-link float-end" type="button" data-bs-target="#checkout-orders-modal" data-bs-toggle="modal">Details</button></h4>
                     <i class="fas fa-exclamation-triangle text-danger">This order contains a PICKUP ORDER!</i>
                     <h6 class="text-muted card-subtitle mb-2 mt-2">You will need to pick up this item yourself.</h6>
                 </div>
@@ -478,64 +478,136 @@
                             <div class="row">
                                 <div class="col">
                                     {% for item in cart %}
-                                        <div class="row cart-item">
-                                            <div class="col-auto">
-                                                <img class="img-thumbnail img-fluid"
-                                                    alt="Product image"
-                                                    width="138"
-                                                    height="95"
-                                                    src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
-                                                        {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
-                                                    {% elif item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon %}
-                                                        {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url }}
+                                        {% if item.order_group.is_delivery %}
+                                            <div class="row cart-item">
+                                                <div class="col-auto">
+                                                    <img class="img-thumbnail img-fluid"
+                                                        alt="Product image"
+                                                        width="138"
+                                                        height="95"
+                                                        src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
+                                                            {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                                        {% elif item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon %}
+                                                            {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url }}
+                                                        {% else %}
+                                                            {% static 'customer_dashboard/img/logo.png' %}
+                                                        {% endif %}" />
+                                                </div>
+                                                <div class="col">
+                                                    <h4>{{ item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
+                                                    {% if item.order_group.end_date %}
+                                                        <p class="mb-1">{{ item.order_group.start_date }} to {{ item.order_group.end_date }}</p>
                                                     {% else %}
-                                                        {% static 'customer_dashboard/img/logo.png' %}
-                                                    {% endif %}" />
-                                            </div>
-                                            <div class="col">
-                                                <h4>{{ item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
-                                                {% if item.order_group.end_date %}
-                                                    <p class="mb-1">{{ item.order_group.start_date }} to {{ item.order_group.end_date }}</p>
-                                                {% else %}
-                                                    {% if item.order_group.service_recurring_frequency %}
-                                                        <p class="mb-1">Subscription starts on {{ item.order_group.start_date }} and recurring {{ item.order_group.service_recurring_frequency.name|lower }}</p>
-                                                    {% else %}
-                                                        <p class="mb-1">Subscription starts on {{ item.order_group.start_date }}</p>
+                                                        {% if item.order_group.service_recurring_frequency %}
+                                                            <p class="mb-1">Subscription starts on {{ item.order_group.start_date }} and recurring {{ item.order_group.service_recurring_frequency.name|lower }}</p>
+                                                        {% else %}
+                                                            <p class="mb-1">Subscription starts on {{ item.order_group.start_date }}</p>
+                                                        {% endif %}
                                                     {% endif %}
-                                                {% endif %}
-                                                <p class="mb-1">Service date: {{ item.order.end_date }}</p>
-                                                <p class="mb-1">Order Type: {{ item.order_type }}</p>
-                                                {% if user.is_staff %}
-                                                    <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
-                                                {% endif %}
+                                                    <p class="mb-1">Service date: {{ item.order.end_date }}</p>
+                                                    <p class="mb-1">Order Type: {{ item.order_type }}</p>
+                                                    {% if user.is_staff %}
+                                                        <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-auto">
+                                                    <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
+                                                </div>
+                                                <div class="col-auto">
+                                                    {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#checkout-orders-modal" data-bs-toggle="modal">Remove</button> {% endcomment %}
+                                                    <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ item.order_group.id }}" type="button"
+                                                        data-id="{{ item.order_group.id }}" data-orderid="{{ item.order.id }}" data-price="{{ item.price }}"
+                                                        hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
+                                                        onClick="event.stopPropagation();
+                                                        Swal.fire(
+                                                            {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
+                                                        ).then((result)=>{
+                                                            if(result.isConfirmed){removeItemFromCart(this);}
+                                                        })">
+                                                        Remove
+                                                        <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div class="col-auto">
-                                                <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
-                                            </div>
-                                            <div class="col-auto">
-                                                {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#checkout-orders-modal" data-bs-toggle="modal">Remove</button> {% endcomment %}
-                                                <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ item.order_group.id }}" type="button"
-                                                    data-id="{{ item.order_group.id }}" data-orderid="{{ item.order.id }}" data-price="{{ item.price }}"
-                                                    hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
-                                                    onClick="event.stopPropagation();
-                                                    Swal.fire(
-                                                        {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
-                                                    ).then((result)=>{
-                                                        if(result.isConfirmed){removeItemFromCart(this);}
-                                                    })">
-                                                    Remove
-                                                    <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        {% if not forloop.last %}
-                                            <hr />
+                                            {% if not forloop.last %}
+                                                <hr />
+                                            {% endif %}
                                         {% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
                         </div>
                     </div>
+                    {% if contains_pickup_order %}
+                        <hr />
+                        <p>These orders will not be shipped. They will be available for pickup.</p>
+                        <div class="card" style="background: var(--bs-card-cap-bg);">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col">
+                                        {% for item in cart %}
+                                            {% if not item.order_group.is_delivery %}
+                                                <div class="row cart-item">
+                                                    <div class="col-auto">
+                                                        <img class="img-thumbnail img-fluid"
+                                                            alt="Product image"
+                                                            width="138"
+                                                            height="95"
+                                                            src="{% if item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
+                                                                {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                                            {% elif item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon %}
+                                                                {{ item.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url }}
+                                                            {% else %}
+                                                                {% static 'customer_dashboard/img/logo.png' %}
+                                                            {% endif %}" />
+                                                    </div>
+                                                    <div class="col">
+                                                        <h4>{{ item.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
+                                                        {% if item.order_group.end_date %}
+                                                            <p class="mb-1">{{ item.order_group.start_date }} to {{ item.order_group.end_date }}</p>
+                                                        {% else %}
+                                                            {% if item.order_group.service_recurring_frequency %}
+                                                                <p class="mb-1">Subscription starts on {{ item.order_group.start_date }} and recurring {{ item.order_group.service_recurring_frequency.name|lower }}</p>
+                                                            {% else %}
+                                                                <p class="mb-1">Subscription starts on {{ item.order_group.start_date }}</p>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                        <p class="mb-1">Service date: {{ item.order.end_date }}</p>
+                                                        <p class="mb-1">Order Type: {{ item.order_type }}</p>
+                                                        <p class="mb-1">Pickup at: <a class="card-link" href="https://www.google.com/maps/place/{{ item.order_group.seller_product_seller_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ item.order_group.seller_product_seller_location.seller_location.formatted_address }}</a></p>
+                                                        {% if user.is_staff %}
+                                                            <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        {% comment %} <button class="btn btn-outline-danger" type="button" data-bs-target="#checkout-orders-modal" data-bs-toggle="modal">Remove</button> {% endcomment %}
+                                                        <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ item.order_group.id }}" type="button"
+                                                            data-id="{{ item.order_group.id }}" data-orderid="{{ item.order.id }}" data-price="{{ item.price }}"
+                                                            hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
+                                                            onClick="event.stopPropagation();
+                                                            Swal.fire(
+                                                                {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
+                                                            ).then((result)=>{
+                                                                if(result.isConfirmed){removeItemFromCart(this);}
+                                                            })">
+                                                            Remove
+                                                            <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {% if not forloop.last %}
+                                                    <hr />
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
