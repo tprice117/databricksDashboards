@@ -116,11 +116,13 @@
             return selectableStatuses.includes(evt.to.id) && !isRequestInProgress
           },
           onEnd: function (evt) {
-            if (selectableStatuses.includes(evt.to.id) && evt.from.id !== evt.to.id) {
+            if (selectableStatuses.includes(evt.to.id) && evt.from.id !== evt.to.id && evt.item.id) {
+              const cardId = evt.item.id
+              const leadId = cardId.replace('card-', '')
               const status = document.getElementById('status')
               const movedCard = document.getElementById('moved-card')
               status.value = evt.to.id
-              movedCard.value = evt.item.dataset.leadId
+              movedCard.value = leadId
               if (evt.to.id === 'junk') {
                 handleLostReason(evt)
               } else {
@@ -238,27 +240,22 @@
       <input id="action" type="hidden" name="update_status" />
       <input id="status" type="hidden" name="status" />
       <input id="moved-card" type="hidden" name="lead_id" />
-      <select id="lost-reason" name="lost_reason" style="display: none;">
+      <select id="lost-reason" class="d-none" name="lost_reason">
         {% for key, value in lost_reasons.items %}
           <option value="{{ key }}">{{ value }}</option>
         {% endfor %}
       </select>
       <!-- Board -->
       <span id="htmx-indicator-board" class="htmx-indicator">Loading <img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-      <div class="board" id="board" hx-get="{% url 'customer_leads_board' %}" hx-swap="innerHTML" hx-indicator="#htmx-indicator-board" hx-trigger="load, change from:#filter-form" hx-include="#filter-form"></div>
+      <div class="board" id="board" hx-get="{% url 'customer_leads_board' %}" hx-swap="outerHTML" hx-indicator="#htmx-indicator-board" hx-trigger="load" hx-include="#filter-form"></div>
     </form>
   </div>
-  <!-- Empty object to avoid errors from hx-indicator -->
-  <div class="htmx-indicator-card" style="display: none;"></div>
 {% endblock %}
 {% block modals %}
   <!-- Lead Details -->
-  <div id="edit-card-modal" class="modal modal-lg modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1" hx-disabled-elt="button">
+  <div id="edit-card-modal" class="modal modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1" hx-disabled-elt="button">
     <div class="modal-dialog modal-dialog-centered" role="document">
-      <div id="htmx-indicator-loading-card" class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Loading, please wait...</h5>
-        </div>
+      <div id="htmx-indicator-loading-card" class="modal-content htmx-indicator-card" style="min-height: 500px;">
         <div class="modal-body d-flex justify-content-center align-items-center p-3">
           <div class="spinner-border text-primary m-3" role="status"></div>
         </div>

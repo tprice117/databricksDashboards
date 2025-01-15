@@ -87,6 +87,7 @@ class Lead(BaseModel):
         OTHER = "other", _("Other")
         __empty__ = _("N/A")
 
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, related_name="user_leads", on_delete=models.CASCADE)
     user_address = models.ForeignKey(
         UserAddress, on_delete=models.CASCADE, null=True, blank=True
@@ -161,23 +162,27 @@ class Lead(BaseModel):
                 # Default to Manual
                 self.status = Lead.Status.MANUAL
 
-        self.update_conversion_status()
+        self.update_expiration_status()
 
         return super().save(*args, **kwargs)
 
-    def update_conversion_status(self, today=timezone.now().date()):
-        """Logic to update lead statuses based on if conversion date has passed."""
+    def update_expiration_status(self, today=timezone.now().date()):
+        """
+        Logic to update lead statuses based on if conversion date has passed.
+        Lead is automatically moved to JUNK with lost reason EXPIRED if it has been more than 7 days since the conversion date.
+        If the lead is not past the expiration date, but has a lost reason of EXPIRED, the lost reason is removed and the status is set to MANUAL.
+        If the lead is not JUNK, but the lost reason is set to EXPIRED, the status is set to JUNK.
+        """
+        expiration_date = self.est_conversion_date + timezone.timedelta(days=7)
+
         if (
             not self.lost_reason
             and self.status != Lead.Status.CONVERTED
-            and self.est_conversion_date < today
+            and expiration_date < today
         ):
             # Conversion Date has passed
             self.lost_reason = Lead.LostReason.EXPIRED
-        elif (
-            self.lost_reason == Lead.LostReason.EXPIRED
-            and self.est_conversion_date >= today
-        ):
+        elif self.lost_reason == Lead.LostReason.EXPIRED and expiration_date >= today:
             # Lost Reason should not be expired if conversion date has not passed
             self.lost_reason = None
             if self.status == Lead.Status.JUNK:

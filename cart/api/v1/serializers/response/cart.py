@@ -80,16 +80,17 @@ class CartItemSerializer(serializers.Serializer):
     Attributes:
         main_product: The main product of the cart item
         order: The order of the cart item
-        customer_price: The pre-tax total price for the item
+        subtotal: The pre-tax total price for the item
+        tax: The tax for the item
+        total: The total price for the item
     """
 
     main_product = CartItemMainProductSerializer(read_only=True)
     order = CartItemOrderSerializer(read_only=True)
 
-    # customer_price is pre-tax total price for the item
-    customer_price = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True
-    )
+    subtotal = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    tax = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
 
 class CartGroupSerializer(serializers.Serializer):
@@ -105,6 +106,10 @@ class CartGroupSerializer(serializers.Serializer):
 
     address = UserAddressSerializer(read_only=True)
     items = CartItemSerializer(many=True, read_only=True)
+    # Deprecated, use subtotal, remove after next app version
+    customer_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
     total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     count = serializers.IntegerField(read_only=True)
     show_quote = serializers.BooleanField(read_only=True)

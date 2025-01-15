@@ -21,7 +21,7 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
     PricingEngineResponseSerializer,
 )
 
-from asset_management.models.asset import Asset
+from asset_management.models import Asset, AssetModel, AssetMake
 
 from .models import (
     AddOn,
@@ -100,8 +100,26 @@ def get_order_approval_serializer():
     return ORDER_APPROVAL_SERIALIZER
 
 
+class AssetMakeSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True, read_only=True)
+
+    class Meta:
+        model = AssetMake
+        fields = "__all__"
+
+
+class AssetModelSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True, read_only=True)
+    asset_make = AssetMakeSerializer(read_only=True)
+
+    class Meta:
+        model = AssetModel
+        fields = "__all__"
+
+
 class AssetSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True, read_only=True)
+    model = AssetModelSerializer(read_only=True)
 
     class Meta:
         model = Asset
@@ -1194,7 +1212,8 @@ class OrderGroupSerializer(serializers.ModelSerializer):
     def get_nearest_order_date(self, obj) -> Optional[datetime.date]:
         return obj.nearest_order.end_date if obj.nearest_order else None
 
-    def get_asset(self, obj):
+    @extend_schema_field(AssetSerializer)
+    def get_asset(self, obj) -> Optional[AssetSerializer]:  # Type hint
         # pass this in to asset serializer and return that
         asset = Asset.objects.filter(
             model__main_product=obj.seller_product_seller_location.seller_product.product.main_product

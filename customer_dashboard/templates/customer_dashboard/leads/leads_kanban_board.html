@@ -1,20 +1,22 @@
-<div class="overflow-x-auto" style="height: 95vh;">
-  <div class="d-flex flex-nowrap align-items-stretch h-100">
-    {% for lane in board %}
-      <div class="card shadow m-1" style="min-width: 250px; flex: 1;">
-        <div class="card-body">
-          <h6 class="card-title text-truncate">{{ lane.name }}</h6>
+<div class="board" id="board" hx-get="{% url 'customer_leads_board' %}" hx-swap="outerHTML" hx-indicator="#htmx-indicator-board" hx-trigger="change from:#filter-form" hx-include="#filter-form">
+  <div class="overflow-auto" style="height: 95vh;">
+    <div class="d-flex flex-nowrap align-items-stretch h-100">
+      {% for lane in board %}
+        <div class="card shadow m-1" style="min-width: 200px; flex: 1;">
+          <div class="card-body px-2 py-3">
+            <h6 class="card-title text-truncate">{{ lane.name }}</h6>
+          </div>
+          <div id="{{ lane.value }}" class="card-footer h-100 overflow-x-hidden p-2 sortable">
+            {% for lead in lane.leads %}
+              {% include 'customer_dashboard/leads/leads_kanban_card.html' with lead=lead %}
+            {% endfor %}
+          </div>
         </div>
-        <div id="{{ lane.value }}" class="card-footer h-100 overflow-y-auto p-2 sortable">
-          {% for lead in lane.leads %}
-            {% include 'customer_dashboard/leads/leads_kanban_card.html' with lead=lead %}
-          {% endfor %}
+      {% empty %}
+        <div class="text-center">
+          <h3>{{ _('No Leads') }}</h3>
         </div>
-      </div>
-    {% empty %}
-      <div class="text-center">
-        <h3>{{ _('No Leads') }}</h3>
-      </div>
-    {% endfor %}
+      {% endfor %}
+    </div>
   </div>
 </div>

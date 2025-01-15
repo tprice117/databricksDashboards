@@ -1,10 +1,20 @@
 from django.contrib import admin
 
+from import_export.admin import ImportExportModelAdmin, ExportActionMixin
+from import_export import resources
+
 import billing.models as models
 
 
+class InvoiceResource(resources.ModelResource):
+    class Meta:
+        model = models.Invoice
+        skip_unchanged = True
+
+
 @admin.register(models.Invoice)
-class InvoiceAdmin(admin.ModelAdmin):
+class InvoiceAdmin(ImportExportModelAdmin, ExportActionMixin):
+    resource_classes = [InvoiceResource]
     list_display = (
         "__str__",
         "number",

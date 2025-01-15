@@ -12,6 +12,15 @@
         const discountElement = document.getElementById("discount");
         // create a function for updating the supplier list
         function updateSupplierList(is_pickup) {
+            // Change the pricing modal One Time Charges
+            let pricingModalOneTimeCharges = document.getElementById("price-detail-one-time-charges-card");
+            if (pricingModalOneTimeCharges) {
+                if (is_pickup) {
+                    pricingModalOneTimeCharges.classList.add("d-none");
+                } else {
+                    pricingModalOneTimeCharges.classList.remove("d-none");
+                }
+            }
             // Get the parent element
             const parent = document.querySelector("#main-product-detail-pricing-list");
             if (!parent) return;

@@ -1,7 +1,13 @@
 {% load sales_stream_tags %}
-<a id="card-{{ lead.id }}" href="{% url 'customer_leads_card_edit' lead.id %}" class="text-decoration-none text-reset" hx-indicator=".htmx-indicator-card" hx-trigger="click" hx-get="{% url 'customer_leads_card_edit' lead.id %}" hx-target="#edit-card-modal" hx-swap="innerHTML" data-bs-toggle="modal" data-bs-target="#edit-card-modal" data-lead-id="{{ lead.id }}">
-  <div class="card shadow small mb-1" draggable="true">
-    <div class="card-body">
+<div id="card-{{ lead.id }}" class="card shadow small mb-1 lead-card" draggable="true">
+  <!-- Card Overlay -->
+  <a href="{% url 'customer_leads_card_edit' lead.id %}" class="text-decoration-none text-reset overlay" data-lead-id="{{ lead.id }}" hx-indicator=".htmx-indicator-card" hx-trigger="click" hx-get="{% url 'customer_leads_card_edit' lead.id %}" hx-target="#edit-card-modal" hx-swap="innerHTML" data-bs-toggle="modal" data-bs-target="#edit-card-modal"></a>
+  <!-- Card Content -->
+  <div class="inner">
+    <!-- Card Action -->
+    <a href="{% url 'customer_lead_detail' lead.id %}" class="card-action btn btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="See Lead Details"><i class="fas fa-external-link-alt"></i></a>
+    <!-- Card Body -->
+    <div class="card-body p-2">
       <div class="card-title">
         <h6>
           <badge>
@@ -11,21 +17,22 @@
               <span class="badge fw-medium text-secondary" style="background-color: rgba(var(--bs-secondary-rgb), 0.2);">{{ lead.get_type_display }}</span>
             {% endif %}
           </badge>
-          {% if lead.lost_reason %}
-            <badge>
-              <span class="badge fw-medium text-danger" style="background-color: rgba(var(--bs-danger-rgb), 0.2);">{{ lead.get_lost_reason_display }}</span>
-            </badge>
-          {% endif %}
         </h6>
       </div>
       <div class="card-text text-truncate">
-        <small class="mb-0"><strong>User:</strong> {{ lead.user.full_name|default:lead.user.email }}</small><br />
-        <small class="mb-0"><strong>User Address:</strong> {{ lead.user_address|default:'----' }}</small><br />
-        <small class="mb-0"><strong>Est. Conversion:</strong> {{ lead.est_conversion_date }}</small><br />
-        <small class="mb-0"><strong>Est. Value:</strong> {{ lead.est_value|currency }}</small>
+        <small class="mb-0">{{ lead.user.full_name|default:lead.user.email }}</small><br />
+        <small class="mb-0">{{ lead.user_address|default:'----' }}</small><br />
+        <small class="mb-0">{{ lead.est_value|currency }}</small><br />
+        <small class="mb-0"><strong>Est. Conversion:</strong> {{ lead.est_conversion_date }}</small>
+        {% if lead.lost_reason %}
+          <badge class="text-truncate d-block">
+            <span class="badge fw-medium text-danger" style="background-color: rgba(var(--bs-danger-rgb), 0.2);">{{ lead.get_lost_reason_display }}</span>
+          </badge>
+        {% endif %}
       </div>
     </div>
-    <div class="card-footer">
+    <!-- Card Footer -->
+    <div class="card-footer p-2">
       <div class="d-flex flex-row-reverse align-items-center">
         {% if lead.owner %}
           {% if lead.owner.photo %}
@@ -40,4 +47,4 @@
       </div>
     </div>
   </div>
-</a>
+</div>
