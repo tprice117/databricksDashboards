@@ -20,6 +20,7 @@ from api.models import (
     User,
 )
 from common.models.choices.user_type import UserType
+from crm.utils import LeadUtils
 
 
 class TabularInlineFormSet(forms.BaseInlineFormSet):
@@ -475,6 +476,8 @@ class BaseProductLocationFormSet(forms.BaseFormSet):
             SellerProductSellerLocation.objects.bulk_create(
                 all_seller_product_seller_locations
             )
+            # Covert Leads for the seller
+            LeadUtils.convert_seller_leads(self.seller)
             return True
         return False
 

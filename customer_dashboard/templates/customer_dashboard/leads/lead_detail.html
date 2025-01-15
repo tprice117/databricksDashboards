@@ -196,6 +196,11 @@
                     <h6 class="alert-heading mb-0"><strong>Lead Lost:</strong> {{ lead.get_lost_reason_display }}</h6>
                   </div>
                 {% endif %}
+                {% if lead.status == 'converted' %}
+                  <div class="alert alert-success" role="alert">
+                    <h6 class="alert-heading mb-0"><strong>Lead Converted</strong></h6>
+                  </div>
+                {% endif %}
                 <div class="row">
                   <div class="col">
                     {% with user=lead.user %}
@@ -245,8 +250,6 @@
                           <td>
                             {% if lead.owner %}
                               {{ lead.owner.full_name|default:lead.owner.email }}
-                            {% else %}
-                              Unassigned
                             {% endif %}
                           </td>
                         </tr>
