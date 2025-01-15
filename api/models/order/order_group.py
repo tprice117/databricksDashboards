@@ -594,6 +594,12 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
                 five_times_per_week=seller_product_seller_location.service_times_per_week.five_times_per_week,
             )
 
+        # import locally to avoid circular import
+        from crm.utils import LeadUtils
+
+        # Convert any Leads that are associated with this OrderGroup's UserAddress.
+        LeadUtils.convert_customer_leads(instance.user_address)
+
     # Generate agreement for the OrderGroup if:
     # 1) The agreement_signed_by or agreement_signed_on is None.
     # 2) The agreement_signed_by or agreement_signed_on has changed from None to not None.

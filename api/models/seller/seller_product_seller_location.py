@@ -232,6 +232,13 @@ class SellerProductSellerLocation(BaseModel):
         ):
             instance.material.delete()
 
+        if created:
+            # Do local import to avoid circular import
+            from crm.utils import LeadUtils
+
+            # Covert Leads for the seller
+            LeadUtils.convert_seller_leads(instance.seller_location.seller)
+
 
 post_save.connect(
     SellerProductSellerLocation.post_save, sender=SellerProductSellerLocation
