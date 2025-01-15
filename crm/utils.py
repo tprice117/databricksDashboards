@@ -44,7 +44,9 @@ class LeadUtils:
     def create_new_sign_up(user):
         return Lead.objects.create(
             user=user,
-            type=Lead.Type.CUSTOMER,
+            type=Lead.Type.SELLER
+            if hasattr(user.user_group, "seller")
+            else Lead.Type.CUSTOMER,
         )
 
     @staticmethod

@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.db.models import Q
-from django.db.models.signals import post_delete, pre_save
+from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.template.loader import render_to_string
@@ -420,6 +420,18 @@ def user_pre_save(sender, instance: User, *args, **kwargs):
 
         if not instance.type:
             instance.type = UserType.ADMIN
+
+
+@receiver(post_save, sender=User)
+def user_post_save(sender, instance, created: bool, **kwargs):
+    """Post save signal for creating a new Lead when a User signs up."""
+    if created and not instance.is_staff:
+        # Perform actions after a new user is created
+        # Create a Lead for New SignUp
+        from crm.utils import LeadUtils
+
+        lead = LeadUtils.create_new_sign_up(instance)
+        logger.info(f"New lead created: {lead}")
 
 
 class CompanyUtils:
