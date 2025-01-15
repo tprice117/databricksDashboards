@@ -93,7 +93,8 @@ from .forms import (
     AccessDetailsForm,
     BrandingFormSet,
     CreditApplicationForm,
-    LeadForm,
+    NewLeadForm,
+    LeadDetailForm,
     LeadNoteForm,
     BaseLeadNoteFormset,
     OrderGroupForm,
@@ -4744,7 +4745,7 @@ def leads(request):
                 value: text for value, text in Lead.LostReason.choices if value
             },
             "owners": User.customer_team_users.all(),
-            "new_lead_form": LeadForm(),
+            "new_lead_form": NewLeadForm(),
         }
     )
 
@@ -4786,7 +4787,7 @@ def leads_board(request):
                         request, f"Error updating lead: {','.join(e.messages)}"
                     )
         elif "new_card" in request.POST:
-            form = LeadForm(request.POST)
+            form = NewLeadForm(request.POST)
             if form.is_valid():
                 form.save()
                 messages.success(request, "Lead created successfully.")
@@ -4841,7 +4842,7 @@ def leads_card(request, lead_id):
     lead = Lead.objects.get(id=lead_id)
 
     if request.method == "POST":
-        form = LeadForm(request.POST, instance=lead)
+        form = NewLeadForm(request.POST, instance=lead)
         if form.is_valid():
             lead = form.save()
             messages.success(request, "Lead saved successfully")
@@ -4868,10 +4869,10 @@ def leads_card_edit(request, lead_id=None):
             return HttpResponse("Not found", status=404)
 
         lead = Lead.objects.get(id=lead_id)
-        form = LeadForm(instance=lead)
+        form = NewLeadForm(instance=lead)
     else:
         lead = None
-        form = LeadForm()
+        form = NewLeadForm()
 
     context.update(
         {
@@ -4902,8 +4903,9 @@ def lead_detail(request, lead_id):
         messages.error(request, "Lead not found.")
         return HttpResponseRedirect(reverse("customer_leads"))
 
-    lead_note_queryset = lead.notes.order_by("created_on")
     lead_statuses = Lead.Status.get_ordered_choices()
+    lead_form = LeadDetailForm(instance=lead)
+    lead_note_queryset = lead.notes.order_by("created_on")
 
     LeadNoteFormset = inlineformset_factory(
         Lead,
@@ -4918,8 +4920,30 @@ def lead_detail(request, lead_id):
     )
 
     if request.method == "POST":
+        # Edit Details
+        if "lead-form" in request.POST:
+            lead_form = LeadDetailForm(request.POST, instance=lead)
+            if lead_form.is_valid():
+                if lead_form.has_changed():
+                    lead = lead_form.save()
+                    if lead.status != lead_form.instance.status:
+                        messages.info(request, "Lead closed automatically.")
+                    else:
+                        messages.success(request, "Lead saved successfully.")
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(
+                    request,
+                    f"Error saving lead {lead_form.non_field_errors().as_text()}",
+                )
+                lead.refresh_from_db()
+
+            # Reinitialize Form
+            lead_form = LeadDetailForm(instance=lead)
+
         # Note Formset
-        if "note-formset" in request.POST:
+        elif "note-formset" in request.POST:
             lead_note_formset = LeadNoteFormset(
                 request.POST,
                 instance=lead,
@@ -4927,16 +4951,12 @@ def lead_detail(request, lead_id):
             )
             action = request.POST.get("action", "create")
 
-            if "add_note" in request.POST:
+            if action == "create":
                 # Handle creation
                 for form in lead_note_formset.extra_forms:
                     if form.is_valid():
                         form.save()
                         messages.success(request, "Note added successfully.")
-                        lead_note_formset = LeadNoteFormset(
-                            instance=lead,
-                            queryset=lead_note_queryset,
-                        )
                         break
                     else:
                         messages.error(
@@ -4958,10 +4978,6 @@ def lead_detail(request, lead_id):
                         if form.is_valid():
                             form.save()
                             messages.success(request, "Notes saved successfully.")
-                            lead_note_formset = LeadNoteFormset(
-                                instance=lead,
-                                queryset=lead_note_queryset,
-                            )
                         else:
                             messages.error(
                                 request,
@@ -4971,19 +4987,11 @@ def lead_detail(request, lead_id):
                         messages.info(request, "No changes detected.")
                 elif action == "delete":
                     # Handle deletion
-                    for keep_form in lead_note_formset:
-                        # Reset all the other forms so that they aren't altered
-                        if keep_form.instance != form.instance:
-                            keep_form = LeadNoteForm(instance=keep_form.instance)
-
-                    if lead_note_formset.is_valid():
-                        # Saving the formset handles the deletion
-                        lead_note_formset.save()
+                    if lead_note := LeadNote.objects.filter(
+                        id=form.instance.id
+                    ).first():
+                        lead_note.delete()
                         messages.success(request, "Notes saved successfully.")
-                        lead_note_formset = LeadNoteFormset(
-                            instance=lead,
-                            queryset=lead_note_queryset,
-                        )
                     else:
                         messages.error(
                             request,
@@ -4991,6 +4999,12 @@ def lead_detail(request, lead_id):
                         )
                 else:
                     messages.error(request, "Invalid action.")
+
+            # Reload formset
+            lead_note_formset = LeadNoteFormset(
+                instance=lead,
+                queryset=lead_note_queryset,
+            )
 
         # Mark as Junk
         elif "update_status" in request.POST:
@@ -5014,6 +5028,7 @@ def lead_detail(request, lead_id):
     context.update(
         {
             "lead": lead,
+            "lead_form": lead_form,
             "lead_note_formset": lead_note_formset,
             "lead_statuses": lead_statuses,
             "lead_status_index": [status for (status, _) in lead_statuses].index(

@@ -150,6 +150,14 @@
       // Card Edit Form functionality START
       addUserAddressAutocompleteListeners()
     
+      const userInput = content.querySelector('#id_user')
+      if (userInput) {
+        userInput.addEventListener('change', function () {
+          content.querySelector('#user_address-search').value = null
+          content.querySelector('#id_user_address').value = null
+        })
+      }
+    
       // Make the user select searchable
       const userSelect = content.querySelectorAll('.select-user').forEach((userSelect) => {
         new Choices(userSelect, {
