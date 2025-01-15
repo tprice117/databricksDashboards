@@ -217,7 +217,7 @@
               <option value="">All</option>
               <option value="unassigned">Unassigned</option>
               {% for owner in owners %}
-                <option value="{{ owner.id }}">{{ owner }}</option>
+                <option value="{{ owner.id }}">{{ owner.full_name|default:owner }}</option>
               {% endfor %}
             </select>
           </div>

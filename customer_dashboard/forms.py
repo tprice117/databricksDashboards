@@ -810,6 +810,12 @@ class LeadForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(LeadForm, self).__init__(*args, **kwargs)
         self.fields["owner"].queryset = User.customer_team_users.all()
+        self.fields["user"].label_from_instance = (
+            lambda obj: f"{obj.full_name or obj.email}"
+        )
+        self.fields["owner"].label_from_instance = (
+            lambda obj: f"{obj.full_name or obj.email}"
+        )
 
     def save(self, commit=True):
         lead = super().save(commit=False)
