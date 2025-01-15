@@ -151,7 +151,7 @@
       addUserAddressAutocompleteListeners()
     
       // Make the user select searchable
-      const userSelect = document.querySelectorAll('.select-user').forEach((userSelect) => {
+      const userSelect = content.querySelectorAll('.select-user').forEach((userSelect) => {
         new Choices(userSelect, {
           searchEnabled: true,
           searchChoices: true,

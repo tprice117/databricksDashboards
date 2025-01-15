@@ -2,7 +2,7 @@ from django.db import models
 from django.forms import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from api.models import User, UserAddress, OrderGroup
+from api.models import User, UserAddress, Order, OrderGroup, SellerProductSellerLocation
 from common.models import BaseModel
 from django.utils import timezone
 
@@ -10,6 +10,15 @@ from django.utils import timezone
 def get_default_est_conversion_date():
     """Return the default estimated conversion date. (7 days from current date)"""
     return timezone.now().date() + timezone.timedelta(days=7)
+
+
+class ActiveLeadManager(models.Manager):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .exclude(status__in=[Lead.Status.JUNK, Lead.Status.CONVERTED])
+        )
 
 
 class Lead(BaseModel):
@@ -121,6 +130,15 @@ class Lead(BaseModel):
         max_length=25, choices=LostReason.choices, null=True, blank=True
     )
 
+    # Managers
+    objects = models.Manager()
+    active_leads = ActiveLeadManager()
+
+    @property
+    def is_active(self):
+        # Make sure logic matches that of ActiveLeadManager
+        return self.status not in [Lead.Status.CONVERTED, Lead.Status.JUNK]
+
     def __str__(self):
         return (
             f"{self.user} - {self.user_address} - {self.status}"
@@ -144,8 +162,10 @@ class Lead(BaseModel):
                 )
 
         # Clean the Lost Reason
-        if self.status == Lead.Status.JUNK and not self.lost_reason:
-            raise ValidationError(_("Lost Reason is required for a junk lead."))
+        if (self.status == Lead.Status.JUNK and not self.lost_reason) or (
+            self.lost_reason and self.status != Lead.Status.JUNK
+        ):
+            raise ValidationError(_("Lost Reason is required for a junk lead only."))
 
         return super().clean()
 
@@ -163,6 +183,7 @@ class Lead(BaseModel):
                 self.status = Lead.Status.MANUAL
 
         self.update_expiration_status()
+        self.update_conversion_status()
 
         return super().save(*args, **kwargs)
 
@@ -175,25 +196,37 @@ class Lead(BaseModel):
         """
         expiration_date = self.est_conversion_date + timezone.timedelta(days=7)
 
-        if (
-            not self.lost_reason
-            and self.status != Lead.Status.CONVERTED
-            and expiration_date < today
-        ):
+        if self.is_active and expiration_date < today:
             # Conversion Date has passed
             self.lost_reason = Lead.LostReason.EXPIRED
+            self.status = Lead.Status.JUNK
         elif self.lost_reason == Lead.LostReason.EXPIRED and expiration_date >= today:
             # Lost Reason should not be expired if conversion date has not passed
             self.lost_reason = None
             if self.status == Lead.Status.JUNK:
                 self.status = Lead.Status.MANUAL
 
-        if (
-            self.lost_reason == Lead.LostReason.EXPIRED
-            and self.status != Lead.Status.JUNK
+    def update_conversion_status(self):
+        """Convert the lead to an opportunity."""
+        if (self.is_active) and (
+            (
+                self.type == Lead.Type.SELLER
+                and SellerProductSellerLocation.objects.filter(
+                    # There is an seller product seller location for this seller
+                    seller_location__seller=self.user.user_group.seller
+                ).exists()
+            )
+            or (
+                self.type == Lead.Type.CUSTOMER
+                and Order.objects.filter(
+                    # There is an order in the cart for this address
+                    order_group__user_address=self.user_address,
+                    submitted_on__isnull=True,
+                ).exists()
+            )
         ):
-            # Status should be junk if lost reason is expired
-            self.status = Lead.Status.JUNK
+            # Convert lead
+            self.status = Lead.Status.CONVERTED
 
 
 class UserSelectableLeadStatus(models.TextChoices):
