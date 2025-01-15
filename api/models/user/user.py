@@ -107,6 +107,8 @@ class User(AbstractUser):
     )
     mailchip_id = models.CharField(max_length=255, blank=True, null=True)
     intercom_id = models.CharField(max_length=255, blank=True, null=True)
+    # Firebase push id
+    push_id = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=40, blank=True, null=True)
     email = models.CharField(max_length=255, unique=True)
     photo = models.ImageField(upload_to=get_file_path, blank=True, null=True)
