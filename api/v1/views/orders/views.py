@@ -1,4 +1,5 @@
-from drf_spectacular.utils import extend_schema, OpenApiTypes
+from django.core.exceptions import ValidationError
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -12,7 +13,6 @@ from django_filters import rest_framework as filters
 from api.serializers import OrderSerializer
 from api.models import Order
 from api.filters import OrderFilterset
-from cart.utils import CartUtils
 
 
 class OrderViewSet(
@@ -45,8 +45,7 @@ class OrderCancelView(APIView):
         order = Order.objects.get(id=request.data["order_id"])
 
         try:
-            order.status = Order.Status.CANCELLED
-            order.save()
+            order.cancel_order()
             return Response(OrderSerializer(order).data)
         except Exception as e:
             raise APIException(str(e))
@@ -69,8 +68,9 @@ class OrderRescheduleView(APIView):
         order = Order.objects.get(id=request.data["order_id"])
 
         try:
-            # order.status = Order.Status.CANCELLED
-            # order.save()
+            order.reschedule_order(request.data["date"])
             return Response(OrderSerializer(order).data)
+        except ValidationError as e:
+            raise DRFValidationError(str(e))
         except Exception as e:
             raise APIException(str(e))

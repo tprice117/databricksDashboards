@@ -687,6 +687,7 @@ class EditOrderDateForm(forms.Form):
                 allow_saturday_delivery = self.user_address.allow_saturday_delivery
             if not allow_saturday_delivery:
                 raise ValidationError("Date cannot be on a Saturday.")
+        return date
 
 
 OrderReviewFormSet = forms.inlineformset_factory(

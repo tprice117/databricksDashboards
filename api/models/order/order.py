@@ -1323,6 +1323,114 @@ class Order(BaseModel):
                 self.submitted_on = timezone.now()
                 self.save()
 
+    def cancel_order(self, o):
+        """This method is used to cancel an Order (set status to CANCELLED)."""
+        if self.status != Order.Status.CANCELLED:
+            self.status = Order.Status.CANCELLED
+            self.save()
+
+    def reschedule_order(self, new_date):
+        """Reschedule the Order to the new start_date and end_date."""
+        old_date = self.order_group.start_date
+        if new_date == old_date:
+            return False
+
+        min_date = timezone.now().date()
+        if (
+            not self.order_type == Order.Type.DELIVERY
+            and not self.order_type == Order.Type.PICKUP
+        ):
+            min_date = self.order_group.start_date
+
+        if new_date < min_date:
+            raise ValidationError(
+                "Must be after: %(min_date)s",
+                params={"min_date": min_date},
+            )
+        elif new_date.weekday() == 6:  # 6 corresponds to Sunday
+            allow_sunday_delivery = False
+            if self.order_group.user_address:
+                allow_sunday_delivery = (
+                    self.order_group.user_address.allow_sunday_delivery
+                )
+            if not allow_sunday_delivery:
+                raise ValidationError("Date cannot be on a Sunday.")
+        elif new_date.weekday() == 5:
+            allow_saturday_delivery = False
+            if self.order_group.user_address:
+                allow_saturday_delivery = (
+                    self.order_group.user_address.allow_saturday_delivery
+                )
+            if not allow_saturday_delivery:
+                raise ValidationError("Date cannot be on a Saturday.")
+
+        def update_surrounding_orders(
+            is_delivery=False, is_swap=False, is_removal=False
+        ):
+            cart_items = self.order_group.orders.filter(submitted_on__isnull=True)
+            # only 1 oder should end on the this start date
+            # eg: delivery orders start and end on the same day
+            # or eg: swap oders start on the same day as the last order
+            if len(cart_items.filter(end_date=self.end_date)) > 1:
+                raise ValidationError(
+                    "There are multiple orders that end on the same date."
+                )
+            next_order = (
+                self.order_group.orders.filter(
+                    submitted_on__isnull=True, end_date__gt=old_date
+                )
+                .order_by("end_date")
+                .first()
+            )
+            if is_delivery:
+                self.start_date = new_date
+                self.end_date = new_date
+            if is_swap:
+                self.end_date = new_date
+            self.order_line_items.all().delete()
+            self.add_line_items(True)
+            # next_order.start_date can't be later than the next order start date
+            if next_order:
+                next_order.start_date = new_date
+                if next_order.start_date > next_order.end_date:
+                    raise ValidationError(
+                        f"The start date runs into the end date of the next order ({next_order.end_date})."
+                    )
+                next_order.order_line_items.all().delete()
+                next_order.add_line_items(True)
+                next_order.save()
+
+        # recreate all the order line items
+        if (
+            self.order_type == Order.Type.DELIVERY
+            or self.order_type == Order.Type.PICKUP
+        ):
+            # for a DELIVERY edit the start date
+            # the start date on the order group is the same
+            # the start date of the next order is the same
+            old_date = self.end_date
+            self.order_group.start_date = new_date
+            update_surrounding_orders(is_delivery=True)
+        elif self.order_type == Order.Type.SWAP:
+            old_date = self.end_date
+            update_surrounding_orders(is_swap=True)
+            # for a SWAP edit the end date
+            # the end date of the next order is the same
+        elif (
+            self.order_type == Order.Type.REMOVAL
+            or self.order_type == Order.Type.RETURN
+        ):
+            # for a REMOVAL edit the end date
+            # the end date on the order group is the same
+            old_date = self.end_date
+            self.end_date = new_date
+            self.order_group.end_date = new_date
+            self.order_line_items.all().delete()
+            self.add_line_items(True)
+        self.order_group.save()
+        self.save()
+        return True
+
     def __str__(self):
         return (
             self.order_group.seller_product_seller_location.seller_product.product.main_product.name
