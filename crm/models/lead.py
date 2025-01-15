@@ -2,7 +2,7 @@ from django.db import models
 from django.forms import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from api.models import User, UserAddress, Order, OrderGroup, SellerProductSellerLocation
+from api.models import User, UserAddress, OrderGroup, SellerProductSellerLocation
 from common.models import BaseModel
 from django.utils import timezone
 
@@ -229,11 +229,13 @@ class Lead(BaseModel):
             )
             or (
                 self.type == Lead.Type.CUSTOMER
-                and Order.objects.filter(
+                and OrderGroup.objects.filter(
                     # There is an order in the cart for this address
-                    order_group__user_address=self.user_address,
-                    submitted_on__isnull=True,
-                ).exists()
+                    user_address=self.user_address,
+                    orders__submitted_on__isnull=True,
+                )
+                .distinct()
+                .exists()
             )
         ):
             # Convert lead
