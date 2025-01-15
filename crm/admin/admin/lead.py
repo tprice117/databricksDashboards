@@ -11,6 +11,7 @@ from crm.admin.inlines import LeadNoteInline
 class LeadAdmin(BaseModelAdmin):
     list_display = (
         "user",
+        "id",
         "user_address",
         "owner",
         "status",
