@@ -140,15 +140,12 @@ class Lead(BaseModel):
         return self.status not in [Lead.Status.CONVERTED, Lead.Status.JUNK]
 
     def __str__(self):
-        return (
-            f"{self.user} - {self.user_address} - {self.status}"
-            if self.user_address
-            else f"{self.user} - {self.status}"
-        )
+        return f"Lead({self.id}) - {self.user} - {self.status}"
 
     def clean(self):
+        # Clean the User Address
         if self.user_address:
-            # Clean the User Address
+            # Check available UserAddresses for the User
             available_user_addresses = UserAddress.objects.for_user(
                 self.user
             ).values_list("id", flat=True)
@@ -166,6 +163,13 @@ class Lead(BaseModel):
             self.lost_reason and self.status != Lead.Status.JUNK
         ):
             raise ValidationError(_("Lost Reason is required for a junk lead only."))
+
+        # Clean the Type
+        if self.type == Lead.Type.SELLER and not self.user.user_group.seller:
+            # Seller leads must have a user associated with a seller
+            raise ValidationError(
+                _("Seller leads must have a user associated with a seller.")
+            )
 
         return super().clean()
 
@@ -207,12 +211,19 @@ class Lead(BaseModel):
                 self.status = Lead.Status.MANUAL
 
     def update_conversion_status(self):
-        """Convert the lead to an opportunity."""
+        """
+        Convert the lead to an opportunity.
+
+        If the lead is active and:
+            - Seller: There is a SellerProductSellerLocation for the seller
+            - Customer: There is an order in the cart for the UserAddress
+        """
         if (self.is_active) and (
             (
                 self.type == Lead.Type.SELLER
                 and SellerProductSellerLocation.objects.filter(
                     # There is an seller product seller location for this seller
+                    # The user must have an associated user_group.seller to be SELLER type
                     seller_location__seller=self.user.user_group.seller
                 ).exists()
             )
