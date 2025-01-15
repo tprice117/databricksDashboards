@@ -995,70 +995,78 @@ def new_order_3(request, product_id):
 def new_order_4(request):
     # Get context data
     context = get_user_context(request)
-    context["product_id"] = request.GET.get("product_id")
-    context["user_address"] = request.GET.get("user_address")
-    context["product_waste_types"] = request.GET.getlist("product_waste_types")
-    if context["product_waste_types"] and context["product_waste_types"][0] == "":
-        context["product_waste_types"] = []
-    context["product_add_on_choices"] = request.GET.getlist("product_add_on_choices")
-    if context["product_add_on_choices"] and context["product_add_on_choices"][0] == "":
-        context["product_add_on_choices"] = []
-    context["schedule_window"] = request.GET.get("schedule_window", "")
-    context["times_per_week"] = request.GET.get("times_per_week", "")
-    if context["times_per_week"]:
-        context["times_per_week"] = int(context["times_per_week"])
-    context["shift_count"] = request.GET.get("shift_count", "")
-    if context["shift_count"]:
-        context["shift_count"] = int(context["shift_count"])
-    context["delivery_date"] = request.GET.get("delivery_date")
-    context["removal_date"] = request.GET.get("removal_date", "")
-    context["quantity"] = int(request.GET.get("quantity"))
-    context["project_id"] = request.GET.get("project_id")
-
-    # Get Product and AddOns
-    products = Product.objects.filter(main_product_id=context["product_id"])
-
-    if context["product_add_on_choices"]:
-        prod_addon_choice_set = set(context["product_add_on_choices"])
-        for product in products:
-            product_addon_choices_db = ProductAddOnChoice.objects.filter(
-                product_id=product.id
-            ).values_list("add_on_choice_id", flat=True)
-            db_choices = set([str(choice) for choice in product_addon_choices_db])
-            if db_choices == prod_addon_choice_set:
-                context["product"] = product
-                break
-    elif products.count() == 1:
-        context["product"] = products.first()
-    elif products.count() > 1:
-        messages.error(
-            request,
-            "Multiple products found. Only one product of each type should exist. You might encounter errors.",
+    try:
+        context["product_id"] = request.GET.get("product_id")
+        context["user_address"] = request.GET.get("user_address")
+        context["product_waste_types"] = request.GET.getlist("product_waste_types")
+        if context["product_waste_types"] and context["product_waste_types"][0] == "":
+            context["product_waste_types"] = []
+        context["product_add_on_choices"] = request.GET.getlist(
+            "product_add_on_choices"
         )
-        context["product"] = products.first()
-    if context.get("product", None) is None:
-        messages.error(request, "Product not found.")
-        return HttpResponseRedirect(reverse("customer_new_order"))
+        if (
+            context["product_add_on_choices"]
+            and context["product_add_on_choices"][0] == ""
+        ):
+            context["product_add_on_choices"] = []
+        context["schedule_window"] = request.GET.get("schedule_window", "")
+        context["times_per_week"] = request.GET.get("times_per_week", "")
+        if context["times_per_week"]:
+            context["times_per_week"] = int(context["times_per_week"])
+        context["shift_count"] = request.GET.get("shift_count", "")
+        if context["shift_count"]:
+            context["shift_count"] = int(context["shift_count"])
+        context["delivery_date"] = request.GET.get("delivery_date")
+        context["removal_date"] = request.GET.get("removal_date", "")
+        context["quantity"] = int(request.GET.get("quantity"))
+        context["project_id"] = request.GET.get("project_id")
 
-    # Discount
-    context["max_discount_100"] = round(
-        float(context["product"].main_product.max_discount) * 100, 1
-    )
-    discount = 0
-    context["market_discount"] = (
-        context["product"].main_product.max_discount * Decimal(0.8)
-    ) * 100
+        # Get Product and AddOns
+        products = Product.objects.filter(main_product_id=context["product_id"])
 
-    if not request.user.is_staff:
-        discount = context["market_discount"]
-    context["discount"] = discount
-    context["default_markup"] = context["product"].main_product.default_take_rate
+        if context["product_add_on_choices"]:
+            prod_addon_choice_set = set(context["product_add_on_choices"])
+            for product in products:
+                product_addon_choices_db = ProductAddOnChoice.objects.filter(
+                    product_id=product.id
+                ).values_list("add_on_choice_id", flat=True)
+                db_choices = set([str(choice) for choice in product_addon_choices_db])
+                if db_choices == prod_addon_choice_set:
+                    context["product"] = product
+                    break
+        elif products.count() == 1:
+            context["product"] = products.first()
+        elif products.count() > 1:
+            messages.error(
+                request,
+                "Multiple products found. Only one product of each type should exist. You might encounter errors.",
+            )
+            context["product"] = products.first()
+        if context.get("product", None) is None:
+            messages.error(request, "Product not found.")
+            return HttpResponseRedirect(reverse("customer_new_order"))
+
+        # Discount
+        context["max_discount_100"] = round(
+            float(context["product"].main_product.max_discount) * 100, 1
+        )
+        discount = 0
+        context["market_discount"] = (
+            context["product"].main_product.max_discount * Decimal(0.8)
+        ) * 100
+
+        if not request.user.is_staff:
+            discount = context["market_discount"]
+        context["discount"] = discount
+        context["default_markup"] = context["product"].main_product.default_take_rate
+    except Exception as e:
+        pass
 
     if request.headers.get("HX-Request"):
-        lat1 = request.GET.get("lat1", None)
-        lon1 = request.GET.get("lon1", None)
-        lat2 = request.GET.get("lat2", None)
-        lon2 = request.GET.get("lon2", None)
+        lat1 = request.GET.get("amp;lat1", None)
+        lon1 = request.GET.get("amp;lon1", None)
+        lat2 = request.GET.get("amp;lat2", None)
+        lon2 = request.GET.get("amp;lon2", None)
         if lat1 and lon1 and lat2 and lon2:
             context["distance"] = DistanceUtils.get_driving_distance(
                 lat1, lon1, lat2, lon2
