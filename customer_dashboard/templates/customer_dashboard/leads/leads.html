@@ -150,11 +150,22 @@
       // Card Edit Form functionality START
       addUserAddressAutocompleteListeners()
     
+      // Clear the user_address field if the user is changed
       const userInput = content.querySelector('#id_user')
       if (userInput) {
         userInput.addEventListener('change', function () {
           content.querySelector('#user_address-search').value = null
           content.querySelector('#id_user_address').value = null
+        })
+      }
+      // Clear the input field if the user clears the search field
+      const userAddressInput = content.querySelector('#user_address-search')
+      if (userAddressInput) {
+        userAddressInput.addEventListener('input', function (e) {
+          console.log(e)
+          if (!e.currentTarget.value && !e.inputType) {
+            document.getElementById('id_user_address').value = null
+          }
         })
       }
     
