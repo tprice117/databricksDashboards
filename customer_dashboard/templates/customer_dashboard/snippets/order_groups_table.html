@@ -46,7 +46,11 @@
                 </td>
                 <td class="d-none location_name">{{ order_group.user_address.name }}</td>
                 <td class="d-none booking_project_id">{{ order_group.project_id }}</td>
-                <td class="company_name">{{ order_group.seller_product_seller_location.seller_product.seller.name }}</td>
+                {% if order_group.user.user_group %}
+                    <td class="company_name">{{ order_group.user.user_group.name }}</td>
+                {% else %}
+                    <td class="company_name">{{ order_group.user.full_name }}</td>
+                {% endif %}
                 <td class="supplier">
                     <img class="rounded-circle me-2"
                         width="30"
@@ -91,8 +95,8 @@
             <th class="location">Location</th>
             <th class="d-none location_name">Location Name</th>
             <th class="d-none booking_project_id">Booking Project</th>
-            <th class="company">Company Name</th>
-            <th class="company_name">Supplier</th>
+            <th class="company_name">Company Name</th>
+            <th class="supplier">Supplier</th>
             <th class="d-none order_type">Order Type</th>
             <th class="d-none status">Status</th>
             <th class="d-none account_manager">Account Manager</th>
