@@ -3887,6 +3887,9 @@ def invoice_detail(request, invoice_id):
                 except ValueError:
                     # Handle the case where the date string is not in the expected format
                     messages.error(request, "Invalid date format.")
+            else:
+                context["invoice"].check_sent_at = None
+                context["invoice"].save()
         else:
             payment_method_id = request.POST.get("payment_method")
             if payment_method_id:
