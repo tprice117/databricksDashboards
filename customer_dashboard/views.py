@@ -4724,7 +4724,7 @@ def leads(request):
             "lost_reasons": {
                 value: text for value, text in Lead.LostReason.choices if value
             },
-            "owners": User.customer_team_users.all(),
+            "owners": User.sales_team_users.all(),
             "new_lead_form": NewLeadForm(),
         }
     )
