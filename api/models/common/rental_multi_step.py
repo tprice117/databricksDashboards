@@ -186,11 +186,11 @@ class PricingRentalMultiStep(BaseModel):
         Returns the monthly rate based on day or month field, whichever is cheaper.
         """
         if self.month and self.day:
-            return min(self.month, self.effective_day_rate * 30)
+            return min(self.month, self.effective_day_rate * 28)
         elif self.month:
             return self.month
         elif self.day:
-            return self.effective_day_rate * 30
+            return self.effective_day_rate * 28
         else:
             raise ValueError("Either day or month rate must be defined")
 
