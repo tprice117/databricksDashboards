@@ -279,33 +279,18 @@ class Lead(BaseModel):
                 # Use the UserGroup account owner
                 self.owner = self.user.user_group.account_owner
             else:
+                # Round Robin to sales team members
                 sales_team = User.sales_team_users.all().order_by("id")
                 if sales_team:
-                    # Check if sales rep created lead automatically
-                    if (
-                        self.status == Lead.Status.SIGN_UP
-                        and self.created_by in sales_team
-                    ):
-                        self.owner = self.created_by
-                    elif (
-                        self.status == Lead.Status.LOCATION
-                        and self.user_address
-                        and self.user_address.created_by in sales_team
-                    ):
-                        self.owner = self.user_address.created_by
+                    sales_team_list = list(sales_team)
+                    last_lead = Lead.objects.all().order_by("-id").first()
+                    if last_lead:
+                        # Assign to next sales team member
+                        # Will not take into account manually assigned leads, but will never assign to the same person twice in a row
+                        self.owner = sales_team_list[last_lead.id + 1 % len(sales_team)]
                     else:
-                        # Round Robin to sales team members
-                        sales_team_list = list(sales_team)
-                        last_lead = Lead.objects.all().order_by("-id").first()
-                        if last_lead:
-                            # Assign to next sales team member
-                            # Will not take into account manually assigned leads, but will never assign to the same person twice in a row
-                            self.owner = sales_team_list[
-                                last_lead.id + 1 % len(sales_team)
-                            ]
-                        else:
-                            # Assign to first sales team member
-                            self.owner = sales_team_list[0]
+                        # Assign to first sales team member
+                        self.owner = sales_team_list[0]
 
 
 class UserSelectableLeadStatus(models.TextChoices):
