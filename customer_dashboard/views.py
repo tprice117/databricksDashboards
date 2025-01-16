@@ -1198,10 +1198,14 @@ def customer_cart_date_edit(request, order_id):
             )
             .first()
         )
+        customer_price = order.customer_price()
+        customer_price_with_tax = order.customer_price_with_tax()
         context["item"] = {
             "order": order,
             "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
-            "customer_price": order.customer_price(),
+            "subtotal": customer_price,
+            "tax": customer_price_with_tax - customer_price,
+            "total": customer_price_with_tax,
         }
         context["loopcount"] = request.POST.get("loopcount")
 
