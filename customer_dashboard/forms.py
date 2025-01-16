@@ -18,7 +18,7 @@ from api.models import (
 )
 from common.forms import HiddenDeleteFormSet
 from common.models.choices.user_type import UserType
-from crm.models import Lead, LeadNote
+from crm.models import Lead, LeadNote, UserSelectableLeadStatus
 
 
 def validate_swap_start_date(value):
@@ -787,7 +787,9 @@ BrandingFormSet = forms.inlineformset_factory(
 )
 
 
-class LeadForm(forms.ModelForm):
+class NewLeadForm(forms.ModelForm):
+    """Form for creating a new lead or editing an existing lead with some automated fields."""
+
     class Meta:
         model = Lead
         fields = [
@@ -808,8 +810,14 @@ class LeadForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(LeadForm, self).__init__(*args, **kwargs)
+        super(NewLeadForm, self).__init__(*args, **kwargs)
         self.fields["owner"].queryset = User.customer_team_users.all()
+        self.fields["user"].label_from_instance = (
+            lambda obj: f"{obj.full_name}, {obj.email}" if obj.full_name else obj.email
+        )
+        self.fields["owner"].label_from_instance = (
+            lambda obj: f"{obj.full_name or obj.email}"
+        )
 
     def save(self, commit=True):
         lead = super().save(commit=False)
@@ -822,6 +830,55 @@ class LeadForm(forms.ModelForm):
         if commit:
             lead.save()
         return lead
+
+
+class LeadDetailForm(forms.ModelForm):
+    """Form for editing a lead's details."""
+
+    class Meta:
+        model = Lead
+        fields = [
+            "user",
+            "user_address",
+            "owner",
+            "est_conversion_date",
+            "est_value",
+            "status",
+            "type",
+        ]
+        widgets = {
+            "user": forms.Select(attrs={"class": "form-select", "required": "true"}),
+            "user_address": forms.HiddenInput(),
+            "owner": forms.Select(attrs={"class": "form-select"}),
+            "est_conversion_date": forms.DateInput(
+                attrs={"class": "form-control", "type": "date"}
+            ),
+            "est_value": forms.NumberInput(attrs={"class": "form-control"}),
+            "status": forms.Select(attrs={"class": "form-select", "required": "true"}),
+            "type": forms.Select(attrs={"class": "form-select"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(LeadDetailForm, self).__init__(*args, **kwargs)
+        # Update status choices to be current choice as well as any user-selectable (non-junk) statuses
+        self.fields["status"].choices = [
+            choice
+            for choice in UserSelectableLeadStatus.choices
+            if choice[0] != Lead.Status.JUNK
+        ]
+        if instance := kwargs.get("instance"):
+            for choice in Lead.Status.choices:
+                if choice[0] == instance.status:
+                    self.fields["status"].choices.append(choice)
+                    break
+
+        self.fields["owner"].queryset = User.customer_team_users.all()
+        self.fields["owner"].label_from_instance = (
+            lambda obj: f"{obj.full_name or obj.email}"
+        )
+        self.fields["user"].label_from_instance = (
+            lambda obj: f"{obj.full_name or obj.email}"
+        )
 
 
 class LeadNoteForm(forms.ModelForm):
