@@ -21,19 +21,11 @@
                     <a class="card-link" href="https://www.google.com/maps/place/{{ item.seller_product_seller_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ item.seller_product_seller_location.seller_location.formatted_address }}</a>
                 </p>
                 <div class="distance-element" style="display: none;">
-                    {% if distance %}
-                        <p style="margin-bottom: 0px;">
-                            <strong>Distance</strong>
-                        </p>
-                        <p>{{ distance|floatformat:1|intcomma }} miles</p>
-                    {% else %}
-                        <div id="distance-loader-{{ forloop.counter }}" hx-get="" hx-swap="outerHTML" hx-trigger="load" hx-indicator="#htmx-indicator-distance">
-                            <p style="margin-bottom: 0px;">
-                                <strong>Distance</strong>
-                            </p>
-                            <span class="htmx-indicator" id="htmx-indicator-distance"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                        </div>
-                    {% endif %}
+                    <input type="hidden" class="distance" value="{{ item.distance }}" />
+                    <p style="margin-bottom: 0px;">
+                        <strong>Distance</strong>
+                    </p>
+                    <p>{{ item.distance|floatformat:1|intcomma }} miles</p>
                 </div>
                 {% if request.user.is_staff %}
                     <input type="hidden" class="last-checkout" value="{{ item.seller_product_seller_location.last_checkout|date:'Y-m-d' }}" />
@@ -362,11 +354,4 @@
     </div>
 {% empty %}
     {% include 'customer_dashboard/new_order/chat_info_bar.html' %}
-{% endfor %}
-{% for link in distance_link %}
-    <script>
-        // set the hx-get on the distance-loader- to distance_link
-        var link = "{{ link }}";
-        document.getElementById("distance-loader-{{ forloop.counter }}").setAttribute("hx-get", "{{ link }}")
-    </script>
 {% endfor %}
