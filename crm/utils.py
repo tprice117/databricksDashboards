@@ -51,6 +51,13 @@ class LeadUtils:
 
     @staticmethod
     def create_new_location(user, user_address):
+        lead = Lead.active_leads.filter(user=user, user_address__is_null=True).first()
+        if lead:
+            # Update an existing unconverted lead
+            lead.user_address = user_address
+            lead.save()
+            return lead
+
         return Lead.objects.create(
             user=user,
             user_address=user_address,
