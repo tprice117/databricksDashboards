@@ -42,23 +42,19 @@ class LeadUtils:
 
     @staticmethod
     def create_new_sign_up(user):
-        lead = Lead.objects.create(
+        """Method to automatically create a new Lead for a user upon sign up"""
+        # Skips clean() method
+        return Lead.objects.create(
             user=user,
             type=Lead.Type.SELLER
             if hasattr(user.user_group, "seller")
             else Lead.Type.CUSTOMER,
         )
-        if (
-            not (user.user_group and user.user_group.account_owner)
-            and lead.created_by.is_staff
-        ):
-            # Reassign lead to sales rep who created it
-            lead.owner = lead.created_by
-            lead.save()
-        return lead
 
     @staticmethod
     def create_new_location(user, user_address):
+        """Method to automatically create a new Lead for a UserAddress upon creation"""
+        # Skips clean() method
         lead = Lead.active_leads.filter(user=user, user_address__is_null=True).first()
         if lead:
             # Update an existing unconverted lead

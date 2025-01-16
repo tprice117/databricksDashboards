@@ -145,7 +145,8 @@ class Lead(BaseModel):
     def clean(self):
         # Prevent duplicates
         if (
-            Lead.active_leads.filter(user=self.user, user_address=self.user_address)
+            self.is_active
+            and Lead.active_leads.filter(user=self.user, user_address=self.user_address)
             .exclude(id=self.id)
             .exists()
         ):
