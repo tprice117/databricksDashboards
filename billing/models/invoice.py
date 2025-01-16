@@ -71,7 +71,7 @@ class Invoice(BaseModel):
         choices=Status.choices,
     )
     total = models.DecimalField(max_digits=10, decimal_places=2)
-    check_sent_at = models.DateTimeField(blank=True, null=True)
+    check_sent_at = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return self.invoice_id
