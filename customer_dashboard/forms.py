@@ -811,7 +811,7 @@ class NewLeadForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(NewLeadForm, self).__init__(*args, **kwargs)
-        self.fields["owner"].queryset = User.customer_team_users.all()
+        self.fields["owner"].queryset = User.sales_team_users.all()
         self.fields["user"].label_from_instance = (
             lambda obj: f"{obj.full_name}, {obj.email}" if obj.full_name else obj.email
         )
@@ -872,7 +872,7 @@ class LeadDetailForm(forms.ModelForm):
                     self.fields["status"].choices.append(choice)
                     break
 
-        self.fields["owner"].queryset = User.customer_team_users.all()
+        self.fields["owner"].queryset = User.sales_team_users.all()
         self.fields["owner"].label_from_instance = (
             lambda obj: f"{obj.full_name or obj.email}"
         )

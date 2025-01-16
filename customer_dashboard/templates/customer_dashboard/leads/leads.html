@@ -97,7 +97,7 @@
         removeItemButton: true,
         noResultsText: 'No results found.',
         shouldSort: false
-      })
+      }).setChoiceByValue('{{ request.user.id }}')
     }
     
     htmx.onLoad(function (content) {
