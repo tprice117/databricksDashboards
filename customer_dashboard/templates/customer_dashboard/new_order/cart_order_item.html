@@ -113,7 +113,7 @@
                                 <div class="row justify-content-center">
                                     <div class="col-auto">
                                         <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ order.order_group.id }}" type="button"
-                                        data-id="{{ order.order_group.id }}" data-orderid="{{ order.id }}" data-price="{{ item.customer_price }}" data-countid="count-{{ cart_address.address.id }}"
+                                        data-id="{{ order.order_group.id }}" data-orderid="{{ order.id }}" data-price="{{ item.total }}" data-countid="count-{{ cart_address.address.id }}"
                                         hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
                                         onClick="event.stopPropagation();
                                         Swal.fire(

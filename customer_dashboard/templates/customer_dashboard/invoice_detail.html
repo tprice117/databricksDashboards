@@ -223,6 +223,13 @@
                         <p class="card-text">Status: {{ invoice.status }}</p>
                         <p class="card-text">Invoice #: {{ invoice.number }}</p>
                         <p class="card-text">Location: {{ invoice.user_address.formatted_address }}</p>
+                        <form class="mb-1 editing" action="{{ request.get_full_path }}" method="post">
+                            {% csrf_token %}
+                            <div class="input-group input-group-sm">
+                                Check Sent At:&nbsp;<input class="form-control" type="date" value="{{ invoice.check_sent_at|date:'Y-m-d' }}" name="check_sent_at" />
+                                <button class="btn btn-outline-secondary" type="submit" name="check_sent_at_submit">Save</button>
+                            </div>
+                        </form>
                         <p class="card-text">
                             PDF:{% if invoice.invoice_pdf %}
                                 <a class="btn btn-light" href="{{ invoice.invoice_pdf }}"><i class="fas fa-download"></i></a>
@@ -288,7 +295,11 @@
                                                 
                                                 
                                                 
+                                                
+                                                
                                                 show
+
+
 
 
 
@@ -296,7 +307,11 @@
                                                 
                                                 
                                                 
+                                                
+                                                
                                                 collapsed
+
+
 
 
 

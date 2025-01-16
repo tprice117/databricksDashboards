@@ -1198,10 +1198,14 @@ def customer_cart_date_edit(request, order_id):
             )
             .first()
         )
+        customer_price = order.customer_price()
+        customer_price_with_tax = order.customer_price_with_tax()
         context["item"] = {
             "order": order,
             "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
-            "customer_price": order.customer_price(),
+            "subtotal": customer_price,
+            "tax": customer_price_with_tax - customer_price,
+            "total": customer_price_with_tax,
         }
         context["loopcount"] = request.POST.get("loopcount")
 
@@ -3885,13 +3889,35 @@ def invoice_detail(request, invoice_id):
     context["payment_methods"] = payment_methods.order_by("-created_on")
 
     if request.method == "POST":
-        payment_method_id = request.POST.get("payment_method")
-        if payment_method_id:
-            payment_method = PaymentMethod.objects.get(id=payment_method_id)
-            context["invoice"].pay_invoice(payment_method)
-            messages.success(request, "Successfully paid!")
+        if "check_sent_at_submit" in request.POST:
+            check_sent_at = request.POST.get("check_sent_at")
+            if check_sent_at:
+                try:
+                    # Parse the date string into a datetime object
+                    check_sent_at = datetime.datetime.strptime(
+                        check_sent_at, "%Y-%m-%d"
+                    )
+                    # Make the datetime object timezone-aware
+                    check_sent_at = timezone.make_aware(
+                        check_sent_at, timezone.get_current_timezone()
+                    )
+                    # Assign the date to the invoice and save
+                    context["invoice"].check_sent_at = check_sent_at.date()
+                    context["invoice"].save()
+                except ValueError:
+                    # Handle the case where the date string is not in the expected format
+                    messages.error(request, "Invalid date format.")
+            else:
+                context["invoice"].check_sent_at = None
+                context["invoice"].save()
         else:
-            messages.error(request, "Invalid payment method.")
+            payment_method_id = request.POST.get("payment_method")
+            if payment_method_id:
+                payment_method = PaymentMethod.objects.get(id=payment_method_id)
+                context["invoice"].pay_invoice(payment_method)
+                messages.success(request, "Successfully paid!")
+            else:
+                messages.error(request, "Invalid payment method.")
 
     return render(request, "customer_dashboard/invoice_detail.html", context)
 
