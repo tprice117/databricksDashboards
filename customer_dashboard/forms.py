@@ -860,6 +860,7 @@ class LeadDetailForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(LeadDetailForm, self).__init__(*args, **kwargs)
+        # Update status choices to be current choice as well as any user-selectable (non-junk) statuses
         self.fields["status"].choices = [
             choice
             for choice in UserSelectableLeadStatus.choices

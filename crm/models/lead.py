@@ -183,7 +183,9 @@ class Lead(BaseModel):
             raise ValidationError(_("Lost Reason is required for a junk lead only."))
 
         # Clean the Type
-        if self.type == Lead.Type.SELLER and not self.user.user_group.seller:
+        if self.type == Lead.Type.SELLER and not hasattr(
+            self.user.user_group, "seller"
+        ):
             # Seller leads must have a user associated with a seller
             raise ValidationError(
                 _("Seller leads must have a user associated with a seller.")
@@ -205,6 +207,7 @@ class Lead(BaseModel):
                 self.status = Lead.Status.MANUAL
 
         self.update_expiration_status()
+        # Potentially overcomplicated to update conversion status on save. Consider removing.
         self.update_conversion_status()
 
         return super().save(*args, **kwargs)
