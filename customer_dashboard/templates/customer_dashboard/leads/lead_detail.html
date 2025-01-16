@@ -114,14 +114,6 @@
     })
     
     document.addEventListener('DOMContentLoaded', function () {
-      const userInput = document.getElementById('id_user')
-      if (userInput) {
-        userInput.addEventListener('change', function () {
-          document.getElementById('user_address-search').value = null
-          document.getElementById('id_user_address').value = null
-        })
-      }
-    
       // Clear the input field if the user clears the search field
       const userAddressInput = document.getElementById('user_address-search')
       if (userAddressInput) {
