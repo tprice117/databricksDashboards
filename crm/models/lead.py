@@ -143,6 +143,14 @@ class Lead(BaseModel):
         return f"Lead({self.id}) - {self.user} - {self.status}"
 
     def clean(self):
+        # Prevent duplicates
+        if (
+            Lead.active_leads.filter(user=self.user, user_address=self.user_address)
+            .exclude(id=self.id)
+            .exists()
+        ):
+            raise ValidationError(_("Lead for this user and location already exists."))
+
         # Clean the User Address
         if self.user_address:
             # Check available UserAddresses for the User
@@ -151,6 +159,16 @@ class Lead(BaseModel):
             ).values_list("id", flat=True)
             if self.user_address.id not in available_user_addresses:
                 raise ValidationError(_("UserAddress is not associated with the User."))
+
+            # Check for open carts
+            if not self.pk and (
+                OrderGroup.objects.filter(
+                    user_address=self.user_address, orders__submitted_on__isnull=True
+                )
+                .distinct()
+                .exists()
+            ):
+                raise ValidationError("Address already has an open cart.")
         else:
             # UserAddress is required for an interested lead
             if self.status == Lead.Status.INTERESTED:
@@ -165,7 +183,9 @@ class Lead(BaseModel):
             raise ValidationError(_("Lost Reason is required for a junk lead only."))
 
         # Clean the Type
-        if self.type == Lead.Type.SELLER and not self.user.user_group.seller:
+        if self.type == Lead.Type.SELLER and not hasattr(
+            self.user.user_group, "seller"
+        ):
             # Seller leads must have a user associated with a seller
             raise ValidationError(
                 _("Seller leads must have a user associated with a seller.")
@@ -187,6 +207,7 @@ class Lead(BaseModel):
                 self.status = Lead.Status.MANUAL
 
         self.update_expiration_status()
+        # Potentially overcomplicated to update conversion status on save. Consider removing.
         self.update_conversion_status()
 
         return super().save(*args, **kwargs)
