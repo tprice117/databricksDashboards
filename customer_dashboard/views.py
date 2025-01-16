@@ -1059,19 +1059,6 @@ def new_order_4(request):
         pass
 
     if request.headers.get("HX-Request"):
-        lat1 = request.GET.get("amp;lat1", None)
-        lon1 = request.GET.get("amp;lon1", None)
-        lat2 = request.GET.get("amp;lat2", None)
-        lon2 = request.GET.get("amp;lon2", None)
-        if lat1 and lon1 and lat2 and lon2:
-            context["distance"] = DistanceUtils.get_driving_distance(
-                lat1, lon1, lat2, lon2
-            )
-            return render(
-                request,
-                "supplier_dashboard/snippets/booking_detail_distance.html",
-                context,
-            )
         # Waste type
         waste_type = None
         waste_type_id = None
@@ -1098,9 +1085,6 @@ def new_order_4(request):
         )
         context["seller_product_seller_locations"] = []
 
-        query_params = request.GET.copy()
-        context["distance_link"] = []
-
         for seller_product_seller_location in seller_product_seller_locations:
             seller_d = {}
             try:
@@ -1108,17 +1092,12 @@ def new_order_4(request):
                 seller_d["seller_product_seller_location"] = (
                     seller_product_seller_location
                 )
-                # show distance if they want to do a pickup longitude
-                query_params["lat1"] = (
-                    seller_product_seller_location.seller_location.latitude
-                )
-                query_params["lon1"] = (
-                    seller_product_seller_location.seller_location.longitude
-                )
-                query_params["lat2"] = user_address_obj.latitude
-                query_params["lon2"] = user_address_obj.longitude
-                context["distance_link"].append(
-                    f"{reverse('customer_new_order_4')}?{query_params.urlencode()}"
+                # show distance if they want to do a pickup
+                seller_d["distance"] = DistanceUtils.get_driving_distance(
+                    seller_product_seller_location.seller_location.latitude,
+                    seller_product_seller_location.seller_location.longitude,
+                    user_address_obj.latitude,
+                    user_address_obj.longitude,
                 )
 
                 pricing = PricingEngine.get_price(
