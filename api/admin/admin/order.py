@@ -60,6 +60,7 @@ class OrderAdmin(admin.ModelAdmin):
     ordering = ("-created_on",)
     list_filter = (
         "status",
+        "submitted_on",
         CreatedDateFilter,
         OrderAdminTasksFilter,
     )
