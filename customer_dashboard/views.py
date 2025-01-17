@@ -3883,6 +3883,19 @@ def invoice_detail(request, invoice_id):
                     check_sent_at = timezone.make_aware(
                         check_sent_at, timezone.get_current_timezone()
                     )
+                    # Do not allow a date more than 2 days in the future
+                    cutoff_date = datetime.date.today() + datetime.timedelta(days=2)
+                    if check_sent_at.date() > cutoff_date:
+                        # Set the error message to may not select a date after 2 days in the future
+                        messages.error(
+                            request, f"May not select a date after {cutoff_date}."
+                        )
+                        return HttpResponseRedirect(
+                            reverse(
+                                "customer_invoice_detail",
+                                kwargs={"invoice_id": context["invoice"].id},
+                            )
+                        )
                     # Assign the date to the invoice and save
                     context["invoice"].check_sent_at = check_sent_at.date()
                     context["invoice"].save()
