@@ -24,9 +24,12 @@ def attempt_charge_for_past_due_invoices():
         Q(due_date__isnull=True)
         | Q(due_date__lt=timezone.now()) & Q(amount_remaining__gt=0)
     )
-
     # Get the check buffer date (14 days ago).
     two_weeks_ago = timezone.now() - timezone.timedelta(days=14)
+    # Annotate check_past_due to invoice if check_sent_at is 14 days ago.
+    all_open_invoices = all_open_invoices.annotate(
+        check_past_due=Q(check_sent_at__lt=two_weeks_ago)
+    )
 
     # Filter for invoices that are due for the UserGroup/Account.
     invoices_due = []
@@ -49,6 +52,16 @@ def attempt_charge_for_past_due_invoices():
                     invoices_due.append(invoice)
                 else:
                     no_payment_method.append(invoice)
+            elif invoice.check_sent_at:
+                # If check_sent_at is set, then check if it is past due (we give 14 days for check to arrive).
+                if invoice.check_past_due:
+                    payment_methods = PaymentMethod.objects.filter(
+                        user_group_id=user_group.id, active=True
+                    )
+                    if payment_methods.exists():
+                        invoices_due.append(invoice)
+                    else:
+                        no_payment_method_credit_terms.append(invoice)
             elif invoice.due_date < two_weeks_ago:
                 # Give a 2 week grace period for net terms customers since we allow payment by check.
                 # This allows for the check to be mailed and received by us before attempting to charge the card.
