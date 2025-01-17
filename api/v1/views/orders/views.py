@@ -13,6 +13,7 @@ from django_filters import rest_framework as filters
 from api.serializers import OrderSerializer
 from api.models import Order
 from api.filters import OrderFilterset
+from api.v1.serializers import OrderRescheduleRequestSerializer
 
 
 class OrderViewSet(
@@ -36,13 +37,14 @@ class OrderCancelView(APIView):
             200: OrderSerializer(),
         },
     )
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
         Cancels an Order.
         Returns:
           The canceled Order.
         """
-        order = Order.objects.get(id=request.data["order_id"])
+        order_id = self.kwargs.get("order_id")
+        order = Order.objects.get(id=order_id)
 
         try:
             order.cancel_order()
@@ -55,6 +57,7 @@ class OrderRescheduleView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
+        request=OrderRescheduleRequestSerializer,
         responses={
             200: OrderSerializer(),
         },
@@ -63,9 +66,17 @@ class OrderRescheduleView(APIView):
         """
         Reschedules an Order.
         Returns:
-          The canceled Order.
+          The rescheduled Order.
         """
-        order = Order.objects.get(id=request.data["order_id"])
+        order_id = self.kwargs.get("order_id")
+        # Convert request into serializer.
+        serializer = OrderRescheduleRequestSerializer(data=request.data)
+
+        # Validate serializer.
+        if not serializer.is_valid():
+            raise DRFValidationError(serializer.errors)
+
+        order = Order.objects.get(id=order_id)
 
         try:
             order.reschedule_order(request.data["date"])

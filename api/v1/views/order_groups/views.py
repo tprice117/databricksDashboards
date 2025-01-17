@@ -44,7 +44,7 @@ class OrderGroupDeliveryView(APIView):
             201: OrderSerializer(),
         },
     )
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
         Creates a new delivery(Order) for the OrderGroup.
         Returns:
@@ -70,6 +70,41 @@ class OrderGroupDeliveryView(APIView):
             raise APIException(str(e))
 
 
+class OrderGroupPickupView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=OrderGroupNewTransactionRequestSerializer,
+        responses={
+            201: OrderSerializer(),
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        """
+        Creates a new pickup(Order) for the OrderGroup.
+        Returns:
+          The Order.
+        """
+        order_group_id = self.kwargs.get("order_group_id")
+        # Convert request into serializer.
+        serializer = OrderGroupNewTransactionRequestSerializer(data=request.data)
+
+        # Validate serializer.
+        if not serializer.is_valid():
+            raise DRFValidationError(serializer.errors)
+
+        order_group = OrderGroup.objects.get(id=order_group_id)
+        pickup_date = serializer.validated_data["date"]
+        schedule_window = serializer.validated_data["schedule_window"]
+        try:
+            order = order_group.create_pickup(
+                pickup_date, schedule_window=schedule_window
+            )
+            return Response(OrderSerializer(order).data)
+        except Exception as e:
+            raise APIException(str(e))
+
+
 class OrderGroupSwapView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -79,7 +114,7 @@ class OrderGroupSwapView(APIView):
             201: OrderSerializer(),
         },
     )
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
         Creates a new swap(Order) for the OrderGroup.
         Returns:
@@ -112,7 +147,7 @@ class OrderGroupRemovalView(APIView):
             201: OrderSerializer(),
         },
     )
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
         Creates a new removal(Order) for the OrderGroup.
         Returns:
@@ -147,7 +182,7 @@ class OrderGroupUpdateAccessDetailsView(APIView):
             200: OrderGroupSerializer(),
         },
     )
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
         Updates the access details of the OrderGroup.
         Returns:
@@ -179,7 +214,7 @@ class OrderGroupUpdatePlacementDetailsView(APIView):
             200: OrderGroupSerializer(),
         },
     )
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
         Updates the placement details of the OrderGroup.
         Returns:

@@ -14,7 +14,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.template.loader import render_to_string
 
-from api.managers import CustomerTeamManager
+from api.managers import CustomerTeamManager, SalesTeamManager
 from api.models.order.order import Order
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
@@ -156,6 +156,7 @@ class User(AbstractUser):
     # Managers
     objects = UserManager()  # Default manager
     customer_team_users = CustomerTeamManager()
+    sales_team_users = SalesTeamManager()
 
     def __str__(self):
         return self.email

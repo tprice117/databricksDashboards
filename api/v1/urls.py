@@ -7,6 +7,7 @@ from api.v1.views import (
     OrderCancelView,
     OrderRescheduleView,
     OrderGroupDeliveryView,
+    OrderGroupPickupView,
     OrderGroupRemovalView,
     OrderGroupSwapView,
     OrderGroupUpdateAccessDetailsView,
@@ -23,36 +24,41 @@ urlpatterns += [
     path(
         "order-groups/<uuid:order_group_id>/order/delivery/",
         OrderGroupDeliveryView.as_view(),
-        name="cart",
+        name="api_booking_delivery",
+    ),
+    path(
+        "order-groups/<uuid:order_group_id>/order/pickup/",
+        OrderGroupPickupView.as_view(),
+        name="api_booking_pickup",
     ),
     path(
         "order-groups/<uuid:order_group_id>/order/swap/",
         OrderGroupSwapView.as_view(),
-        name="cart",
+        name="api_booking_swap",
     ),
     path(
         "order-groups/<uuid:order_group_id>/order/removal/",
         OrderGroupRemovalView.as_view(),
-        name="cart",
+        name="api_booking_removal",
     ),
     path(
         "order-groups/<uuid:order_group_id>/update-access-details/",
         OrderGroupUpdateAccessDetailsView.as_view(),
-        name="cart",
+        name="api_booking_update_access_details",
     ),
     path(
         "order-groups/<uuid:order_group_id>/update-placement-details/",
         OrderGroupUpdatePlacementDetailsView.as_view(),
-        name="cart",
+        name="api_booking_update_placement_details",
     ),
     path(
         "orders/<uuid:order_id>/cancel/",
         OrderCancelView.as_view(),
-        name="order_cancel",
+        name="api_order_cancel",
     ),
     path(
         "orders/<uuid:order_id>/reschedule/",
         OrderRescheduleView.as_view(),
-        name="order_reschedule",
+        name="api_order_reschedule",
     ),
 ]
