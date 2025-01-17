@@ -1180,6 +1180,7 @@ def customer_cart_date_edit(request, order_id):
         )
         customer_price = order.customer_price()
         customer_price_with_tax = order.customer_price_with_tax()
+        context["cart_address"] = {"address": order.order_group.user_address}
         context["item"] = {
             "order": order,
             "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
