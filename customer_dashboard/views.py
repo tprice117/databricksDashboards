@@ -1514,10 +1514,12 @@ def new_order_5(request):
                 ).first()
                 if sub_obj:
                     sub_obj.delete()
-                for ordr in order_group.orders.all():
-                    # del_subtotal += order.customer_price()
-                    ordr.ordermaterialfee_set.all().delete()
-                    ordr.delete()
+                for order in order_group.orders.all():
+                    # Need to delete all related objects to the order.
+                    # Because they are all Protected
+                    order.ordermaterialfee_set.all().delete()
+                    order.orderpermitfee_set.all().delete()
+                    order.delete()
                 order_group.delete()
             elif order:
                 order.delete()
