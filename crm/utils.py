@@ -1,4 +1,6 @@
 from django.utils import timezone
+from api.models import User
+from common.middleware.save_author import get_request
 from crm.models.lead import Lead
 
 
@@ -42,17 +44,60 @@ class LeadUtils:
 
     @staticmethod
     def create_new_sign_up(user):
+        """Method to automatically create a new Lead for a user upon sign up"""
+        # Skips clean() method
         return Lead.objects.create(
             user=user,
             type=Lead.Type.SELLER
-            if hasattr(user.user_group, "seller")
+            if user.user_group and user.user_group.seller
             else Lead.Type.CUSTOMER,
+            owner=LeadUtils.get_account_owner(user),
         )
 
     @staticmethod
     def create_new_location(user, user_address):
+        """Method to automatically create a new Lead for a UserAddress upon creation"""
+        # Skips clean() method
+        lead = Lead.active_leads.filter(user=user, user_address__isnull=True).first()
+        if lead:
+            # Update an existing unconverted lead
+            lead.user_address = user_address
+            lead.status = Lead.Status.LOCATION
+            lead.save()
+            return lead
+
         return Lead.objects.create(
             user=user,
             user_address=user_address,
-            type=Lead.Type.CUSTOMER,
+            type=Lead.Type.SELLER
+            if user.user_group and user.user_group.seller
+            else Lead.Type.CUSTOMER,
+            owner=LeadUtils.get_account_owner(user, user_address=user_address),
         )
+
+    @staticmethod
+    def get_account_owner(user, user_address=None):
+        """Helper to get the account owner for a user or user_address.
+        This is for automatically assigning leads to Sales team members."""
+
+        if user_address:
+            # Check account owner
+            if user_address.user_group and user_address.user_group.account_owner:
+                return user_address.user_group.account_owner
+            # Check Created By
+            elif (
+                user_address.created_by
+                and User.sales_team_users.filter(id=user_address.created_by.id).exists()
+            ):
+                return user_address.created_by
+        elif user.user_group and user.user_group.account_owner:
+            # Check account owner
+            return user.user_group.account_owner
+
+        # Check logged_in user
+        request = get_request()
+        if request and getattr(request, "user", None):
+            if User.sales_team_users.filter(id=request.user.id).exists():
+                return request.user
+
+        return None

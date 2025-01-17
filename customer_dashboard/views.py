@@ -4709,6 +4709,7 @@ def create_lead_board(leads):
     Create a board structure from the given leads queryset.
     """
     board = []
+    # TODO: handle scale of leads (i.e. limit number of results, filter lanes)
     for status, status_name in Lead.Status.get_ordered_choices():
         board.append(
             {
@@ -4726,10 +4727,6 @@ def leads(request):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("customer_home"))
 
-    if settings.ENVIRONMENT == "TEST":
-        messages.info(request, "This feature is not ready yet! Check again later.")
-        return HttpResponseRedirect(reverse("customer_home"))
-
     context.update(
         {
             "selectable_statuses": [
@@ -4739,7 +4736,6 @@ def leads(request):
                 value: text for value, text in Lead.LostReason.choices if value
             },
             "owners": User.sales_team_users.all(),
-            "new_lead_form": NewLeadForm(),
         }
     )
 
@@ -4866,7 +4862,13 @@ def leads_card_edit(request, lead_id=None):
         form = NewLeadForm(instance=lead)
     else:
         lead = None
-        form = NewLeadForm()
+        # Load New Lead form with Owner preset to current user if user is in sales team
+        initial_data = (
+            {"owner": request.user}
+            if User.sales_team_users.filter(id=request.user.id).exists()
+            else {}
+        )
+        form = NewLeadForm(initial=initial_data)
 
     context.update(
         {
@@ -4886,10 +4888,6 @@ def lead_detail(request, lead_id):
     context.update(get_user_context(request))
 
     if not request.user.is_staff:
-        return HttpResponseRedirect(reverse("customer_home"))
-
-    if settings.ENVIRONMENT == "TEST":
-        messages.info(request, "This feature is not ready yet! Check again later.")
         return HttpResponseRedirect(reverse("customer_home"))
 
     lead = Lead.objects.prefetch_related("notes").filter(id=lead_id).first()
