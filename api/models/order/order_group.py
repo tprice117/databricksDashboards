@@ -325,9 +325,48 @@ class OrderGroup(BaseModel):
             delivery_order.save()
         else:
             raise Exception(
-                "Cannot create a delivery because OrderGroup already has an order, create swap instead."
+                "Cannot create a delivery because OrderGroup already has an order, create swap or removal instead."
             )
         return delivery_order
+
+    def create_pickup(self, pickup_date, schedule_window: str = None) -> Order:
+        """Create a pickup or a one time for the OrderGroup.
+
+        Args:
+            pickup_date (date/date str): The pickup date.
+            schedule_window (str): The preferred time window for the pickup.
+
+        Returns:
+            Order: Returns the pickup order object.
+        """
+        orders = self.orders.order_by("-created_on")
+        if orders.count() == 0:
+            order_group_start_equal = pickup_date == self.start_date
+            if not order_group_start_equal:
+                raise Exception(
+                    f"Cannot create a pickup because Order has a different start date than OrderGroup [{pickup_date}!={self.start_date}]."
+                )
+            # Ensure Booking is setup properly for a pickup.
+            if self.is_delivery:
+                if self.delivery_fee:
+                    self.delivery_fee = 0
+                if self.removal_fee:
+                    self.removal_fee = 0
+                self.is_delivery = False
+                self.save()
+            pickup_order = Order(
+                order_group=self,
+                start_date=pickup_date,
+                end_date=pickup_date,
+            )
+            if schedule_window:
+                pickup_order.schedule_window = schedule_window
+            pickup_order.save()
+        else:
+            raise Exception(
+                "Cannot create a pickup because OrderGroup already has an order, create swap or removal instead."
+            )
+        return pickup_order
 
     @property
     def order_type(self):
