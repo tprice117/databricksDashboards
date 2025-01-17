@@ -145,7 +145,8 @@ class Lead(BaseModel):
     def clean(self):
         # Prevent duplicates
         if (
-            Lead.active_leads.filter(user=self.user, user_address=self.user_address)
+            self.is_active
+            and Lead.active_leads.filter(user=self.user, user_address=self.user_address)
             .exclude(id=self.id)
             .exists()
         ):
@@ -185,8 +186,8 @@ class Lead(BaseModel):
             raise ValidationError(_("Lost Reason is required for a junk lead only."))
 
         # Clean the Type
-        if self.type == Lead.Type.SELLER and not hasattr(
-            self.user.user_group, "seller"
+        if self.type == Lead.Type.SELLER and not (
+            self.user.user_group and self.user.user_group.seller
         ):
             # Seller leads must have a user associated with a seller
             raise ValidationError(

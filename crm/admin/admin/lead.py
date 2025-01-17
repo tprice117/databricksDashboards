@@ -15,6 +15,7 @@ class LeadAdmin(BaseModelAdmin):
         "user_address",
         "owner",
         "status",
+        "type",
         "created_on",
         "created_by",
     )

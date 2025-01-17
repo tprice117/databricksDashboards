@@ -239,8 +239,11 @@ class UserAddress(BaseModel):
             # Create a Lead for New Location
             from crm.utils import LeadUtils
 
-            lead = LeadUtils.create_new_location(instance.user, instance)
-            logger.info(f"New lead created: {lead}")
+            try:
+                lead = LeadUtils.create_new_location(instance.user, instance)
+                logger.info(f"New lead created: {lead}")
+            except Exception as e:
+                logger.error(f"Error creating new location lead: {e}")
 
 
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)

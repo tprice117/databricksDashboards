@@ -431,8 +431,11 @@ def user_post_save(sender, instance, created: bool, **kwargs):
         # Create a Lead for New SignUp
         from crm.utils import LeadUtils
 
-        lead = LeadUtils.create_new_sign_up(instance)
-        logger.info(f"New lead created: {lead}")
+        try:
+            lead = LeadUtils.create_new_sign_up(instance)
+            logger.info(f"New lead created: {lead}")
+        except Exception as e:
+            logger.error(f"Error creating new lead: {e}", exc_info=e)
 
 
 class CompanyUtils:

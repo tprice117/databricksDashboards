@@ -13,6 +13,7 @@
           hx-post="{% if lead %}{% url 'customer_leads_card' lead.id %}{% else %}{% url 'customer_leads_board' %}{% endif %}" 
           hx-indicator="#htmx-indicator-save-btn" 
           hx-disabled-elt="button, .form-control, .form-select"
+          hx-include="{% if not lead %}#filter-form{% endif %}"
           hx-swap="outerHTML"
           hx-target="{% if lead %}#card-{{ lead.id }}{% else %}#board{% endif %}">
       {% csrf_token %}
