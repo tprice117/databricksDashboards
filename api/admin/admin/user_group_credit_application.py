@@ -6,3 +6,5 @@ from api.models import UserGroupCreditApplication
 @admin.register(UserGroupCreditApplication)
 class UserGroupCreditApplicationAdmin(admin.ModelAdmin):
     model = UserGroupCreditApplication
+
+    list_filter = ("status",)

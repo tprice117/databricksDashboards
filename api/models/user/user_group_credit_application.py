@@ -70,9 +70,13 @@ class UserGroupCreditApplication(BaseModel):
             # If there is, raise a validation error to prevent multiple pending
             # applications.
             if self.status == ApprovalStatus.PENDING:
-                existing_application = UserGroupCreditApplication.objects.filter(
-                    user_group=self.user_group, status=ApprovalStatus.PENDING
-                ).exists()
+                existing_application = (
+                    UserGroupCreditApplication.objects.filter(
+                        user_group=self.user_group, status=ApprovalStatus.PENDING
+                    )
+                    .exclude(id=self.id)
+                    .exists()
+                )
                 if existing_application:
                     raise ValidationError(
                         "A pending credit application already exists for this user group."
