@@ -1475,7 +1475,7 @@ def new_order_5(request):
 
             # Create the order (Let submitted on null, this indicates that the order is in the cart)
             # The first order of an order group always gets the same start and end date.
-            order = order_group.create_delivery(
+            order = order_group.create_pickup(
                 delivery_date, schedule_window=schedule_window
             )
         # context["cart"][order_group.id] = {
