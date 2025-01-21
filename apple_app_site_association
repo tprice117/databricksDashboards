@@ -1,0 +1,11 @@
+{
+    "applinks": {
+      "apps": [],
+      "details": [
+        {
+          "appID": "727C54C37U.com.downstream.marketplace",
+          "paths": ["*"]
+        }
+      ]
+    }
+  }
