@@ -19,6 +19,45 @@
         line-height: 16px;
         color: #0F1B22;
     }
+    .total-price-badge {
+
+        /* Info line */
+
+        box-sizing: border-box;
+
+        /* Auto layout */
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 8px 16px;
+        gap: 22px;
+
+        background: rgba(1, 131, 129, 0.1);
+        border: 1px solid #020F16;
+        border-radius: 16px;
+        {% comment %} width: 232px; {% endcomment %}
+        height: 33px;
+
+    }
+    .total-price {
+        /* Subtitle */
+        font-family: 'Outfit';
+        font-style: normal;
+        font-weight: 700;
+        font-size: 18px;
+        line-height: 24px;
+        /* identical to box height, or 133% */
+        display: flex;
+        align-items: center;
+
+        color: #018381;
+
+
+        /* Inside auto layout */
+        flex: none;
+        order: 1;
+        flex-grow: 0;
+    }
   </style>
 {% endblock %}
 <div class="row cart-item mb-2">
@@ -116,9 +155,14 @@
                                 {% endif %}
                             </div>
                             <div class="col-auto">
-                                <p class="text-end mb-1">Subtotal: ${{ item.subtotal|floatformat:2|intcomma }}</p>
-                                <p class="text-end mb-1">Estimated Taxes: ${{ item.tax|floatformat:2|intcomma }}</p>
-                                <p class="text-end">Total: ${{ item.total|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1 order-descriptor">Est. Subtotal: ${{ item.subtotal|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1">Delivery: ${{ order.order_group.delivery_fee|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1">Removal: ${{ order.order_group.removal_fee|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1">Rental Protection Plan: ${{ item.tax|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1">Est. Tax: ${{ item.tax|floatformat:2|intcomma }}</p>
+                                <div class="total-price-badge">
+                                    <p class="total-price mb-0">Estimated Total ${{ item.total|floatformat:2|intcomma }}</p>
+                                </div>
                             </div>
                             <div class="col-auto">
                                 <div class="row justify-content-center">
