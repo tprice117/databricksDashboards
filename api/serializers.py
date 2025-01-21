@@ -647,24 +647,11 @@ class MainProductSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.IntegerField)
     def get_listings_count(self, obj):
-        return obj.products.aggregate(
-            listings_count=Count(
-                "seller_products__seller_product_seller_locations",
-                distinct=True,
-            ),
-        )["listings_count"]
+        return obj.listings_count
 
     @extend_schema_field(serializers.IntegerField)
     def get_likes_count(self, obj):
-        return obj.products.aggregate(
-            likes_count=Count(
-                "seller_products__seller_product_seller_locations__order_groups__orders__review",
-                filter=Q(
-                    seller_products__seller_product_seller_locations__order_groups__orders__review__rating=True
-                ),
-                distinct=True,
-            ),
-        )["likes_count"]
+        return obj.likes_count
 
     def get_field_names(self, declared_fields, info):
         expanded_fields = super(MainProductSerializer, self).get_field_names(

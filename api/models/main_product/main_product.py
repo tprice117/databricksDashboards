@@ -57,6 +57,12 @@ class MainProduct(BaseModel):
     has_material = models.BooleanField(default=False)
     allows_pick_up = models.BooleanField(default=True)
 
+    # Related Products.
+    is_related = models.BooleanField(default=False)
+    related_products = models.ManyToManyField(
+        "self", blank=True, symmetrical=False, related_name="parent_products"
+    )
+
     def __str__(self):
         return f"{self.main_product_category.name} - {self.name}"
 
@@ -111,6 +117,37 @@ class MainProduct(BaseModel):
             and not self.has_rental_multi_step
         )
         return not is_roll_off and not is_one_time
+
+    @property
+    def listings_count(self):
+        """
+        Get the total number of supplier listings for this product.
+
+        Prefetch "products__seller_products__seller_product_seller_locations" for efficiency.
+        """
+        return self.products.aggregate(
+            listings_count=models.Count(
+                "seller_products__seller_product_seller_locations",
+                distinct=True,
+            ),
+        )["listings_count"]
+
+    @property
+    def likes_count(self):
+        """
+        Get the total number of likes for this product.
+
+        Prefetch "products__seller_products__seller_product_seller_locations__order_groups__orders" for efficiency.
+        """
+        return self.products.aggregate(
+            likes_count=models.Count(
+                "seller_products__seller_product_seller_locations__order_groups__orders__review",
+                filter=models.Q(
+                    seller_products__seller_product_seller_locations__order_groups__orders__review__rating=True
+                ),
+                distinct=True,
+            ),
+        )["likes_count"]
 
     def _is_complete(self) -> bool:
         # Given all related AddOns, ensure that we have a Product
