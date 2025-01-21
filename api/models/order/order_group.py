@@ -138,6 +138,15 @@ class OrderGroup(BaseModel):
     )
     project_id = models.CharField(max_length=50, blank=True, null=True)
 
+    # Related Bookings
+    parent_booking = models.ForeignKey(
+        "self",
+        models.CASCADE,
+        blank=True,
+        null=True,
+        related_name="related_bookings",
+    )
+
     # Managers
     objects = OrderGroupManager()
 

@@ -23,7 +23,13 @@
         <small class="mb-0">{{ lead.user.full_name|default:lead.user.email }}</small><br />
         <small class="mb-0">{{ lead.user_address|default:'----' }}</small><br />
         <small class="mb-0">{{ lead.est_value|currency }}</small><br />
-        <small class="mb-0"><strong>Est. Conversion:</strong> {{ lead.est_conversion_date }}</small>
+        <small class="mb-0">
+          {% if lead.status == 'converted' %}
+            <span class="text-primary">Converted</span>
+          {% elif lead.is_active %}
+            <strong>Est. Conversion:</strong> {{ lead.est_conversion_date }}
+          {% endif %}
+        </small>
         {% if lead.lost_reason %}
           <badge class="text-truncate d-block">
             <span class="badge fw-medium text-danger" style="background-color: rgba(var(--bs-danger-rgb), 0.2);">{{ lead.get_lost_reason_display }}</span>

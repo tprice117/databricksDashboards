@@ -410,7 +410,7 @@ class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
             "add_ons__choices",
             "images",
             "products__seller_products__seller_product_seller_locations",
-            "products__seller_products__seller_product_seller_locations__order_groups__orders__review",
+            "products__seller_products__seller_product_seller_locations__order_groups__orders",
         )
 
 
