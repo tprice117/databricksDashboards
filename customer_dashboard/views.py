@@ -575,12 +575,12 @@ def customer_search(request, is_selection=False):
 @login_required(login_url="/admin/login/")
 def customer_impersonation_start(request):
     if request.user.is_staff:
-        redirect_url = reverse("customer_home")
+        redirect_url = request.META.get("HTTP_REFERER", reverse("customer_home"))
         if request.method == "POST":
             user_group_id = request.POST.get("user_group_id")
             user_id = request.POST.get("user_id")
             if request.POST.get("redirect_url"):
-                redirect_url = request.GET.get("redirect_url")
+                redirect_url = request.POST.get("redirect_url")
         elif request.method == "GET":
             user_group_id = request.GET.get("user_group_id")
             user_id = request.GET.get("user_id")
@@ -621,7 +621,7 @@ def customer_impersonation_start(request):
                 request,
                 "No admin user found for UserGroup. UserGroup must have at least one admin user.",
             )
-            return HttpResponseRedirect("/customer/")
+            return HttpResponseRedirect(redirect_url)
         except Exception:
             return HttpResponse("Not Found", status=404)
     else:
@@ -634,7 +634,7 @@ def customer_impersonation_stop(request):
         del request.session["customer_user_id"]
     if request.session.get("customer_user_group_id"):
         del request.session["customer_user_group_id"]
-    return HttpResponseRedirect("/customer/")
+    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/customer/"))
 
 
 def get_user_context(request: HttpRequest, add_user_group=True):

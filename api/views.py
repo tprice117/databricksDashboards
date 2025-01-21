@@ -402,7 +402,7 @@ class MainProductInfoViewSet(viewsets.ReadOnlyModelViewSet):
 class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
-    filterset_fields = ["id", "main_product_category__id"]
+    filterset_fields = ["id", "main_product_category__id", "is_related"]
 
     def get_queryset(self):
         return self.queryset.prefetch_related(

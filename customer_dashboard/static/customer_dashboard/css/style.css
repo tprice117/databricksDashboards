@@ -82,7 +82,27 @@ Used for loading in images with a fade-in effect
     height: 100px;
 }
 
-
+.carousel-indicators button[data-bs-target] {
+    width: 50px;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+}
+.carousel-indicators button img{
+    object-fit: cover;
+    height: 50px;
+    border-radius: 8px;
+}
+.carousel-indicators {
+    opacity: 0.8;
+}
+.carousel-indicators button.active {
+    opacity: 1;
+    border: 1px solid var(--bs-primary);
+}
+.carousel-indicators {
+    position: static;
+}
 /* 
 Lead Cards
 Used for showing a button on hover

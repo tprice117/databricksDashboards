@@ -98,25 +98,95 @@
 {% endblock %}
 {% block content %}
   <div class="container-xxl">
-    <h3 class="text-dark mb-1">New Booking</h3>
+    <h6 class="pb-3 mb-3">
+      {% if main_product.main_product_category.group %}
+        {{ main_product.main_product_category.group }} /
+      {% endif %}{{ main_product.main_product_category }} / <span class="text-primary">{{ main_product.name }}</span>
+    </h6>
     <div class="row row-cols-1 row-cols-sm-1 row-cols-md-2">
-      <div class="col">
-        <img class="img-fluid"
-          style="border-radius: 37px;"
-          src="{% if main_product.image_del %}
-            {{ main_product.image_del }}
-          {% elif main_product.main_product_category.icon %}
-            {{ main_product.main_product_category.icon.url }}
-          {% else %}
-            {% static 'customer_dashboard/img/logo.png' %}
-          {% endif %}" />
+      <div class="col col-xl-5 px-4">
+        {% with images=main_product.images.all %}
+          <!-- Image Carousel -->
+          <div id="imageCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              {% for main_product_image in images %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                  <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+                    <img class="d-block w-100 h-100 object-fit-contain" style="border-radius: 37px;" src="{{ main_product_image.image.url }}" alt="Slide {{ forloop.counter0 }}" />
+                  </div>
+                </div>
+              {% empty %}
+                <div class="carousel-item active">
+                  <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+                    <img class="d-block w-100 h-100"
+                      style="border-radius: 37px;"
+                      src="{% if main_product.image_del %}
+                        {{ main_product.image_del }}
+                      {% elif main_product.main_product_category.icon %}
+                        {{ main_product.main_product_category.icon.url }}
+                      {% else %}
+                        {% static 'customer_dashboard/img/logo.png' %}
+                      {% endif %}"
+                      alt="Slide 0" />
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+            <div class="carousel-indicators mt-1">
+              {% for main_product_image in images %}
+                <button type="button" class="{% if forloop.first %}active{% endif %}" data-bs-target="#imageCarousel" data-bs-slide-to="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter0 }}"><img class="d-block w-100" src="{{ main_product_image.image.url }}" /></button>
+              {% empty %}
+                <button type="button" class="active" data-bs-target="#imageCarousel" data-bs-slide-to="0" aria-label="Slide 0">
+                  <img class="d-block w-100"
+                    src="{% if main_product.image_del %}
+                      {{ main_product.image_del }}
+                    {% elif main_product.main_product_category.icon %}
+                      {{ main_product.main_product_category.icon.url }}
+                    {% else %}
+                      {% static 'customer_dashboard/img/logo.png' %}
+                    {% endif %}" />
+                </button>
+              {% endfor %}
+            </div>
+          </div>
+        {% endwith %}
+        <!-- Product Infos -->
+        {% with infos=main_product.mainproductinfo_set.all %}
+          <div class="card mb-3">
+            <div class="card-header bg-secondary p-3" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#rentalCardBody" aria-controls="rentalCardBody" type="button">
+              <h6 class="text-white m-0">Product Information</h6>
+            </div>
+            <div id="rentalCardBody" class="card-body collapse show">
+              {% for info in infos %}
+                <div class="mb-3">
+                  <p class="text-dark m-0">
+                    <strong>{{ info.name }}</strong>
+                  </p>
+                  <p class="m-0">{{ info.description }}</p>
+                </div>
+              {% empty %}
+                <p class="text-muted m-0">{{ main_product.description|default:'No information available.' }}</p>
+              {% endfor %}
+            </div>
+          </div>
+        {% endwith %}
       </div>
-      <div class="col mb-4">
-        <h2>{{ main_product.name }}</h2>
-        <p>
-          <strong>{{ main_product.main_product_category.name }}</strong>
+      <div class="col col-xl-7 mb-4 px-4">
+        <h2 class="text-dark"><strong>{{ main_product.name }}</strong></h2>
+        <p class="text-muted mb-2">
+          {% with listings_count=main_product.listings_count %}
+            {{ listings_count }} listing{{ listings_count|pluralize }}
+          {% endwith %}&nbsp;|&nbsp; <i class="far fa-thumbs-up me-2"></i>{{ main_product.likes_count|intcomma }}
         </p>
-        <p>{{ main_product.description }}</p>
+        <hr style="border-color: var(--bs-dark); opacity: 0.75;" />
         <form action="{% url 'customer_new_order_3' product_id=product_id %}" method="post" class="mb-2" enctype="multipart/form-data">
           {% csrf_token %}
           <!-- Include the hidden fields -->
@@ -125,7 +195,7 @@
           {% endfor %}
           <!-- Include the visible fields -->
           {% if user_addresses|length < 20 %}
-            <label for="user_address" class="form-label">Select Address<a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1" role="button" href="{% url 'customer_new_location' %}?return_to={{ request.get_full_path }}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create</a></label>
+            <label for="user_address" class="form-label mb-0"><strong class="text-dark"><i class="far fa-map-marker-alt me-2"></i>Select an Address</strong><a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1 px-3" role="button" href="{% url 'customer_new_location' %}?return_to={{ request.get_full_path }}">Create Now</a></label>
             <select class="form-select" name="user_address" style="margin-bottom: 12px;" required>
               <optgroup label="Your added locations">
                 {% for user_address in user_addresses %}
@@ -139,7 +209,7 @@
             </select>
           {% else %}
             <div class="dropdown mb-3">
-              <label for="user_address-search" class="form-label">Search Address<a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1" role="button" href="{% url 'customer_new_location' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create</a> <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
+              <label for="user_address-search" class="form-label mb-0"><strong class="text-dark"><i class="far fa-map-marker-alt me-2"></i>Search Address</strong><a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1 px-3" role="button" href="{% url 'customer_new_location' %}">Create Now</a> <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
               {% if selected_user_address %}
                 <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" value="{{ selected_user_address.name }}" hx-get="{% url 'customer_user_address_search' user_id=user.id %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
                 <!-- Hidden input field for user_address ID is added by forms.py with id=id_user_address -->
@@ -199,9 +269,7 @@
             <p class="text-success">{{ form_msg }}</p>
           {% endif %}
           <hr />
-          <div class="d-flex flex-row-reverse">
-            <button class="btn btn-primary" type="submit" name="action_button" id="submit-button">See Pricing</button>
-          </div>
+          <button class="btn btn-primary w-100 shadow" type="submit" name="action_button" id="submit-button"><small>Find a Supplier</small></button>
         </form>
       </div>
     </div>
