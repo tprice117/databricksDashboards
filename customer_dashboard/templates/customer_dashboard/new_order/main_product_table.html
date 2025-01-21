@@ -24,7 +24,7 @@
                     <div class="row ms-3 me-3 mt-2 mb-0">
                         <ul class="mb-0">
                             {% for main_product_info in main_product.infos %}
-                                <li style="font-size: smaller;">{{ main_product_info.name }}</li>
+                                <li style="font-size: smaller;">{{ main_product_info.name }}: {{ main_product_info.description }}</li>
                             {% endfor %}
                         </ul>
                     </div>
