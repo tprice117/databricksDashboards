@@ -58,7 +58,11 @@ class MainProduct(BaseModel):
     allows_pick_up = models.BooleanField(default=True)
 
     # Related Products.
-    is_related = models.BooleanField(default=False)
+    is_related = models.BooleanField(
+        default=False,
+        verbose_name="Related Product Only",
+        help_text="Check this box if this product is only available as a related product.",
+    )
     related_products = models.ManyToManyField(
         "self", blank=True, symmetrical=False, related_name="parent_products"
     )
