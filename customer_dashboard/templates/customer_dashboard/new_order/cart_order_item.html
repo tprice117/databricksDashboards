@@ -1,6 +1,26 @@
 {% load static %}
 {% load tz %}
 {% load humanize %}
+{% block stylesheet %}
+  <style>
+    .subtitle {
+        font-family: 'Outfit';
+        font-style: normal;
+        font-weight: 700;
+        font-size: 18px;
+        line-height: 24px;
+        color: #0F1B22;
+    }
+    .order-descriptor {
+        font-family: 'Outfit';
+        font-style: normal;
+        font-weight: 700;
+        font-size: 14px;
+        line-height: 16px;
+        color: #0F1B22;
+    }
+  </style>
+{% endblock %}
 <div class="row cart-item mb-2">
     <div class="col">
         <div class="card" style="background: var(--bs-card-cap-bg);">
@@ -15,8 +35,8 @@
                                     alt="Product image"
                                     width="138"
                                     height="95"
-                                    src="{% if main_product.image_del %}
-                                        {{ main_product.image_del }}
+                                    src="{% if main_product.images.first %}
+                                        {{ main_product.images.first.image.url }}
                                     {% elif main_product.main_product_category.icon %}
                                         {{ main_product.main_product_category.icon.url }}
                                     {% else %}
@@ -25,17 +45,8 @@
                                 {% endwith %}
                             </div>
                             <div class="col" id="details-{{loopcount}}">
-                                <h3>{{ item.main_product.name }}</h3>
-                                {% if order.order_group.end_date %}
-                                <p class="mb-1">{{ order.order_group.start_date }} to {{ order.order_group.end_date }}&nbsp;</p>
-                                {% else %}
-                                {% if order.order_group.service_recurring_frequency %}
-                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }} and recurring {{ order.order_group.service_recurring_frequency.name|lower }}&nbsp;</p>
-                                {% else %}
-                                <p class="mb-1">Subscription starts on {{ order.order_group.start_date }}&nbsp;</p>
-                                {% endif %}
-                                {% endif %}
-                                <p class="mb-1">Service date: {{ order.end_date }}
+                                <h3 class="subtitle">{{ item.main_product.name }}</h3>
+                                <p class="mb-1 order-descriptor">Service date: <span class="fw-light">{{ order.end_date }}</span>
                                     {% if not form %}
                                     <button class="btn btn-link edit-start-date ps-2 p-0" id="btn-{{loopcount}}" type="button" hx-post="{% url 'customer_cart_date_edit' order_id=order.id %}" hx-vals='{"loopcount": "{{loopcount}}"}' hx-target="closest .cart-item" hx-swap="outerHTML" hx-indicator="#htmx-indicator-edit-date-{{loopcount}}">
                                         <i class="fas fa-edit" style="color: #007bff;" id="edit-start-date-icon-{{loopcount}}"></i>
@@ -98,10 +109,10 @@
                                     </div>
                                     {% endif %}
                                 </div>
-                                <p class="mb-1">Order type: {{ order.order_type }}</p>
+                                <p class="mb-1 order-descriptor">Order type: <span class="fw-light">{{ order.order_type }}</span></p>
                                 {% include 'customer_dashboard/snippets/cart_order_item_po.html' with order_group=order.order_group %}
                                 {% if request.user.is_staff %}
-                                <p class="mb-1">Created by: {% if order.created_by %}{{ order.created_by.full_name }}{% else %}N/A{% endif%} on {{ order.created_on|timezone:"America/Chicago" }} (CT)</p>
+                                <p class="mb-1 order-descriptor">Created by: <span class="fw-light">{% if order.created_by %}{{ order.created_by.full_name }}{% else %}N/A{% endif%} on {{ order.created_on|timezone:"America/Chicago" }} (CT)</span></p>
                                 {% endif %}
                             </div>
                             <div class="col-auto">
