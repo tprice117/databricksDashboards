@@ -1428,6 +1428,24 @@ def create_products_for_main_product(request, main_product_id):
     )
 
 
+def apple_app_site_association(request):
+    # Get the apple-app-site-association file.
+    apple_app_site_association_file = open(
+        settings.BASE_DIR / ".well-known/apple_app_site_association.json", "r"
+    )
+    # Return the file.
+    return HttpResponse(
+        apple_app_site_association_file.read(), content_type="application/json"
+    )
+
+
+def asset_link(request):
+    # Get the assetlinks.json file.
+    asset_link_file = open(settings.BASE_DIR / ".well-known/assetlinks.json", "r")
+    # Return the file.
+    return HttpResponse(asset_link_file.read(), content_type="application/json")
+
+
 def test3(request):
     # Move the "rate" field to "flat_rate_price" for all OrderGroupServices.
     # order_group_services = OrderGroupService.objects.all()
