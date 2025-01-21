@@ -60,6 +60,11 @@ class OrderGroupAdmin(admin.ModelAdmin):
         "user_address",
         "conversation",
         "agreement_signed_by",
+    )
+    readonly_fields = (
+        "parent_booking",
         "created_by",
+        "created_on",
         "updated_by",
+        "updated_on",
     )

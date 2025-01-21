@@ -38,6 +38,15 @@ class MainProductAdmin(BaseModelAdmin, ExportActionMixin):
             },
         ),
         (
+            "Related Products",
+            {
+                "fields": [
+                    "is_related",
+                    "related_products",
+                ]
+            },
+        ),
+        (
             "Images",
             {
                 "fields": [
@@ -98,3 +107,9 @@ class MainProductAdmin(BaseModelAdmin, ExportActionMixin):
         MainProductInfoInline,
         AddOnInline,
     ]
+    filter_horizontal = ["tags", "related_products"]
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "related_products":
+            kwargs["queryset"] = MainProduct.objects.filter(is_related=True)
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
