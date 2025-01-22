@@ -1,6 +1,7 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
 {% load humanize %}
+{% load sales_stream_tags %}
 {% block title %}
   Select Options
 {% endblock %}
@@ -103,99 +104,104 @@
         {{ main_product.main_product_category.group }} /
       {% endif %}{{ main_product.main_product_category }} / <span class="text-primary">{{ main_product.name }}</span>
     </h6>
-    <div class="row row-cols-1 row-cols-sm-1 row-cols-md-2">
-      <div class="col col-xl-5 px-4">
-        {% with images=main_product.images.all %}
-          <!-- Image Carousel -->
-          <div id="imageCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
-              {% for main_product_image in images %}
-                <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                  <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
-                    <img class="d-block w-100 h-100 object-fit-contain" style="border-radius: 37px;" src="{{ main_product_image.image.url }}" alt="Slide {{ forloop.counter0 }}" />
+    <form action="{% url 'customer_new_order_3' product_id=product_id %}" method="post" class="mb-2" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row row-cols-1 row-cols-sm-1 row-cols-md-2">
+        <div class="col col-xl-5 px-4">
+          {% with images=main_product.images.all %}
+            <!-- Image Carousel -->
+            <div id="imageCarousel" class="carousel slide" data-bs-ride="carousel">
+              <div class="carousel-inner">
+                {% for main_product_image in images %}
+                  <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+                      <img class="d-block w-100 h-100 object-fit-contain" style="border-radius: 37px;" src="{{ main_product_image.image.url }}" alt="Slide {{ forloop.counter0 }}" />
+                    </div>
                   </div>
-                </div>
-              {% empty %}
-                <div class="carousel-item active">
-                  <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
-                    <img class="d-block w-100 h-100"
-                      style="border-radius: 37px;"
+                {% empty %}
+                  <div class="carousel-item active">
+                    <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+                      <img class="d-block w-100 h-100"
+                        style="border-radius: 37px;"
+                        src="{% if main_product.image_del %}
+                          {{ main_product.image_del }}
+                        {% elif main_product.main_product_category.icon %}
+                          {{ main_product.main_product_category.icon.url }}
+                        {% else %}
+                          {% static 'customer_dashboard/img/logo.png' %}
+                        {% endif %}"
+                        alt="Slide 0" />
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+              <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+              </button>
+              <div class="carousel-indicators mt-1">
+                {% for main_product_image in images %}
+                  <button type="button" class="{% if forloop.first %}active{% endif %}" data-bs-target="#imageCarousel" data-bs-slide-to="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter0 }}"><img class="d-block w-100" src="{{ main_product_image.image.url }}" /></button>
+                {% empty %}
+                  <button type="button" class="active" data-bs-target="#imageCarousel" data-bs-slide-to="0" aria-label="Slide 0">
+                    <img class="d-block w-100"
                       src="{% if main_product.image_del %}
                         {{ main_product.image_del }}
                       {% elif main_product.main_product_category.icon %}
                         {{ main_product.main_product_category.icon.url }}
                       {% else %}
                         {% static 'customer_dashboard/img/logo.png' %}
-                      {% endif %}"
-                      alt="Slide 0" />
+                      {% endif %}" />
+                  </button>
+                {% endfor %}
+              </div>
+            </div>
+          {% endwith %}
+          <!-- Product Infos -->
+          {% with infos=main_product.mainproductinfo_set.all %}
+            <div class="card mb-3">
+              <div class="card-header bg-secondary p-3" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#rentalCardBody" aria-controls="rentalCardBody" type="button">
+                <h6 class="text-white m-0">Product Information</h6>
+              </div>
+              <div id="rentalCardBody" class="card-body collapse show">
+                {% for info in infos reversed %}
+                  <div class="mb-3">
+                    <p class="text-dark m-0">
+                      <strong>{{ info.name }}</strong>
+                    </p>
+                    <p class="m-0">{{ info.description }}</p>
                   </div>
-                </div>
-              {% endfor %}
+                {% empty %}
+                  <p class="text-muted m-0">{{ main_product.description|default:'No information available.' }}</p>
+                {% endfor %}
+              </div>
             </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
-              <span class="carousel-control-next-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Next</span>
-            </button>
-            <div class="carousel-indicators mt-1">
-              {% for main_product_image in images %}
-                <button type="button" class="{% if forloop.first %}active{% endif %}" data-bs-target="#imageCarousel" data-bs-slide-to="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter0 }}"><img class="d-block w-100" src="{{ main_product_image.image.url }}" /></button>
-              {% empty %}
-                <button type="button" class="active" data-bs-target="#imageCarousel" data-bs-slide-to="0" aria-label="Slide 0">
-                  <img class="d-block w-100"
-                    src="{% if main_product.image_del %}
-                      {{ main_product.image_del }}
-                    {% elif main_product.main_product_category.icon %}
-                      {{ main_product.main_product_category.icon.url }}
-                    {% else %}
-                      {% static 'customer_dashboard/img/logo.png' %}
-                    {% endif %}" />
-                </button>
-              {% endfor %}
-            </div>
-          </div>
-        {% endwith %}
-        <!-- Product Infos -->
-        {% with infos=main_product.mainproductinfo_set.all %}
-          <div class="card mb-3">
-            <div class="card-header bg-secondary p-3" aria-expanded="true" data-bs-toggle="collapse" data-bs-target="#rentalCardBody" aria-controls="rentalCardBody" type="button">
-              <h6 class="text-white m-0">Product Information</h6>
-            </div>
-            <div id="rentalCardBody" class="card-body collapse show">
-              {% for info in infos %}
-                <div class="mb-3">
-                  <p class="text-dark m-0">
-                    <strong>{{ info.name }}</strong>
-                  </p>
-                  <p class="m-0">{{ info.description }}</p>
-                </div>
-              {% empty %}
-                <p class="text-muted m-0">{{ main_product.description|default:'No information available.' }}</p>
-              {% endfor %}
-            </div>
-          </div>
-        {% endwith %}
-      </div>
-      <div class="col col-xl-7 mb-4 px-4">
-        <h2 class="text-dark"><strong>{{ main_product.name }}</strong></h2>
-        <p class="text-muted mb-2">
-          {% with listings_count=main_product.listings_count %}
-            {{ listings_count }} listing{{ listings_count|pluralize }}
-          {% endwith %}&nbsp;|&nbsp; <i class="far fa-thumbs-up me-2"></i>{{ main_product.likes_count|intcomma }}
-        </p>
-        <hr style="border-color: var(--bs-dark); opacity: 0.75;" />
-        <form action="{% url 'customer_new_order_3' product_id=product_id %}" method="post" class="mb-2" enctype="multipart/form-data">
-          {% csrf_token %}
+          {% endwith %}
+        </div>
+        <!-- Details -->
+        <div class="col col-xl-7 mb-4 px-4">
+          <h2 class="text-dark"><strong>{{ main_product.name }}</strong></h2>
+          <p class="text-muted mb-2">
+            {% with listings_count=main_product.listings_count %}
+              {{ listings_count }} listing{{ listings_count|pluralize }}
+            {% endwith %}&nbsp;|&nbsp; <i class="far fa-thumbs-up me-2"></i>{{ main_product.likes_count|intcomma }}
+          </p>
+          <hr style="border-color: var(--bs-dark); opacity: 0.75;" />
           <!-- Include the hidden fields -->
           {% for hidden in form.hidden_fields %}
             {{ hidden }}
           {% endfor %}
           <!-- Include the visible fields -->
           {% if user_addresses|length < 20 %}
-            <label for="user_address" class="form-label mb-0"><strong class="text-dark"><i class="far fa-map-marker-alt me-2"></i>Select an Address</strong><a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1 px-3" role="button" href="{% url 'customer_new_location' %}?return_to={{ request.get_full_path }}">Create Now</a></label>
+            <label for="user_address" class="form-label mb-0">
+              <strong class="text-dark me-3"><i class="far {{ field_icons.address }} me-2"></i>Select an Address</strong>
+              <small class="required text-muted">Required</small>
+              <a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1 px-3" role="button" href="{% url 'customer_new_location' %}?return_to={{ request.get_full_path }}">Create Now</a>
+            </label>
             <select class="form-select" name="user_address" style="margin-bottom: 12px;" required>
               <optgroup label="Your added locations">
                 {% for user_address in user_addresses %}
@@ -209,7 +215,12 @@
             </select>
           {% else %}
             <div class="dropdown mb-3">
-              <label for="user_address-search" class="form-label mb-0"><strong class="text-dark"><i class="far fa-map-marker-alt me-2"></i>Search Address</strong><a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1 px-3" role="button" href="{% url 'customer_new_location' %}">Create Now</a> <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></label>
+              <label for="user_address-search" class="form-label mb-0">
+                <strong class="text-dark me-3"><i class="far {{ field_icons.address }} me-2"></i>Search Address</strong>
+                <small class="required text-muted"><strong>Required</strong></small>
+                <a class="btn btn-primary btn-sm d-sm-inline-block ms-2 mb-1 px-3" role="button" href="{% url 'customer_new_location' %}">Create Now</a>
+                <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+              </label>
               {% if selected_user_address %}
                 <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" value="{{ selected_user_address.name }}" hx-get="{% url 'customer_user_address_search' user_id=user.id %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
                 <!-- Hidden input field for user_address ID is added by forms.py with id=id_user_address -->
@@ -217,49 +228,98 @@
                 <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" hx-get="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
                 <!-- Hidden input field for user_address ID is added by forms.py id=id_user_address -->
               {% endif %}
-              <div class="dropdown-content" id="user_address-search-results"></div>
+              <div class="dropdown-content" id="user_address-search-results" style="z-index: 5;"></div>
             </div>
           {% endif %}
-          {% for product_add_on in product_add_ons %}
-            <p style="margin-bottom: 0px;">{{ product_add_on.add_on.name }}</p>
-            <select class="form-select" name="product_add_on_choices" style="margin-bottom: 12px;">
-              <optgroup label="{{ product_add_on.add_on.name }}">
-                {% for product_add_on_choice in product_add_on.choices %}
-                  <option value="{{ product_add_on_choice.id }}">{{ product_add_on_choice.name }}</option>
-                {% endfor %}
-              </optgroup>
-            </select>
-          {% endfor %}
           {% for field in form.visible_fields %}
-            {% if field.widget_type == 'checkbox' %}
-              <div class="mb-3 form-switch">
-                {{ field }}
-                <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}{{ field.label_suffix }}</label>
-                {% if field.help_text %}
-                  <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
-                {% endif %}
-                {% if field.errors %}
-                  <small class="text-danger">{{ field.errors }}</small>
-                {% endif %}
+            {% if field.name == 'shift_count' %}
+              <label for="{{ field.id_for_label }}" class="form-label">
+                <strong class="text-dark me-3"><i class="far {{ field_icons|get_dict_value:field.name }} me-2"></i>{{ field.label }}</strong>
+                {{ field.label_suffix }}
+                <small class="{{ field.field.required|yesno:'required' }} text-muted"><strong>{{ field.field.required|yesno:'Required,Optional' }}</strong></small>
+              </label>
+              <div class="btn-group w-100 mb-3" role="group" aria-label="Radio toggle for {{ field.label }}">
+                {% for radio in field %}
+                  {{ radio.tag }}
+                  <label class="btn" for="{{ radio.id_for_label }}"><small>{{ radio.choice_label }}</small></label>
+                {% endfor %}
               </div>
+              {% if field.help_text %}
+                <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+              {% endif %}
+              {% if field.errors %}
+                <small class="text-danger">{{ field.errors }}</small>
+              {% endif %}
             {% else %}
               <div class="mb-3">
-                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{{ field.label_suffix }}</label>
+                <label for="{{ field.id_for_label }}" class="form-label">
+                  <strong class="text-dark me-3">
+                    <!-- prettier-ignore -->
+                    <i class="far {{ field_icons|get_dict_value:field.name }} me-2">
+                    </i>
+                    {{ field.label }}
+                  </strong>{{ field.label_suffix }}<small class="{{ field.field.required|yesno:'required' }} text-muted"><strong>{{ field.field.required|yesno:'Required,Optional' }}</strong></small>
+                </label>
                 {{ field }}
                 {% if field.help_text %}
                   <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
                 {% endif %}
                 {% if field.errors %}
                   <small class="text-danger">{{ field.errors }}</small>
-                {% endif %}
-                {% if field.name == 'street' %}
-                  <div class="form-text">
-                    <a class="card-link" href="https://www.google.com/maps/place/{{ user_address.formatted_address|urlencode }}" target="_blank">{{ user_address.formatted_address }}</a>
-                  </div>
                 {% endif %}
               </div>
             {% endif %}
           {% endfor %}
+          {% if product_add_ons %}
+            <p>
+              <strong class="text-dark me-2"><i class="far fa-cogs me-2"></i> Variations</strong> <small class="required text-muted"><strong>Required</strong></small>
+            </p>
+            <div class="d-flex flex-wrap mb-3 form-group">
+              {% for product_add_on in product_add_ons %}
+                <div class="col-3">
+                  <p class="mb-1">
+                    <strong class="text-dark">{{ product_add_on.add_on.name }}</strong>
+                  </p>
+                  {% for product_add_on_choice in product_add_on.choices %}
+                    <div class="form-check downstream-radio">
+                      {% if forloop.first %}
+                        <input class="form-check-input" type="radio" name="product_add_on_choices_{{ product_add_on.add_on.name }}" id="product_add_on_choice_{{ product_add_on_choice.id }}" value="{{ product_add_on_choice.id }}" checked required />
+                      {% else %}
+                        <input class="form-check-input" type="radio" name="product_add_on_choices_{{ product_add_on.add_on.name }}" id="product_add_on_choice_{{ product_add_on_choice.id }}" value="{{ product_add_on_choice.id }}" required />
+                      {% endif %}
+                      <label class="form-check-label" for="product_add_on_choice_{{ product_add_on_choice.id }}">{{ product_add_on_choice.name }}</label>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if main_product.related_products.exists %}
+            <p>
+              <strong class="text-dark me-3"><i class="far fa-link me-2"></i> Related Products</strong> <small class="text-muted"><strong>Optional</strong></small>
+            </p>
+            <div class="d-flex flex-wrap mb-3 form-group">
+              {% for related_product in main_product.related_products.all %}
+                <div class="col-xl-4 col-6 image-select align-items-center px-2">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="related_products" id="related_product_{{ related_product.id }}" value="{{ related_product.id }}" />
+                    <label class="form-check-label text-center" for="related_product_{{ related_product.id }}">
+                      <img src="{% if related_product.image_del %}
+                          {{ related_product.image_del }}
+                        {% elif related_product.main_product_category.icon %}
+                          {{ related_product.main_product_category.icon.url }}
+                        {% else %}
+                          {% static 'customer_dashboard/img/logo.png' %}
+                        {% endif %}"
+                        alt="{{ related_product.name }}"
+                        class="img-fluid rounded mb-2" /><br />
+                      <strong class="text-dark">{{ related_product.name }}</strong>
+                    </label>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
           {% if form_error %}
             <hr />
             <p class="text-danger">{{ form_error }}</p>
@@ -268,10 +328,10 @@
             <hr />
             <p class="text-success">{{ form_msg }}</p>
           {% endif %}
-          <hr />
-          <button class="btn btn-primary w-100 shadow" type="submit" name="action_button" id="submit-button"><small>Find a Supplier</small></button>
-        </form>
+          <!-- Submit Button -->
+          <button class="btn btn-primary w-100 p-2 my-3 shadow" type="submit" name="action_button" id="submit-button"><small>Find a Supplier</small></button>
+        </div>
       </div>
-    </div>
+    </form>
   </div>
 {% endblock %}

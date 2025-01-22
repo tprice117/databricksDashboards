@@ -918,20 +918,36 @@ def new_order_3(request, product_id):
         if request.user.is_authenticated
         else []
     )
+    context["field_icons"] = {
+        "product_waste_types": "fa-dumpster",
+        "address": "fa-map-marker-alt",
+        "shift_count": "fa-sync-alt",
+        "schedule_window": "fa-clock",
+        "delivery_date": "fa-calendar-check",
+        "times_per_week": "fa-calendar-alt",
+    }
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
         if user_address_id:
             context["selected_user_address"] = UserAddress.objects.get(
                 id=user_address_id
             )
+
+        # Get the selected product add-ons
+        selected_add_ons = []
+        for key, value in request.POST.items():
+            if key.startswith("product_add_on_choices_"):
+                selected_add_ons.append(value)
+
         query_params = {
             "product_id": context["product_id"],
             "user_address": request.POST.get("user_address"),
             "delivery_date": request.POST.get("delivery_date"),
             "removal_date": request.POST.get("removal_date"),
             "schedule_window": request.POST.get("schedule_window"),
-            "product_add_on_choices": request.POST.getlist("product_add_on_choices"),
+            "product_add_on_choices": selected_add_ons,
             "product_waste_types": request.POST.getlist("product_waste_types"),
+            "related_products": request.POST.getlist("related_products"),
             "quantity": request.POST.get("quantity"),
             "project_id": request.POST.get("project_id"),
         }

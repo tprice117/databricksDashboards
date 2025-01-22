@@ -22,3 +22,9 @@ def currency(value):
     if value is None:
         return "$0.00"
     return "${:,.2f}".format(value)
+
+
+@register.filter(is_safe=True)
+def get_dict_value(dictionary, key):
+    """Get a value from a dictionary"""
+    return dictionary.get(key, None)

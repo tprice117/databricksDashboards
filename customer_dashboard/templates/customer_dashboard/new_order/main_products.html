@@ -2,58 +2,77 @@
 {% load static %}
 {% load humanize %}
 {% block javascript %}
-    <script>
-        // On dom load update search field
-        document.addEventListener("DOMContentLoaded", function () {
-            const searchFilter = document.getElementById("category-search-filter");
-            const urlParams = new URLSearchParams(window.location.search);
-            const search = urlParams.get("q");
-            if (search) {
-                searchFilter.value = search;
-            }
-        });
-        let debounceTimeout;
-        
-        function onInputChanged(el) {
-            // Only trigger the search if the value is not empty and has more than 1 character and the user has stopped typing.
-            // Clear the previous timeout
-            clearTimeout(debounceTimeout);
-        
-            // Set a new timeout
-            debounceTimeout = setTimeout(function () {
-                if (!el.value || el.value.length > 1) {
-                    htmx.trigger(el, "confirmed");
-                }
-            }, 500);
+  <script>
+    function addImageLoadEventListeners() {
+      const images = document.querySelectorAll('.image-container img')
+    
+      images.forEach((img) => {
+        img.addEventListener('load', function () {
+          img.classList.add('loaded')
+        })
+    
+        // For cached images
+        if (img.complete) {
+          img.classList.add('loaded')
         }
-    </script>
+      })
+    }
+    
+    // On dom load update search field
+    document.addEventListener('DOMContentLoaded', function () {
+      const searchFilter = document.getElementById('category-search-filter')
+      const urlParams = new URLSearchParams(window.location.search)
+      const search = urlParams.get('q')
+      if (search) {
+        searchFilter.value = search
+      }
+      addImageLoadEventListeners()
+    })
+    let debounceTimeout
+    
+    function onInputChanged(el) {
+      // Only trigger the search if the value is not empty and has more than 1 character and the user has stopped typing.
+      // Clear the previous timeout
+      clearTimeout(debounceTimeout)
+    
+      // Set a new timeout
+      debounceTimeout = setTimeout(function () {
+        if (!el.value || el.value.length > 1) {
+          htmx.trigger(el, 'confirmed')
+        }
+      }, 500)
+    }
+    
+    document.addEventListener('htmx:afterSwap', addImageLoadEventListeners)
+  </script>
 {% endblock %}
 {% block title %}
-    Select Product
+  Select Product
 {% endblock %}
 {% block stylesheet %}
-    <style></style>
+  <style></style>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid">
-        <div class="card-header p-3 mb-2 border">
-            <div class="row">
-                <div class="col">
-                    <div class="d-sm-flex justify-content-between align-items-center mb-4">
-                        <h3 class="text-dark mb-0">New Booking: {{ main_product_category.name }}</h3>
-                    </div>
-                    {% comment %} <h3 class="text-dark mb-0">Create New Booking</h3> {% endcomment %}
-                    <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                </div>
-            </div>
-            <form class="row mt-2 row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-2 row-cols-xxl-2" hx-trigger="confirmed" hx-get="{% url 'customer_new_order_2' category_id %}" hx-target="#product-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
-                <div class="col">
-                    <div class="input-group">
-                        <span class="input-group-text" id="inputGroup-sizing-lg">Search</span>
-                        <input id="category-search-filter" class="form-control" type="search" name="q" oninput="onInputChanged(this)" />
-                    </div>
-                </div>
-            </form>
+  <div class="container-fluid">
+    <div class="card-header p-3 mb-2 border">
+      <div class="row">
+        <div class="col">
+          <div class="d-sm-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-dark mb-0">New Booking: {{ main_product_category.name }}</h3>
+          </div>
+          {% comment %} <h3 class="text-dark mb-0">Create New Booking</h3> {% endcomment %}
+          <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
         </div>
-        {% include "./main_product_table.html" %}
+      </div>
+      <form class="row mt-2 row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-2 row-cols-xxl-2" hx-trigger="confirmed" hx-get="{% url 'customer_new_order_2' category_id %}" hx-target="#product-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+        <div class="col">
+          <div class="input-group">
+            <span class="input-group-text" id="inputGroup-sizing-lg">Search</span>
+            <input id="category-search-filter" class="form-control" type="search" name="q" oninput="onInputChanged(this)" />
+          </div>
+        </div>
+      </form>
+    </div>
+    {% include './main_product_table.html' %}
+  </div>
 {% endblock %}

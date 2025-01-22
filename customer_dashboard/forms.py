@@ -411,6 +411,7 @@ class OrderGroupForm(forms.Form):
                 "min": datetime.date.today() + datetime.timedelta(days=1),
             }
         ),
+        required=True,
     )
     removal_date = forms.DateField(
         validators=[validate_start_date],
@@ -436,11 +437,26 @@ class OrderGroupForm(forms.Form):
         required=True,
     )
     # Create a choice field for shift count. Only required if the product has rental_multi_step.
-    shift_count = forms.ChoiceField(
-        label="Service Times Per Week",
-        choices=OrderGroup.ShiftCount.choices,
+    schedule_window = forms.ChoiceField(
+        choices=[
+            ("Anytime (7am-4pm)", "Anytime (7am-4pm)"),
+            ("Morning (7am-11am)", "Morning (7am-11am)"),
+            ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
+        ],
         widget=forms.Select(attrs={"class": "form-select"}),
+        label="Preferred Time of Day",
         required=True,
+    )
+    shift_count = forms.ChoiceField(
+        label="Utilization",
+        choices=[
+            (OrderGroup.ShiftCount.ONE_SHIFT, "0 to 8 hours per day"),
+            (OrderGroup.ShiftCount.TWO_SHIFTS, "9 to 16 hours per day"),
+            (OrderGroup.ShiftCount.THREE_SHIFTS, "17 to 24 hours per day"),
+        ],
+        widget=forms.RadioSelect(attrs={"class": "btn-check"}),
+        required=True,
+        initial=OrderGroup.ShiftCount.ONE_SHIFT,
     )
     # Add is estimated end date checkbox
     # NOTE: Maybe also say that we will assume monthly rental for now.
@@ -451,26 +467,11 @@ class OrderGroupForm(forms.Form):
     #     ),
     #     required=False,
     # )
-    schedule_window = forms.ChoiceField(
-        choices=[
-            ("Anytime (7am-4pm)", "Anytime (7am-4pm)"),
-            ("Morning (7am-11am)", "Morning (7am-11am)"),
-            ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
-        ],
-        widget=forms.Select(attrs={"class": "form-select"}),
-    )
     quantity = forms.IntegerField(
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        widget=forms.HiddenInput(),
         initial=1,
         required=True,
         help_text="Note: Currently, the prices on the next page are always for one.",
-    )
-    project_id = forms.CharField(
-        max_length=50,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        required=False,
-        label="PO ID (optional)",
-        help_text="This is added to the booking, which is also added to the invoice.",
     )
 
     def __init__(self, *args, **kwargs):
