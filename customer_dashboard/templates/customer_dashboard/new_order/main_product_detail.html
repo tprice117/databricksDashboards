@@ -236,24 +236,26 @@
           {% endif %}
           <!-- Other fields -->
           {% for field in form.visible_fields %}
-            {% if field.name == 'shift_count' %}
-              <label for="{{ field.id_for_label }}" class="form-label">
-                <strong class="text-dark me-3"><i class="far {{ field_icons|get_dict_value:field.name }} me-2"></i>{{ field.label }}</strong>
-                {{ field.label_suffix }}
-                <small class="{{ field.field.required|yesno:'required' }} text-muted"><strong>{{ field.field.required|yesno:'Required,Optional' }}</strong></small>
-              </label>
-              <div class="btn-group w-100 mb-3" role="group" aria-label="Radio toggle for {{ field.label }}">
-                {% for radio in field %}
-                  {{ radio.tag }}
-                  <label class="btn" for="{{ radio.id_for_label }}"><small>{{ radio.choice_label }}</small></label>
-                {% endfor %}
+            {% if field.name == 'shift_count' or field.name == 'times_per_week' %}
+              <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">
+                  <strong class="text-dark me-3"><i class="far {{ field_icons|get_dict_value:field.name }} me-2"></i>{{ field.label }}</strong>
+                  {{ field.label_suffix }}
+                  <small class="{{ field.field.required|yesno:'required' }} text-muted"><strong>{{ field.field.required|yesno:'Required,Optional' }}</strong></small>
+                </label>
+                <div class="btn-group w-100" role="group" aria-label="Radio toggle for {{ field.label }}">
+                  {% for radio in field %}
+                    {{ radio.tag }}
+                    <label class="btn" for="{{ radio.id_for_label }}"><small>{{ radio.choice_label }}</small></label>
+                  {% endfor %}
+                </div>
+                {% if field.help_text %}
+                  <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                {% endif %}
+                {% if field.errors %}
+                  <small class="text-danger">{{ field.errors }}</small>
+                {% endif %}
               </div>
-              {% if field.help_text %}
-                <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
-              {% endif %}
-              {% if field.errors %}
-                <small class="text-danger">{{ field.errors }}</small>
-              {% endif %}
             {% else %}
               <div class="mb-3">
                 <label for="{{ field.id_for_label }}" class="form-label">
