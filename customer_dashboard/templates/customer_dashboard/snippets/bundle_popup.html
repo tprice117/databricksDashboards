@@ -106,23 +106,63 @@
 {% endblock %}
 {% block javascript %}
   <script>
+    var bundleId = 1
+    var showBundles = function() {
+        // loop through all the cart buckets i.e. user_address
+        // find items check in each
+        // if less that 2 are checked in a bucket. don't count that bucket
+        console.log(bundleId)
+        var cartAddresses = jQuery("[id^='cart-address-']")
+        var cartBuckets = jQuery(cartAddresses[bundleId]).find("[id^='seller-address-']")
+        var cartBucketItemChecked = []
+        cartBuckets.each(function(index, bucket) {
+          var cartItems = jQuery(bucket).find("[id^='cart-item-']")
+          cartBucketItemChecked[index] = cartItems.map(function(index2, item) {
+            var checkbox = jQuery(item).find("input[type='checkbox']")
+            return checkbox.is(":checked");
+          }).get()
+        })
+        console.log(cartBucketItemChecked)
+
+        var bundleAddresses = jQuery("[id^='cart-bundle-address-']")
+        var cartBundleBuckets = jQuery(bundleAddresses[bundleId]).find("[id^='bundle-seller-address-']")
+        cartBundleBuckets.each(function(index, bucket) {
+            if (cartBucketItemChecked[index].length >=2 ) {
+                jQuery(bucket).show()
+            } else {
+                jQuery(bucket).hide()
+            }
+            console.log(index)
+            console.log(cartBucketItemChecked[index].length)
+            var cartItems = jQuery(bucket).find("[id^='cart-bundled-item-']")
+            cartItems.each(function(index2, item) {
+                if (cartBucketItemChecked[index][index2]) {
+                    jQuery(item).show()
+                } else {
+                    jQuery(item).hide()
+                }
+            })
+        })
+    }
     jQuery( document ).ready(function() {
       // show the address that goes with this bundle button
       var bundleButtons = jQuery("[id^='bundle-button-']")
       var cartAddresses = jQuery("[id^='cart-address-']")
+      var cartBundleAddresses = jQuery("[id^='cart-bundle-address-']")
       var bundleListHeader = jQuery(".bundle-list-header")
       
       bundleButtons.each(function(index, button) {
         $(button).on("click", function() {
           cartAddresses.hide();
-          const bundleId = $(button).attr("id").split("-")[2];
+          bundleId = $(button).attr("id").split("-")[2];
           cartAddresses.filter("#cart-address-" + bundleId).show();
+          cartAddresses.filter("#cart-bundle-address-" + bundleId).show();
         })
       })
 		
       var back =jQuery(".prev");
-      var	next = jQuery(".next");
-      var	steps = jQuery(".step");
+      var next = jQuery(".next");
+      var steps = jQuery(".step");
       
       next.bind("click", function() { 
         // if this is the last step, show the checkout button
@@ -135,6 +175,10 @@
           next.unbind("click");
           back.unbind("click");
           // unfinished
+        }
+        // if this is the middle step, show the bundles
+        if (jQuery(steps[steps.length-3]).hasClass('current')) {
+          showBundles()
         }
         back.removeClass('disabled');
         // show the correct content
@@ -211,7 +255,7 @@
                                   <div class="col">
                                       <div class="accordion" role="tablist" id="bundle-results">
                                         {% for seller_address in seller_addresses %}
-                                          <div class="accordion-item">
+                                          <div class="accordion-item" id="seller-address-{{forloop.counter}}">
                                             {{cart_address.seller_addresses}}
                                             <h2 class="accordion-header" role="tab">
                                               <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#bundle-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="bundle-results .item-{{ forloop.counter }}">
@@ -243,9 +287,9 @@
                                               {% for item in cart_address.items %}
                                                 {% if item.seller_address.id == seller_address.id %}
                                                   {% if item.canBundle %}
-                                                      <div class="row cart-item border-2 border-danger">
+                                                      <div class="row cart-item" id="cart-item-{{forloop.counter}}">
                                                           <div class="col-auto my-auto">
-                                                            <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="..." style=" width: 30px; height: 30px; border-color: var(--bs-danger);">
+                                                            <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" style=" width: 30px; height: 30px; border-color: var(--bs-danger);">
                                                           </div>
                                                           <div class="col-auto">
                                                               <img class="img-thumbnail img-fluid"
@@ -300,7 +344,102 @@
                   {% endfor %}
                 </div>
                 <div class="step2-body" style="display: none;">
-                  this is step 2
+                    {% for cart_address in cart %}
+                    <div id="cart-bundle-address-{{forloop.counter}}">
+                      <p class="bundle-list-header">Order in the Cart for: {{ cart_address.address }}</p>
+                      <div class="card" style="background: var(--bs-card-cap-bg);">
+                          <div class="card-body">
+                              <div class="row">
+                                  <div class="col">
+                                      <div class="accordion" role="tablist" id="bundle-results-2">
+                                        {% for seller_address in seller_addresses %}
+                                          <div class="accordion-item" id="bundle-seller-address-{{forloop.counter}}">
+                                            {{cart_address.seller_addresses}}
+                                            <h2 class="accordion-header" role="tab">
+                                              <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#bundle-results-2 .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="bundle-results-2 .item-{{ forloop.counter }}">
+                                                <div>
+                                                  <span>
+                                                    {% if seller_address.name %}
+                                                      {{ seller_address.name }}
+                                                    {% endif %}
+                                                  </span> -
+                                                  <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
+                                                  <span id="count-{{ seller_address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
+                                                </div>
+                                                <div class="ms-auto align-items-end">
+                                                  {% if user.is_staff %}
+                                                    <span class="ms-2">
+                                                      [{% if seller_address.seller.name %}
+                                                        {{ seller_address.seller.name }}
+                                                      {% endif %}]
+                                                    </span>
+                                                  {% endif %}
+                                                </div>
+                                              </button>
+                                            </h2>
+                                            <!-- prettier-ignore -->
+                                            <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show {% else %}collapsed{% endif %}"
+                                              role="tabpanel"
+                                              data-bs-parent="#bundle-results-2">
+                                              <div class="accordion-body">
+                                              {% for item in cart_address.items %}
+                                                {% if item.seller_address.id == seller_address.id %}
+                                                  {% if item.canBundle %}
+                                                      <div class="row cart-item" id="cart-bundled-item-{{forloop.counter}}">
+                                                          <div class="col-auto my-auto">
+                                                            <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" style=" width: 30px; height: 30px; border-color: var(--bs-danger);" checked disabled>
+                                                          </div>
+                                                          <div class="col-auto">
+                                                              <img class="img-thumbnail img-fluid"
+                                                                  alt="Product image"
+                                                                  width="138"
+                                                                  height="95"
+                                                                  src="{% if item.order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
+                                                                      {{ item.order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                                                  {% elif item.order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon %}
+                                                                      {{ item.order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url }}
+                                                                  {% else %}
+                                                                      {% static 'customer_dashboard/img/logo.png' %}
+                                                                  {% endif %}" />
+                                                          </div>
+                                                          <div class="col">
+                                                              <h4>{{ item.order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
+                                                              {% if item.order.order_group.end_date %}
+                                                                  <p class="mb-1">{{ item.order.order_group.start_date }} to {{ item.order.order_group.end_date }}</p>
+                                                              {% else %}
+                                                                  {% if item.order.order_group.service_recurring_frequency %}
+                                                                      <p class="mb-1">Subscription starts on {{ item.order.order_group.start_date }} and recurring {{ item.order.order_group.service_recurring_frequency.name|lower }}</p>
+                                                                  {% else %}
+                                                                      <p class="mb-1">Subscription starts on {{ item.order.order_group.start_date }}</p>
+                                                                  {% endif %}
+                                                              {% endif %}
+                                                              <p class="mb-1">Service date: {{ item.order.end_date }}</p>
+                                                              <p class="mb-1">Order Type: {{ item.order.order_type }}</p>
+                                                              {% if user.is_staff %}
+                                                                  <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
+                                                              {% endif %}
+                                                          </div>
+                                                          <div class="col-auto">
+                                                              <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
+                                                          </div>
+                                                      </div>
+                                                      {% if not forloop.last %}
+                                                          <hr />
+                                                      {% endif %}
+                                                  {% endif %}
+                                                {% endif %}
+                                              {% endfor %}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        {% endfor %}
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                  {% endfor %}
                 </div>
                 <div class="step3-body" style="display: none;">
                   this is step 3
@@ -309,5 +448,5 @@
           </div>
       </div>
   </div>
-  <input/>
+  <input type="hidden" name="bundles" value="">
 {% endblock %}
