@@ -1712,6 +1712,32 @@ def new_order_6(request, order_group_id):
 
 
 @login_required(login_url="/admin/login/")
+def edit_attachments(request, order_group_id):
+    context = {}
+
+    if not OrderGroup.objects.filter(id=order_group_id).exists():
+        return HttpResponse("Not found", status=404)
+
+    order_group = OrderGroup.objects.get(id=order_group_id)
+    OrderGroupAttachmentsFormSet = inlineformset_factory(
+        OrderGroup,
+        OrderGroupAttachment,
+        form=OrderGroupAttachmentsForm,
+        formset=HiddenDeleteFormSet,
+        can_delete=True,
+        extra=0,
+    )
+    context["order_group"] = order_group
+    context["attachments_formset"] = OrderGroupAttachmentsFormSet(instance=order_group)
+
+    return render(
+        request,
+        "customer_dashboard/new_order/cart_order_edit_attachments.html",
+        context,
+    )
+
+
+@login_required(login_url="/admin/login/")
 @catch_errors()
 def show_quote(request):
     context = get_user_context(request)

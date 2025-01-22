@@ -1,0 +1,112 @@
+{% load static %}
+{% block javascript %}
+    <script>
+        document.body.addEventListener("htmx:afterRequest", function (evt) {
+            console.log(evt, evt.detail.target);
+            let addAttachmentButton = document.getElementById("add-attachments");
+            let formsetDiv = document.getElementById("Attachments-formset");
+            let totalForms = document.getElementById("id_attachments-TOTAL_FORMS");
+            let emptyFormTemplate = document.getElementById("empty-form-template").innerHTML;
+            let attachmentForms = document.querySelectorAll(".attachment-form");
+            attachmentForms.forEach(function (form) {
+                const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]');
+                if (deleteInput && deleteInput.value === "on") {
+                    form.style.display = "none";
+                }
+                const link = form.querySelector("[href]");
+                try {
+                    if (link) {
+                        // add an image with the link 30 x 30
+                        const image = document.createElement("img");
+                        image.src = link.href;
+                        image.style.width = "50px";
+                        image.style.height = "50px";
+                        // add the image at the end of this form just after the href
+                        const nextSibling = link.nextSibling;
+                        form.insertBefore(image, nextSibling);
+                    }
+                } catch (error) {}
+            });
+            addAttachmentButton.addEventListener("click", function () {
+                const currentFormCount = parseInt(totalForms.value);
+                const newFormCount = currentFormCount + 1;
+                const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount);
+        
+                formsetDiv.insertAdjacentHTML("beforeend", newFormHtml);
+                totalForms.value = newFormCount;
+            });
+            formsetDiv.addEventListener("click", function (event) {
+                if (event.target.classList.contains("remove-location")) {
+                    const formToRemove = event.target.closest(".attachment-form");
+                    formToRemove.style.display = "none";
+                    formToRemove.querySelector('input[type="hidden"][name$="-DELETE"]').value = "on";
+                }
+            });
+            if (evt.detail.target.id.startsWith("rating")) {
+            }
+        });
+    </script>
+{% endblock %}
+<div class="modal-dialog modal-dialog-centered">
+    <div id="htmx-indicator-loading-card" class="htmx-indicator htmx-indicator-card modal-content">
+        <div class="modal-body d-flex justify-content-center align-items-center p-3" style="min-height: 500px;">
+            <div class="spinner-border text-primary m-3" role="status"></div>
+        </div>
+    </div>
+    <div class="modal-content htmx-loading-hide">
+        <!-- prettier-ignore -->
+        <form id="form-card-edit" 
+          data-order-group-id="{{ order_group.id|default:'new' }}"
+          method="post" 
+          hx-post="{% url 'customer_order_group_edit_attachments' order_group.id %}" 
+          hx-indicator="#htmx-indicator-save-btn" 
+          hx-disabled-elt="button, .form-control, .form-select"
+          hx-swap="outerHTML"
+          hx-target="#edit-attachments-modal">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title">Add Attachments</h5>
+        <button type="button" class="btn btn-success" id="add-attachments"><i class="fas fa-plus fa-sm text-white"></i></button>
+      </div>
+      <div class="modal-body">
+        <!-- Form -->
+        <div class="d-flex align-items-center mb-3">
+            <h3 class="text-dark mb-1 me-3">Add Attachments</h3>
+            <button type="button" class="btn btn-success" id="add-attachments"><i class="fas fa-plus fa-sm text-white"></i></button>
+        </div>
+        {% if attachments_formset.non_form_errors %}
+            {% for error in attachments_formset.non_form_errors %}
+                    <small class="text-danger">{{ error }}</small>
+            {% endfor %}
+        {% endif %}
+        <hr />
+        {{ attachments_formset.management_form }}
+        <!-- Hidden template for new forms -->
+        <div id="empty-form-template" style="display: none;">
+            <div class="attachment-form">
+                    {{ attachments_formset.empty_form }}
+                        <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
+                    <hr />
+            </div>
+        </div>
+        <div id="Attachments-formset">
+            {% for inline in attachments_formset %}
+                <div class="attachment-form">
+                    {{ inline }}
+                        <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
+                    <hr />
+                </div>
+            {% endfor %}
+        </div>
+        <!--  End Form -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-success" name="edit_card">
+          Save
+          <span id="htmx-indicator-save-btn" class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        </button>
+      </div>
+    </form>
+    </div>
+</div>

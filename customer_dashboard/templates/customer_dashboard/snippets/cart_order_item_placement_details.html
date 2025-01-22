@@ -1,6 +1,0 @@
-{% load static %}
-
-<button class="btn btn-link edit-po-id ps-2 p-0" id="btn-po-{{ order_group.id }}" type="button" hx-target="closest p" hx-get="{% url 'customer_cart_po_edit' order_group_id=order_group.id %}">
-    <!-- prettier ignore -->
-    <i class="fal fa-map-marker-alt" style="color: #007bff;" id="edit-po-id-icon-{{ order_group.id }}"></i>
-</button>
