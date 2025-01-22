@@ -105,7 +105,12 @@ class BillingUtils:
 
             # Create Stripe Invoice Line Item for each OrderItem that
             # doesn't have a StripeInvoiceLineItemId.
-            non_zero_order_items = order.order_items.exclude(customer_rate=0)
+            non_zero_order_items = [
+                order_item
+                for order_item in order.order_items
+                if order_item.customer_rate != 0
+                and not order_item.stripe_invoice_line_item_id
+            ]
 
             order_item: OrderItem
             order_item_ids = []

@@ -36,6 +36,7 @@ from api.models.order.order_group_material_waste_type import OrderGroupMaterialW
 from api.models.order.order_group_service import OrderGroupService
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from api.utils.utils import decrypt_string
+from asset_management.models.asset import Asset
 from billing.scheduled_jobs.attempt_charge_for_past_due_invoices import (
     attempt_charge_for_past_due_invoices,
 )
@@ -43,11 +44,9 @@ from billing.scheduled_jobs.ensure_invoice_settings_default_payment_method impor
     ensure_invoice_settings_default_payment_method,
 )
 from billing.utils.billing import BillingUtils
+from common.models.choices.user_type import UserType
 from notifications.utils import internal_email
 from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
-from common.models.choices.user_type import UserType
-
-from asset_management.models.asset import Asset
 
 from .models import (
     AddOn,
@@ -111,9 +110,9 @@ from .serializers import (
     DisposalLocationWasteTypeSerializer,
     IndustrySerializer,
     MainProductAddOnSerializer,
+    MainProductCategoryGroupSerializer,
     MainProductCategoryInfoSerializer,
     MainProductCategorySerializer,
-    MainProductCategoryGroupSerializer,
     MainProductInfoSerializer,
     MainProductSerializer,
     MainProductServiceRecurringFrequencySerializer,
@@ -1447,85 +1446,20 @@ def asset_link(request):
 
 
 def test3(request):
-    # Move the "rate" field to "flat_rate_price" for all OrderGroupServices.
-    # order_group_services = OrderGroupService.objects.all()
+    order = Order.objects.get(id="8362a2e7-bc0c-4388-8a37-777451e65845")
 
-    # order_group_service: OrderGroupService
-    # for order_group_service in order_group_services:
-    #     print("=================")
-    #     print(order_group_service.id)
-    #     if (
-    #         order_group_service.flat_rate_price is None
-    #         and order_group_service.price_per_mile is None
-    #     ):
-    #         try:
-    #             print("Updating order_group_service: {}".format(order_group_service.id))
-    #             order_group_service.flat_rate_price = order_group_service.rate
-    #             order_group_service.save()
-    #             print(
-    #                 "Updated/saved order_group_service: {}".format(
-    #                     order_group_service.id
-    #                 )
-    #             )
-    #         except Exception as error:
-    #             print("An exception occurred: {}".format(error))
+    invoice = BillingUtils.get_or_create_invoice_for_user_address(
+        order.order_group.user_address,
+        is_cart=False,
+        is_booking=False,
+    )
 
-    # # For all OrderGroupMaterials, populate the OrderGroupMaterialWasteTypes.
-    # order_group_materials = OrderGroupMaterial.objects.all()
+    print("invoice: ", invoice)
 
-    # order_group_material: OrderGroupMaterial
-    # for order_group_material in order_group_materials:
-    #     print("=================")
-    #     print(order_group_material.id)
-    #     # Get the SellerProductSellerLocation.
-    #     seller_product_seller_location = (
-    #         order_group_material.order_group.seller_product_seller_location
-    #     )
-
-    #     print(
-    #         "SellerProductSellerLocation: {}".format(seller_product_seller_location.id)
-    #     )
-
-    #     # Get the SellerProductSellerLocationMaterial.
-    #     seller_product_seller_location_material = (
-    #         seller_product_seller_location.material
-    #         if hasattr(seller_product_seller_location, "material")
-    #         else None
-    #     )
-
-    #     print(
-    #         "SellerProductSellerLocationMaterial: {}".format(
-    #             seller_product_seller_location_material
-    #         )
-    #     )
-
-    #     # For each SellerProductSellerLocationMaterialWasteType,
-    #     # create an OrderGroupMaterialWasteType.
-    #     if seller_product_seller_location_material:
-    #         print("Creating OrderGroupMaterialWasteTypes.")
-    #         for (
-    #             material_waste_type
-    #         ) in seller_product_seller_location_material.waste_types.all():
-    #             print(
-    #                 f"Creating OrderGroupMaterialWasteType for {material_waste_type.id}"
-    #             )
-    #             # Only create if a OrderGroupMaterialWasteType does not already exist
-    #             # for this OrderGroupMaterial and MainProductWasteType.
-    #             if not OrderGroupMaterialWasteType.objects.filter(
-    #                 order_group_material=order_group_material,
-    #                 main_product_waste_type=material_waste_type.main_product_waste_type,
-    #             ).exists():
-    #                 OrderGroupMaterialWasteType.objects.create(
-    #                     order_group_material=order_group_material,
-    #                     main_product_waste_type=material_waste_type.main_product_waste_type,
-    #                     price_per_ton=material_waste_type.price_per_ton,
-    #                     tonnage_included=material_waste_type.tonnage_included,
-    #                 )
-    #                 print(
-    #                     f"Created new OrderGroupMaterialWasteType for {material_waste_type.id}"
-    #                 )
-    #     else:
-    #         print("No SellerProductSellerLocationMaterial found.")
+    BillingUtils.create_invoice_items_for_order(
+        invoice=invoice,
+        order=order,
+    )
 
     return HttpResponse(status=200)
 
