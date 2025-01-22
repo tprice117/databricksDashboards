@@ -31,20 +31,23 @@ Customer First Order Dashboard
         <thead>
             <tr>
                 <th>User Group ID</th>
+                <th>First Order ID</th>
                 <th>User Group Name</th>
                 <th>Account Owner</th>
                 <th>First Order Date</th>
-                <th>First Order ID</th>
+                <th>User Name</th>
             </tr>
         </thead>
         <tbody>
             {% for group in user_groups %}
             <tr class="order-row">
                 <td>{{ group.id }}</td>
+                <td>{{ group.first_order_id }}</td>
                 <td>{{ group.name }}</td>
                 <td>{{ group.account_owner_first_name }} {{ group.account_owner_last_name }}</td>
                 <td>{{ group.first_order_date }}</td>
-                <td>{{ group.first_order_id }}</td>
+                <td>{{ group.user_first_name }} {{ group.user_last_name }}</td>
+
             </tr>
             {% endfor %}
         </tbody>

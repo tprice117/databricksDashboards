@@ -982,7 +982,9 @@ def customer_first_order(request):
             Order.objects.filter(
                 order_group__user_address__user_group=OuterRef('pk')
             ).order_by('end_date').values('id')[:1]
-        )
+        ),
+        user_first_name=F("user_addresses__order_groups__orders__order_group__user__first_name"),
+        user_last_name=F("user_addresses__order_groups__orders__order_group__user__last_name")
     ).filter(first_order_year=2025).distinct()
     context["user_groups"] = user_groups
     return render(request, "dashboards/customer_first_order.html", context)
