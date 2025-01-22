@@ -1,13 +1,15 @@
 import calendar
 import datetime
 import logging
-from typing import List, Iterable
+import re
+from typing import Iterable, List
 
 import stripe
 from django.conf import settings
 from django.utils import timezone
 
 from api.models import Order, OrderLineItem, UserAddress, UserGroup
+from api.models.order.common.order_item import OrderItem
 from common.utils.get_last_day_of_previous_month import get_last_day_of_previous_month
 from common.utils.stripe.stripe_utils import StripeUtils
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
@@ -100,6 +102,50 @@ class BillingUtils:
                 # Update OrderLineItem with StripeInvoiceLineItemId.
                 order_line_item.stripe_invoice_line_item_id = stripe_invoice_item.id
                 order_line_item.save()
+
+            # Create Stripe Invoice Line Item for each OrderItem that
+            # doesn't have a StripeInvoiceLineItemId.
+            non_zero_order_items = order.order_items.exclude(customer_rate=0)
+
+            order_item: OrderItem
+            order_item_ids = []
+            for order_item in non_zero_order_items:
+                order_item_ids.append(str(order_item.id))
+
+                # Get the "human readable" name of the model.
+                model_name = type(order_item).__name__
+                human_readable_name = " ".join(
+                    word for word in re.findall(r"[A-Z][a-z]*", model_name)
+                )
+                human_readable_name = human_readable_name.replace("Order", "")
+
+                # Create Stripe Invoice Line Item.
+                description = f"{human_readable_name}"  # {f' | {order_item.description}' if order_item.description else ''}"
+
+                stripe_invoice_item = stripe.InvoiceItem.create(
+                    customer=order.order_group.user_address.stripe_customer_id,
+                    invoice=invoice.id,
+                    description=description,
+                    quantity=round(order_item.quantity),
+                    unit_amount=round(100 * order_item.customer_rate),
+                    tax_behavior="exclusive",
+                    tax_code=order_item.stripe_tax_code_id,
+                    currency="usd",
+                    period={
+                        "start": calendar.timegm(order.start_date.timetuple()),
+                        "end": calendar.timegm(order.end_date.timetuple()),
+                    },
+                    metadata={
+                        "order_line_item_id": order_item.id,
+                        "main_product_name": order.order_group.seller_product_seller_location.seller_product.product.main_product.name,
+                        "order_start_date": order.start_date.strftime("%a, %b %-d"),
+                        "order_end_date": order.end_date.strftime("%a, %b %-d"),
+                    },
+                )
+
+                # Update OrderLineItem with StripeInvoiceLineItemId.
+                order_item.stripe_invoice_line_item_id = stripe_invoice_item.id
+                order_item.save()
 
             # Get all Stripe Invoice Items for this Stripe Invoice.
             stripe_invoice_line_items = StripeUtils.InvoiceLineItem.get_all_for_invoice(
