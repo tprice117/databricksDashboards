@@ -1185,6 +1185,7 @@ def customer_cart_date_edit(request, order_id):
             "order": order,
             "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
             "subtotal": customer_price,
+            "rpp": order.get_rpp_fee(),
             "tax": customer_price_with_tax - customer_price,
             "total": customer_price_with_tax,
         }

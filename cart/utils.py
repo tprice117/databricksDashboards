@@ -778,6 +778,7 @@ class CartUtils:
                             "main_product": MainProduct,
                             "order": Order,
                             "subtotal": Decimal,
+                            "rpp": Decimal,
                             "tax": Decimal,
                             "total": Decimal,
                         },
@@ -843,6 +844,7 @@ class CartUtils:
                 # Deprecated, use subtotal, remove after next app version
                 "customer_price": customer_price,
                 "subtotal": customer_price,
+                "rpp": order.get_rpp_fee(),
                 "tax": customer_price_with_tax - customer_price,
                 "total": customer_price_with_tax,
             }
