@@ -6,6 +6,15 @@
 {% endblock %}
 {% block stylesheet %}
     <style>
+        .sw-wide-button {
+            width: 450px;
+        }
+        /* If document width less than 300, set width to 100% */
+        @media (max-width: 500px) {
+            .sw-wide-button {
+                width: 100%;
+            }
+        }
         .htmx-swapping {
             opacity: 0;
             transition: opacity 1s ease-out;
@@ -216,6 +225,41 @@
                   }
               }
             });
+      }
+      async function showPlacementDetailsModal(order_group_id, placement_details) {
+        let inputValue = placement_details;
+          console.log("showPlacementDetailsModal", order_group_id, placement_details);
+          const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+              confirmButton: "btn btn-primary sw-wide-button",
+            },
+            buttonsStyling: false
+          });
+          const { value: formValues } = await swalWithBootstrapButtons.fire({
+            title: "",
+            html: `
+              <div class="mb-3 text-start">
+                <label for="booking-placement-details" class="form-label">Placement Details</label>
+                <textarea id="booking-placement-details" class="form-control" rows="3"></textarea>
+              </div>
+              <div class="form-check form-switch text-start">
+                <input id="booking-is-pickup" class="form-check-input" type="checkbox" role="switch">
+                <label class="form-check-label fw-bold" for="booking-is-pickup">Deliver to the Street</label>
+              </div>
+            `,
+            focusConfirm: false,
+            confirmButtonText: "Save",
+            confirmButtonColor: "#018381",
+            preConfirm: () => {
+              return [
+                document.getElementById("booking-placement-details").value,
+                document.getElementById("booking-is-pickup").checked
+              ];
+            }
+          });
+          if (formValues) {
+            Swal.fire(JSON.stringify(formValues));
+          }
       }
     </script>
 {% endblock %}
