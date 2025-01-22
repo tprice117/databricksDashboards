@@ -259,7 +259,7 @@ class Order(BaseModel):
         child_models = []
         for model in apps.get_models():
             if issubclass(model, OrderItem) and hasattr(model, "order"):
-                child_models.extend(model.objects.filter(parent=self))
+                child_models.extend(model.objects.filter(order=self))
         return child_models
 
     def update_status_on_credit_application_approved(self):

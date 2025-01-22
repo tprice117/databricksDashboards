@@ -15,10 +15,7 @@ class OrderItem(BaseModel):
         "api.Order",
         models.PROTECT,
     )
-    quantity = models.DecimalField(
-        max_digits=18,
-        decimal_places=4,
-    )
+    quantity = models.IntegerField()
     customer_rate = models.DecimalField(
         max_digits=18,
         decimal_places=2,
@@ -81,7 +78,7 @@ class OrderItem(BaseModel):
         This is the amount the platform takes from the transaction in dollars.
         """
         return (
-            self.customer_rate - self.seller_rate
+            (self.customer_rate - self.seller_rate) * self.quantity
             if self.customer_rate and self.seller_rate
             else None
         )

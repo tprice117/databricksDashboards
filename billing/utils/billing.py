@@ -105,9 +105,11 @@ class BillingUtils:
 
             # Create Stripe Invoice Line Item for each OrderItem that
             # doesn't have a StripeInvoiceLineItemId.
+            non_zero_order_items = order.order_items.exclude(customer_rate=0)
+
             order_item: OrderItem
             order_item_ids = []
-            for order_item in order.order_items.all():
+            for order_item in non_zero_order_items:
                 order_item_ids.append(str(order_item.id))
 
                 # Get the "human readable" name of the model.
@@ -118,16 +120,16 @@ class BillingUtils:
                 human_readable_name = human_readable_name.replace("Order", "")
 
                 # Create Stripe Invoice Line Item.
-                description = f"{human_readable_name} | {order_item.description}"
+                description = f"{human_readable_name}"  # {f' | {order_item.description}' if order_item.description else ''}"
 
                 stripe_invoice_item = stripe.InvoiceItem.create(
                     customer=order.order_group.user_address.stripe_customer_id,
                     invoice=invoice.id,
                     description=description,
-                    quantity=order_item.quantity,
+                    quantity=round(order_item.quantity),
                     unit_amount=round(100 * order_item.customer_rate),
                     tax_behavior="exclusive",
-                    tax_code=order_item.order_line_item_type.stripe_tax_code_id,
+                    tax_code=order_item.stripe_tax_code_id,
                     currency="usd",
                     period={
                         "start": calendar.timegm(order.start_date.timetuple()),
