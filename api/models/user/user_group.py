@@ -194,12 +194,16 @@ class UserGroup(BaseModel):
             logger.error(f"UserGroup.intercom_sync: [{e}]", exc_info=e)
 
     def credit_limit_used(self):
-        order_line_items = OrderLineItem.objects.filter(
-            order__order_group__user_address__user_group=self, paid=False
+        order_line_items = (
+            OrderLineItem.objects.filter(
+                order__order_group__user_address__user_group=self, paid=False
+            )
+            .exclude(stripe_invoice_line_item_id="BYPASS")
+            .exclude(order__status=Order.Status.CANCELLED)
         )
         credit_used = 0
         for order_line_item in order_line_items:
-            credit_used += order_line_item.customer_price()
+            credit_used += order_line_item.customer_price_with_tax()
         return credit_used
 
     def lifetime_spend(self):
@@ -282,9 +286,9 @@ class CompanyUtils:
 
         return: Django UserGroup queryset
         """
-        assert not (
-            owner_id and missing_owner
-        ), "Cannot filter by both owner_id and missing_owner"
+        assert not (owner_id and missing_owner), (
+            "Cannot filter by both owner_id and missing_owner"
+        )
         cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
         user_groups = UserGroup.objects.filter(seller__isnull=True)
         if owner_id:
@@ -312,9 +316,9 @@ class CompanyUtils:
 
         return: List of UserGroup objects
         """
-        assert not (
-            owner_id and missing_owner
-        ), "Cannot filter by both owner_id and missing_owner"
+        assert not (owner_id and missing_owner), (
+            "Cannot filter by both owner_id and missing_owner"
+        )
         cutoff_date = datetime.date.today() - datetime.timedelta(days=30)
         # Active Companies is user group on an order within date range (or within last 30 days if no range)
         orders = Order.objects.filter(end_date__gte=cutoff_date)
@@ -370,9 +374,9 @@ class CompanyUtils:
         return: List of UserGroup objects
         """
         # import time
-        assert not (
-            owner_id and missing_owner
-        ), "Cannot filter by both owner_id and missing_owner"
+        assert not (owner_id and missing_owner), (
+            "Cannot filter by both owner_id and missing_owner"
+        )
         if old_date is None:
             old_date = datetime.date.today() - datetime.timedelta(days=60)
         if new_date is None:
