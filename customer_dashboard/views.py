@@ -897,7 +897,9 @@ def new_order_3(request, product_id):
     # TODO: Add a button that allows adding an address.
     # The button could open a modal that allows adding an address.
     main_product = MainProduct.objects.filter(id=product_id)
-    main_product = main_product.select_related("main_product_category")
+    main_product = main_product.select_related(
+        "main_product_category"
+    ).prefetch_related("images", "related_products")
     main_product = main_product.first()
     context["main_product"] = main_product
     product_waste_types = MainProductWasteType.objects.filter(
@@ -949,7 +951,6 @@ def new_order_3(request, product_id):
             "product_waste_types": request.POST.getlist("product_waste_types"),
             "related_products": request.POST.getlist("related_products"),
             "quantity": request.POST.get("quantity"),
-            "project_id": request.POST.get("project_id"),
         }
         if request.POST.get("times_per_week"):
             query_params["times_per_week"] = request.POST.get("times_per_week")
