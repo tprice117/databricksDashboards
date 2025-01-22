@@ -30,13 +30,14 @@ from django.db.models.functions import (
     TruncDay,
     Abs,
 )
+from django.db.models import Min
 from django.db.models import DateField
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import now
 
-from api.models import Order, Payout
+from api.models import Order, Payout, UserGroup
 from api_proxy import settings
 
 logger = logging.getLogger(__name__)
@@ -969,6 +970,22 @@ def auto_renewal_list_dashboard(request):
 
     context["orders"] = orders
     return render(request, "dashboards/auto_renewal_list_dashboard.html", context)
+
+def customer_first_order(request):
+    context = {}
+    user_groups = UserGroup.objects.annotate(
+        first_order_year=Min("user_addresses__order_groups__orders__end_date__year"),
+        account_owner_first_name=F("account_owner__first_name"),
+        account_owner_last_name=F("account_owner__last_name"),
+        first_order_date=Min("user_addresses__order_groups__orders__end_date"),
+        first_order_id=Subquery(
+            Order.objects.filter(
+                order_group__user_address__user_group=OuterRef('pk')
+            ).order_by('end_date').values('id')[:1]
+        )
+    ).filter(first_order_year=2025).distinct()
+    context["user_groups"] = user_groups
+    return render(request, "dashboards/customer_first_order.html", context)
 
 
 @login_required(login_url="/admin/login/")

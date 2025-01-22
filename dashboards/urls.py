@@ -130,4 +130,9 @@ urlpatterns = [
         export_time_to_acceptance_csv,
         name="export_time_to_acceptance_csv",
     ),
+    path(
+        "customer-first-order/",
+        views.customer_first_order,
+        name="customer_first_order",
+    ),
 ]
