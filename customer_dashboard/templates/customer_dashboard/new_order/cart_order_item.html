@@ -155,11 +155,11 @@
                                 {% endif %}
                             </div>
                             <div class="col-auto">
-                                <p class="text-end mb-1 order-descriptor">Est. Subtotal: ${{ item.subtotal|floatformat:2|intcomma }}</p>
-                                <p class="text-end mb-1">Delivery: ${{ order.order_group.delivery_fee|floatformat:2|intcomma }}</p>
-                                <p class="text-end mb-1">Removal: ${{ order.order_group.removal_fee|floatformat:2|intcomma }}</p>
-                                <p class="text-end mb-1">Rental Protection Plan: ${{ item.tax|floatformat:2|intcomma }}</p>
-                                <p class="text-end mb-1">Est. Tax: ${{ item.tax|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1 order-descriptor pe-3">Est. Subtotal: ${{ item.subtotal|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1 order-descriptor fw-light pe-3">Delivery: ${{ order.order_group.delivery_fee|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1 order-descriptor fw-light pe-3">Removal: ${{ order.order_group.removal_fee|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1 order-descriptor fw-light pe-3">Rental Protection Plan: ${{ item.tax|floatformat:2|intcomma }}</p>
+                                <p class="text-end mb-1 order-descriptor fw-light pe-3">Est. Tax: ${{ item.tax|floatformat:2|intcomma }}</p>
                                 <div class="total-price-badge">
                                     <p class="total-price mb-0">Estimated Total ${{ item.total|floatformat:2|intcomma }}</p>
                                 </div>
