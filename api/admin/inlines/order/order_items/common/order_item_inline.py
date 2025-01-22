@@ -50,15 +50,6 @@ class OrderItemInline(BaseModelTabularInline):
         "paid",
     ] + BaseModelTabularInline.readonly_fields
 
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
     def customer_price(self, instance):
         """Override to format as currency with 2 decimal places."""
         return f"${instance.customer_price:.2f}" if instance.customer_price else None
