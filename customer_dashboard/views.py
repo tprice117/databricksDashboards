@@ -1656,6 +1656,8 @@ def new_order_5(request):
             # This code takes the longest to execute.
             context.update(CartUtils.get_cart_orders(orders))
 
+            # get the supplier addresses
+            context["seller_addresses"] = []
             # Get the seller price for each order and add it to the context.
             for bucket in context["cart"]:
                 bucket["ids"] = [str(item["order"].id) for item in bucket["items"]]
@@ -1663,16 +1665,60 @@ def new_order_5(request):
                 # context["cart"][addr]["show_quote"] = True
                 checkout_order = None
                 for item in bucket["items"]:
+                    item["price"] = item["order"].customer_price()
                     order = item["order"]
                     if order.checkout_order:
                         checkout_order = order.checkout_order
                     supplier_total += order.seller_price()
+                    item["seller_address"] = (
+                        order.order_group.seller_product_seller_location.seller_location
+                    )
+                    if item["seller_address"] not in context["seller_addresses"]:
+                        context["seller_addresses"].append(item["seller_address"])
                 if (
                     checkout_order
                     and supplier_total == checkout_order.seller_price
                     and checkout_order.quote_expiration
                 ):
                     bucket["quote_sent_on"] = checkout_order.updated_on
+        # show the bundle button
+        # only can bundle Type.DELIVERY and rental_multi_step
+        # make sure to only give bundle option for items with >2 per user_address, seller_location combo
+        for bucket in context["cart"]:
+            # all the seller_locations in this bucket
+            # seller_locations a dict: keys default to 0
+            class MyIntDict(dict):
+                def __missing__(self, key):
+                    return 0  # default value
+
+            seller_locations = MyIntDict()
+            # find seller locations with items that can be bundled
+            for item in bucket["items"]:
+                # if hasattr(item["order"].order_group, "rental_multi_step"):
+                if item["order"].order_type == Order.Type.DELIVERY:
+                    seller_locations[
+                        item[
+                            "order"
+                        ].order_group.seller_product_seller_location.seller_location.id
+                    ] += 1
+            # remove seller_locations with less than 2 items to be bundled
+            seller_locations = {k: v for k, v in seller_locations.items() if v >= 2}
+            # items that can be bundled if they are from a location with 2 or more
+            countRentalMultiStep = 0
+            for item in bucket["items"]:
+                # if hasattr(item["order"].order_group, "rental_multi_step"):
+                if item["order"].order_type == Order.Type.DELIVERY:
+                    if (
+                        item[
+                            "order"
+                        ].order_group.seller_product_seller_location.seller_location.id
+                        in seller_locations
+                    ):
+                        item["canBundle"] = True
+                        countRentalMultiStep += 1
+            # whether to even to show the bundle button
+            if countRentalMultiStep >= 2:
+                bucket["show_bundle_button"] = True
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
     context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"

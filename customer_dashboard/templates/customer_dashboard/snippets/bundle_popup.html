@@ -1,0 +1,313 @@
+{% load static %}
+{% load tz %}
+{% load humanize %}
+{% block stylesheet %}
+  <style>
+    .form-check-input:checked {
+      background-color: var(--bs-danger);
+    }
+    
+    a, a:active {
+      color: #333;
+      text-decoration: none;
+    }
+    
+    a:hover {
+      color: #999;
+    }
+    
+    .arrow-steps .step {
+      font-size: 14px;
+      text-align: center;
+      color: #666;
+      cursor: default;
+      margin: 2px;
+      padding: 10px 10px 10px 30px;
+      min-width: 150px;
+      float: left;
+      position: relative;
+      background-color: #a8bfbf;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none; 
+      transition: background-color 0.2s ease;
+    }
+    
+    .arrow-steps .step.done {
+      background-color: #0a888a;
+      color: #ffffff;
+    }
+
+    .arrow-steps .step.done:after {
+      border-left: 15px solid #0a888a;
+    }
+    
+    .arrow-steps .step:after,
+    .arrow-steps .step:before {
+      content: " ";
+      position: absolute;
+      top: 0;
+      right: -14px;
+      width: 0;
+      height: 0;
+      border-top: 20px solid transparent;
+      border-bottom: 20px solid transparent;
+      border-left: 15px solid #a8bfbf;	
+      z-index: 2;
+      transition: border-color 0.2s ease;
+    }
+    
+    .arrow-steps .step:before {
+      right: auto;
+      left: 0;
+      border-left: 15px solid #ffffff;	
+      z-index: 0;
+    }
+    
+    .arrow-steps .step:first-child:before {
+      border: none;
+    }
+    
+    .arrow-steps .step:first-child {
+      border-top-left-radius: 4px;
+      border-bottom-left-radius: 4px;
+    }
+    
+    .arrow-steps .step span {
+      position: relative;
+    }
+    
+    .arrow-steps .step span:before {
+      opacity: 0;
+      content: "✔";
+      position: absolute;
+      top: -2px;
+      left: -20px;
+    }
+    
+    .arrow-steps .step.done span:before {
+      opacity: 1;
+      -webkit-transition: opacity 0.3s ease 0.5s;
+      -moz-transition: opacity 0.3s ease 0.5s;
+      -ms-transition: opacity 0.3s ease 0.5s;
+      transition: opacity 0.3s ease 0.5s;
+    }
+    
+    .arrow-steps .step.current {
+      color: #fff;
+      background-color: #4fd1cd;
+    }
+    
+    .arrow-steps .step.current:after {
+      border-left: 15px solid #4fd1cd;	
+    }
+  </style>
+{% endblock %}
+{% block javascript %}
+  <script>
+    jQuery( document ).ready(function() {
+      // show the address that goes with this bundle button
+      var bundleButtons = jQuery("[id^='bundle-button-']")
+      var cartAddresses = jQuery("[id^='cart-address-']")
+      var bundleListHeader = jQuery(".bundle-list-header")
+      
+      bundleButtons.each(function(index, button) {
+        $(button).on("click", function() {
+          cartAddresses.hide();
+          const bundleId = $(button).attr("id").split("-")[2];
+          cartAddresses.filter("#cart-address-" + bundleId).show();
+        })
+      })
+		
+      var back =jQuery(".prev");
+      var	next = jQuery(".next");
+      var	steps = jQuery(".step");
+      
+      next.bind("click", function() { 
+        // if this is the last step, show the checkout button
+        if (jQuery(steps[steps.length-3]).hasClass('done')) {
+          next.text("Checkout");
+        }
+        // if the last step is done, show the last step is done
+        if (jQuery(steps[steps.length - 2]).hasClass('done')) {
+          jQuery(steps[steps.length-1]).removeClass('current').addClass('done');
+          next.unbind("click");
+          back.unbind("click");
+          // unfinished
+        }
+        back.removeClass('disabled');
+        // show the correct content
+        const oldClass = ".step" + (jQuery(".current").attr("id")) + "-body";
+        const newClass = ".step" + (parseInt(jQuery(".current").attr("id"))+1) + "-body";
+        jQuery(oldClass).hide()
+        jQuery(newClass).show()
+        jQuery.each( steps, function( i ) {
+          if (!jQuery(steps[i]).hasClass('current') && !jQuery(steps[i]).hasClass('done')) {
+            jQuery(steps[i]).addClass('current');
+            jQuery(steps[i - 1]).removeClass('current').addClass('done');
+            return false;
+          }
+        })
+      });
+      back.bind("click", function() {
+        next.text("Next");
+        if (!jQuery(steps[1]).hasClass('done')) {
+          back.addClass('disabled');
+        }
+        // show the correct content
+        const oldClass = ".step" + (jQuery(".current").attr("id")) + "-body";
+        const newClass = ".step" + (parseInt(jQuery(".current").attr("id"))-1) + "-body";
+        jQuery(oldClass).hide()
+        jQuery(newClass).show()
+        jQuery.each( steps, function( i ) {
+          if (jQuery(steps[i]).hasClass('done') && jQuery(steps[i + 1]).hasClass('current')) {
+            jQuery(steps[i + 1]).removeClass('current');
+            jQuery(steps[i]).removeClass('done').addClass('current');
+            return false;
+          }
+        })
+      });
+    })
+  </script>
+{% endblock %}
+{% block modals %}
+  <div class="modal fade" role="dialog" tabindex="-1" id="bundle-orders-modal" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
+      <div class="modal-dialog modal-lg modal-fullscreen-lg-down modal-dialog-centered" role="document">
+          <div class="modal-content">
+              <div class="modal-header">
+                <div class="col">
+                  <div class="row">
+                    <div class="col" style="display: flex; justify-content: space-between;">
+                      <h4 class="modal-title">Bundle Items</h4>
+                      <button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col">
+                      <div class="arrow-steps">
+                        <div class="step current" id="1"> <span>Select Products</span> </div>
+                        <div class="step" id="2"> <span>Set Pricing</span> </div>
+                        <div class="step" id="3"> <span>Confirm Bundle</span> </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col" style="margin-top: 10px;">
+                    <div class="nav" style="display: flex; justify-content: space-between;">
+                      <a href="#" class="prev btn btn-primary disabled" role="button">Previous</a>
+                      <a href="#" class="next btn btn-primary" role="button">Next</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-body">
+                <div class="step1-body">
+                  {% for cart_address in cart %}
+                    <div id="cart-address-{{forloop.counter}}">
+                      <p class="bundle-list-header">Order in the Cart for: {{ cart_address.address }}</p>
+                      <div class="card" style="background: var(--bs-card-cap-bg);">
+                          <div class="card-body">
+                              <div class="row">
+                                  <div class="col">
+                                      <div class="accordion" role="tablist" id="bundle-results">
+                                        {% for seller_address in seller_addresses %}
+                                          <div class="accordion-item">
+                                            {{cart_address.seller_addresses}}
+                                            <h2 class="accordion-header" role="tab">
+                                              <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#bundle-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="bundle-results .item-{{ forloop.counter }}">
+                                                <div>
+                                                  <span>
+                                                    {% if seller_address.name %}
+                                                      {{ seller_address.name }}
+                                                    {% endif %}
+                                                  </span> -
+                                                  <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
+                                                  <span id="count-{{ seller_address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
+                                                </div>
+                                                <div class="ms-auto align-items-end">
+                                                  {% if user.is_staff %}
+                                                    <span class="ms-2">
+                                                      [{% if seller_address.seller.name %}
+                                                        {{ seller_address.seller.name }}
+                                                      {% endif %}]
+                                                    </span>
+                                                  {% endif %}
+                                                </div>
+                                              </button>
+                                            </h2>
+                                            <!-- prettier-ignore -->
+                                            <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show {% else %}collapsed{% endif %}"
+                                              role="tabpanel"
+                                              data-bs-parent="#bundle-results">
+                                              <div class="accordion-body">
+                                              {% for item in cart_address.items %}
+                                                {% if item.seller_address.id == seller_address.id %}
+                                                  {% if item.canBundle %}
+                                                      <div class="row cart-item border-2 border-danger">
+                                                          <div class="col-auto my-auto">
+                                                            <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="..." style=" width: 30px; height: 30px; border-color: var(--bs-danger);">
+                                                          </div>
+                                                          <div class="col-auto">
+                                                              <img class="img-thumbnail img-fluid"
+                                                                  alt="Product image"
+                                                                  width="138"
+                                                                  height="95"
+                                                                  src="{% if item.order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del %}
+                                                                      {{ item.order.order_group.seller_product_seller_location.seller_product.product.main_product.image_del }}
+                                                                  {% elif item.order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon %}
+                                                                      {{ item.order.order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.icon.url }}
+                                                                  {% else %}
+                                                                      {% static 'customer_dashboard/img/logo.png' %}
+                                                                  {% endif %}" />
+                                                          </div>
+                                                          <div class="col">
+                                                              <h4>{{ item.order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
+                                                              {% if item.order.order_group.end_date %}
+                                                                  <p class="mb-1">{{ item.order.order_group.start_date }} to {{ item.order.order_group.end_date }}</p>
+                                                              {% else %}
+                                                                  {% if item.order.order_group.service_recurring_frequency %}
+                                                                      <p class="mb-1">Subscription starts on {{ item.order.order_group.start_date }} and recurring {{ item.order.order_group.service_recurring_frequency.name|lower }}</p>
+                                                                  {% else %}
+                                                                      <p class="mb-1">Subscription starts on {{ item.order.order_group.start_date }}</p>
+                                                                  {% endif %}
+                                                              {% endif %}
+                                                              <p class="mb-1">Service date: {{ item.order.end_date }}</p>
+                                                              <p class="mb-1">Order Type: {{ item.order.order_type }}</p>
+                                                              {% if user.is_staff %}
+                                                                  <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
+                                                              {% endif %}
+                                                          </div>
+                                                          <div class="col-auto">
+                                                              <p class="text-end">${{ item.price|floatformat:2|intcomma }}</p>
+                                                          </div>
+                                                      </div>
+                                                      {% if not forloop.last %}
+                                                          <hr />
+                                                      {% endif %}
+                                                  {% endif %}
+                                                {% endif %}
+                                              {% endfor %}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        {% endfor %}
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+                <div class="step2-body" style="display: none;">
+                  this is step 2
+                </div>
+                <div class="step3-body" style="display: none;">
+                  this is step 3
+                </div>
+              </div>
+          </div>
+      </div>
+  </div>
+  <input/>
+{% endblock %}

@@ -69,7 +69,11 @@ class PaymentMethod(BaseModel):
         {"number": "******1111", "brand": "", ""expiration_month": 12, "expiration_year": 2023}
         payment_methods.api.v1.serializers.payment_method.CreditCardType
         Not imported to avoid circular import."""
-        response = DSPaymentMethods.Tokens.get_card(self.token)
+        response = None
+        try:
+            response = DSPaymentMethods.Tokens.get_card(self.token)
+        except Exception as e:
+            pass
         card = {
             "number": None,
             "brand": None,
