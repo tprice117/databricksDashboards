@@ -13,6 +13,9 @@ class Bundle(BaseModel):
     delivery_fee = models.DecimalField(
         max_digits=18, decimal_places=2, default=0, blank=True, null=True
     )
+    removal_fee = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, blank=True, null=True
+    )
 
     # class Meta:
     #     verbose_name = "Bundle"
