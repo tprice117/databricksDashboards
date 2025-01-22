@@ -83,6 +83,7 @@ class OrderGroup(BaseModel):
     bundle = models.ForeignKey(
         Bundle,
         models.SET_NULL,
+        related_name="order_groups",
         blank=True,
         null=True,
     )
