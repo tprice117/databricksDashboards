@@ -5,6 +5,8 @@ from permits.models import Permit
 
 
 class OrderPermitFee(OrderItem):
+    order_line_item_type_code = "PERMIT"
+
     permit = models.ForeignKey(
         Permit,
         on_delete=models.PROTECT,

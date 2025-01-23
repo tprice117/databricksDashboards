@@ -193,5 +193,6 @@ urlpatterns = [
     # invoice_payables URLS.
     path("invoice-payables/", include("invoice_payables.urls")),
     path("apple-app-site-association", views.apple_app_site_association),
+    path(".well-known/apple-app-site-association", views.apple_app_site_association),
     path(".well-known/assetlinks.json", views.asset_link),
 ]

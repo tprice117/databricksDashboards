@@ -25,6 +25,7 @@ from api.models.order.order_group_service import OrderGroupService
 from api.models.order.order_group_service_times_per_week import (
     OrderGroupServiceTimesPerWeek,
 )
+from api.models.order.bundle import Bundle
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.service_recurring_freqency import ServiceRecurringFrequency
 from api.models.time_slot import TimeSlot
@@ -78,6 +79,13 @@ class OrderGroup(BaseModel):
         Conversation,
         models.CASCADE,
         blank=True,
+    )
+    bundle = models.ForeignKey(
+        Bundle,
+        models.SET_NULL,
+        related_name="order_groups",
+        blank=True,
+        null=True,
     )
     waste_type = models.ForeignKey(WasteType, models.PROTECT, blank=True, null=True)
     time_slot = models.ForeignKey(TimeSlot, models.PROTECT, blank=True, null=True)
