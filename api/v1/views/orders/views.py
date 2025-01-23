@@ -62,7 +62,7 @@ class OrderRescheduleView(APIView):
             200: OrderSerializer(),
         },
     )
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
         Reschedules an Order.
         Returns:
