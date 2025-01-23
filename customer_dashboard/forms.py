@@ -435,7 +435,6 @@ class OrderGroupForm(forms.Form):
         ],
         widget=forms.RadioSelect(attrs={"class": "btn-check"}),
         help_text="Select the number of times per week",
-        initial=1,
         required=True,
     )
     # Create a choice field for shift count. Only required if the product has rental_multi_step.
