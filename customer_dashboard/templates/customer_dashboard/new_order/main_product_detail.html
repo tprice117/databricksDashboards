@@ -289,7 +289,7 @@
                 <span class="htmx-indicator" id="htmx-indicator-loading2"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
               </label>
               {% if selected_user_address %}
-                <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" value="{{ selected_user_address.name }}" hx-get="{% url 'customer_user_address_search' user_id=user.id %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
+                <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" value="{{ selected_user_address.name }}" hx-get="{% url 'customer_user_address_search' %}?user_id={{ user.id }}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
                 <!-- Hidden input field for user_address ID is added by forms.py with id=id_user_address -->
               {% else %}
                 <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" required="true" hx-get="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading2" />
@@ -366,34 +366,32 @@
             </div>
           {% endif %}
           <!-- Related Products -->
-          <div class="d-none">
-            {% if main_product.related_products.exists %}
-              <p>
-                <strong class="text-dark me-3"><i class="far fa-link me-2"></i> Related Products</strong> <small class="text-muted"><strong>Optional</strong></small>
-              </p>
-              <div class="d-flex flex-wrap mb-3 form-group">
-                {% for related_product in main_product.related_products.all %}
-                  <div class="col-xl-4 col-6 image-select align-items-center px-2">
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" name="related_products" id="related_product_{{ related_product.id }}" value="{{ related_product.id }}" />
-                      <label class="form-check-label text-center" for="related_product_{{ related_product.id }}">
-                        <img src="{% if related_product.image_del %}
-                            {{ related_product.image_del }}
-                          {% elif related_product.main_product_category.icon %}
-                            {{ related_product.main_product_category.icon.url }}
-                          {% else %}
-                            {% static 'customer_dashboard/img/logo.png' %}
-                          {% endif %}"
-                          alt="{{ related_product.name }}"
-                          class="img-fluid rounded mb-2" /><br />
-                        <strong class="text-dark">{{ related_product.name }}</strong>
-                      </label>
-                    </div>
+          {% if main_product.related_products.exists %}
+            <p>
+              <strong class="text-dark me-3"><i class="far fa-link me-2"></i> Related Products</strong> <small class="text-muted"><strong>Optional</strong></small>
+            </p>
+            <div class="d-flex flex-wrap mb-3 form-group">
+              {% for related_product in main_product.related_products.all %}
+                <div class="col-xl-4 col-6 image-select align-items-center px-2">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="related_products" id="related_product_{{ related_product.id }}" value="{{ related_product.id }}" />
+                    <label class="form-check-label text-center" for="related_product_{{ related_product.id }}">
+                      <img src="{% if related_product.image_del %}
+                          {{ related_product.image_del }}
+                        {% elif related_product.main_product_category.icon %}
+                          {{ related_product.main_product_category.icon.url }}
+                        {% else %}
+                          {% static 'customer_dashboard/img/logo.png' %}
+                        {% endif %}"
+                        alt="{{ related_product.name }}"
+                        class="img-fluid rounded mb-2" /><br />
+                      <strong class="text-dark">{{ related_product.name }}</strong>
+                    </label>
                   </div>
-                {% endfor %}
-              </div>
-            {% endif %}
-          </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
           {% if form_error %}
             <hr />
             <p class="text-danger">{{ form_error }}</p>
