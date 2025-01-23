@@ -1,31 +1,33 @@
 {% load static %}
 {% load humanize %}
 <div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4" id="category-results">
-    {% for main_product_category in main_product_categories %}
-        <div class="col-lg-4 d-flex align-items-stretch">
-            <div class="card shadow mb-4">
-                <img class="card-img-top img-fluid"
-                    src="{% if main_product_category.icon %}
-                        {{ main_product_category.icon.url }}
-                    {% else %}
-                        {% static 'customer_dashboard/img/logo.png' %}
-                    {% endif %}" />
-                <div class="card-body" style="padding-top: 0px;padding-right: 0px;padding-left: 0px;">
-                    <div class="row">
-                        <div class="col" style="padding-right: 24px;padding-left: 24px;padding-top: 12px;">
-                            <h5>{{ main_product_category.name }}</h5>
-                            {% comment %} <p style="margin-bottom: 0px;" hx-get="{% url 'customer_category_price' category_id=main_product_category.id %}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
-                                <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                            </p> {% endcomment %}
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <a class="btn btn-primary float-end" role="button" href="{% url 'customer_new_order_2' category_id=main_product_category.id %}">Build &amp; Price</a>
-                </div>
-            </div>
+  {% for main_product_category in main_product_categories %}
+    <div class="col-lg-4 d-flex align-items-stretch">
+      <div class="card shadow mb-4 w-100">
+        <div class="image-container">
+          <img class="card-img-top img-fluid"
+            src="{% if main_product_category.icon %}
+              {{ main_product_category.icon.url }}
+            {% else %}
+              {% static 'customer_dashboard/img/logo.png' %}
+            {% endif %}" />
         </div>
-    {% endfor %}
-    <div class="col"></div>
-    <div class="col"></div>
+        <div class="card-body" style="padding-top: 0px;padding-right: 0px;padding-left: 0px;">
+          <div class="row">
+            <div class="col" style="padding-right: 24px;padding-left: 24px;padding-top: 12px;">
+              <h5>{{ main_product_category.name }}</h5>
+              {% comment %} <p style="margin-bottom: 0px;" hx-get="{% url 'customer_category_price' category_id=main_product_category.id %}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
+                <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+              </p> {% endcomment %}
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <a class="btn btn-primary float-end" role="button" href="{% url 'customer_new_order_2' category_id=main_product_category.id %}">Build &amp; Price</a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+  <div class="col"></div>
+  <div class="col"></div>
 </div>
