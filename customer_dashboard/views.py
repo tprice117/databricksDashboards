@@ -39,7 +39,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET, require_http_methods
 from django.forms import inlineformset_factory
-from common.forms import HiddenDeleteFormSet
+from common.forms import HiddenDeleteFormSet, MultiTabularFormSet
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -1723,7 +1723,7 @@ def edit_attachments(request, order_group_id):
         OrderGroup,
         OrderGroupAttachment,
         form=OrderGroupAttachmentsForm,
-        formset=HiddenDeleteFormSet,
+        formset=MultiTabularFormSet,
         can_delete=True,
         extra=0,
     )

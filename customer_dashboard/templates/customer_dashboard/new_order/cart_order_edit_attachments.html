@@ -1,32 +1,20 @@
 {% load static %}
 {% block javascript %}
     <script>
-        document.body.addEventListener("htmx:afterRequest", function (evt) {
-            console.log(evt, evt.detail.target);
-            let addAttachmentButton = document.getElementById("add-attachments");
-            let formsetDiv = document.getElementById("Attachments-formset");
-            let totalForms = document.getElementById("id_attachments-TOTAL_FORMS");
-            let emptyFormTemplate = document.getElementById("empty-form-template").innerHTML;
-            let attachmentForms = document.querySelectorAll(".attachment-form");
+        function loadAttachmentsFormset() {
+            const addAttachmentButton = document.getElementById("add-attachments");
+            const formsetDiv = document.getElementById("attachments-formset");
+            const totalForms = document.getElementById("id_attachments-TOTAL_FORMS");
+            const emptyFormTemplate = document.getElementById("attachments-empty").innerHTML;
+        
+            const attachmentForms = document.querySelectorAll(".attachments-form");
             attachmentForms.forEach(function (form) {
                 const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]');
                 if (deleteInput && deleteInput.value === "on") {
                     form.style.display = "none";
                 }
-                const link = form.querySelector("[href]");
-                try {
-                    if (link) {
-                        // add an image with the link 30 x 30
-                        const image = document.createElement("img");
-                        image.src = link.href;
-                        image.style.width = "50px";
-                        image.style.height = "50px";
-                        // add the image at the end of this form just after the href
-                        const nextSibling = link.nextSibling;
-                        form.insertBefore(image, nextSibling);
-                    }
-                } catch (error) {}
             });
+        
             addAttachmentButton.addEventListener("click", function () {
                 const currentFormCount = parseInt(totalForms.value);
                 const newFormCount = currentFormCount + 1;
@@ -34,15 +22,15 @@
         
                 formsetDiv.insertAdjacentHTML("beforeend", newFormHtml);
                 totalForms.value = newFormCount;
+                const emptyText = document.querySelectorAll(".empty-text");
+                emptyText.forEach(function (text) {
+                    text.style.display = "none";
+                });
             });
-            formsetDiv.addEventListener("click", function (event) {
-                if (event.target.classList.contains("remove-location")) {
-                    const formToRemove = event.target.closest(".attachment-form");
-                    formToRemove.style.display = "none";
-                    formToRemove.querySelector('input[type="hidden"][name$="-DELETE"]').value = "on";
-                }
-            });
-            if (evt.detail.target.id.startsWith("rating")) {
+        }
+        document.body.addEventListener("htmx:afterRequest", function (evt) {
+            if (evt.detail.target.id.startsWith("edit-attachments-modal")) {
+                loadAttachmentsFormset();
             }
         });
     </script>
@@ -70,34 +58,8 @@
       </div>
       <div class="modal-body">
         <!-- Form -->
-        <div class="d-flex align-items-center mb-3">
-            <h3 class="text-dark mb-1 me-3">Add Attachments</h3>
-            <button type="button" class="btn btn-success" id="add-attachments"><i class="fas fa-plus fa-sm text-white"></i></button>
-        </div>
-        {% if attachments_formset.non_form_errors %}
-            {% for error in attachments_formset.non_form_errors %}
-                    <small class="text-danger">{{ error }}</small>
-            {% endfor %}
-        {% endif %}
-        <hr />
-        {{ attachments_formset.management_form }}
-        <!-- Hidden template for new forms -->
-        <div id="empty-form-template" style="display: none;">
-            <div class="attachment-form">
-                    {{ attachments_formset.empty_form }}
-                        <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
-                    <hr />
-            </div>
-        </div>
-        <div id="Attachments-formset">
-            {% for inline in attachments_formset %}
-                <div class="attachment-form">
-                    {{ inline }}
-                        <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
-                    <hr />
-                </div>
-            {% endfor %}
-        </div>
+        <div class="overflow-auto">{{ attachments_formset.as_table }}</div>
+        <hr>
         <!--  End Form -->
       </div>
       <div class="modal-footer">

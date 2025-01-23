@@ -191,6 +191,9 @@ class OrderGroupAttachmentsForm(forms.ModelForm):
     class Meta:
         model = OrderGroupAttachment
         fields = ["file"]
+        widgets = {
+            "file": forms.FileInput(attrs={"class": "form-control"}),
+        }
 
 
 class UserAddressForm(forms.Form):
