@@ -5,8 +5,8 @@ class OrderInsurance(OrderItem):
     order_line_item_type_code = "RPP"
 
     class Meta:
-        verbose_name = "Transaction Insurance"
-        verbose_name_plural = "Transaction Insurance"
+        verbose_name = "Transaction Protection Plan"
+        verbose_name_plural = "Transaction Protection Plans"
 
     @staticmethod
     def update_order_insurance(order):
