@@ -7,7 +7,7 @@ import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
@@ -301,22 +301,33 @@ class Order(BaseModel):
 
     @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
     def seller_price(self):
-        seller_price = sum(
+        order_line_items_total = sum(
             [
                 order_line_item.seller_payout_price()
                 for order_line_item in self.order_line_items.all()
             ]
         )
-        return round(seller_price, 2)
+
+        order_items_total = sum(
+            [order_item.seller_price or 0 for order_item in self.order_items]
+        )
+
+        return round(order_line_items_total + order_items_total, 2)
 
     @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
     def customer_price(self):
-        return sum(
+        order_line_item_total = sum(
             [
                 order_line_item.customer_price()
                 for order_line_item in self.order_line_items.all()
             ]
         )
+
+        order_item_total = sum(
+            [order_item.customer_price or 0 for order_item in self.order_items]
+        )
+
+        return round(order_line_item_total + order_item_total, 2)
 
     @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
     def customer_price_with_tax(self):
