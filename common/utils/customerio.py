@@ -87,7 +87,8 @@ def send_push(
                               This overrides the title of the transactional template. Defaults to None.
 
     Returns:
-        bool: True if the push notification was sent successfully. False otherwise.
+        (bool, string): True and delivery_id if the push notification was sent successfully.
+                        False and error message otherwise.
     """
     json_data = None
     try:
@@ -124,7 +125,8 @@ def send_push(
                 f"[{response.status_code}]-[{template_id}]: Error sending {email} [{resp_json['meta']['error']}]"
             )
             return False, resp_json["meta"]["error"]
-        return True
+        resp_json = response.json()
+        return True, resp_json["delivery_id"]
     except Exception as e:
         logger.error(
             f"customerid.send_email:[{template_id}] Error sending {email}-[{title}]-[{json_data}]-[{str(e)}]"

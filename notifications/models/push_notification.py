@@ -75,7 +75,7 @@ class PushNotification(BaseModel):
         Uses Customer IO API to send the push notification.
         """
         for push_to in self.push_notification_tos.all():
-            success, err_msg = send_push(
+            success, ret_id = send_push(
                 template_id=self.template_id,
                 email=push_to.user.email,
                 title=self.title,
@@ -84,9 +84,13 @@ class PushNotification(BaseModel):
                 image_url=self.image.url if self.image else None,
                 link=self.link,
             )
-            if not success:
+            if success:
                 self.push_notification_tos.filter(id=push_to.id).update(
-                    send_error=err_msg
+                    delivery_id=ret_id
+                )
+            else:
+                self.push_notification_tos.filter(id=push_to.id).update(
+                    send_error=ret_id
                 )
         self.sent_at = timezone.now()
         self.save()
