@@ -37,6 +37,7 @@ from notifications.scheduled_jobs.send_emails import (
     send_emails,
     send_seller_order_emails,
 )
+from notifications.scheduled_jobs.send_push_notifications import send_push_notifications
 from payment_methods.scheduled_jobs.sync_stripe_payment_methods import (
     sync_stripe_payment_methods,
 )
@@ -76,6 +77,16 @@ class Command(BaseCommand):
             send_emails,
             trigger=CronTrigger(minute="*/5"),
             id="send_emails",
+            max_instances=20,
+            jitter=120,
+            replace_existing=True,
+        )
+
+        # Send Push Notifications. Run every 5 minutes.
+        scheduler.add_job(
+            send_push_notifications,
+            trigger=CronTrigger(minute="*/5"),
+            id="send_push_notifications",
             max_instances=20,
             jitter=120,
             replace_existing=True,
