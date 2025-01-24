@@ -1,0 +1,259 @@
+{% load static %}
+{% load humanize %}
+{% load sales_stream_tags %}
+{% if price_breakdown.rental_breakdown is None %}
+  <div class="col"></div>
+{% endif %}
+<div style="{% if price_breakdown.rental_breakdown %}min-width: 790px;{% endif %}">
+  <h3>{{ listing.seller_product.product.main_product.name }}</h3>
+  {% if price_breakdown.rental_breakdown %}
+    <div class="row bg-white">
+      {% for key, value in price_breakdown.rental_breakdown.items %}
+        <div class="col-4 border">
+          <div class="row">
+            <div class="col-8">Base rate:</div>
+            <div class="col-4">
+              {% if value.base %}
+                <span class="price-item" data-price="{{ value.base }}">{{ value.base|currency }}</span>
+              {% else %}
+                Not Set
+              {% endif %}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-8">Fuel &amp; Fees ({{ price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%):</div>
+            <div class="col-4">
+              <span class="price-item" data-price="{{ value.fuel_fees }}">{{ value.fuel_fees|currency }}</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-8">RPP (15%):</div>
+            <div class="col-4">
+              <span class="price-item" data-price="{{ value.rpp_fee }}">{{ value.rpp_fee|currency }}</span>
+            </div>
+          </div>
+          <hr />
+          <div class="row">
+            <div class="col-8">
+              <strong>Total Per{% cycle ' Day' ' Week' ' Month' %}</strong>
+            </div>
+            <div class="col-4">
+              <strong><span class="price-item" data-price="{{ value.subtotal }}">{{ value.subtotal|currency }}</span></strong>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      <div class="col-12 align-self-end">
+        <div class="col-12 align-self-end" id="freit-section">
+          <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
+            Delivery:{% if price_breakdown.delivery %}
+              <span class="price-item" data-price="{{ price_breakdown.delivery.total }}">{{ price_breakdown.delivery.total|currency }}</span>
+            {% else %}
+              No charge
+            {% endif %}
+          </p>
+          <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
+            Removal:{% if price_breakdown.removal %}
+              <span class="price-item" data-price="{{ price_breakdown.removal.total }}">{{ price_breakdown.removal.total|currency }}</span>
+            {% else %}
+              No charge
+            {% endif %}
+          </p>
+          <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
+            Fuel &amp; Fees ({{ price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%):{% if price_breakdown.fuel_and_environmental %}
+              <strong><span class="price-item" data-price="{{ price_breakdown.fuel_and_environmental.total }}">{{ price_breakdown.fuel_and_environmental.total|currency }}</span></strong>
+            {% else %}
+              No charge
+            {% endif %}
+          </p>
+          <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;border-bottom-style: solid;">
+            Freight (One time): <strong><span class="price-item" data-price="{{ price_breakdown.one_time.total }}">{{ price_breakdown.one_time.total|currency }}</span></strong>
+          </p>
+        </div>
+        <p style="padding-top:5px;margin-bottom: 0px;margin-top: 5px;text-align: right;">
+          Product Subtotal: <strong><span id="display-price" class="price-item" data-delivery-price="{{ price_breakdown.one_time.total }}" data-price-with-delivery="{{ price_breakdown.total }}" data-price="{{ price_breakdown.total }}">{{ price_breakdown.total|currency }}</span></strong>
+          <input type="hidden" class="total-price" value="{{ price_breakdown.total }}" />
+        </p>
+      </div>
+    </div>
+    {% if not request.user.is_staff %}
+      <span class="position-relative top-0 start-50 translate-middle badge rounded-pill bg-success"><i class="fas fa-bolt"></i> Online Discount {{ discount|floatformat }}%</span>
+    {% endif %}
+  {% else %}
+    <div class="row">
+      <div class="card" style="width: 450px;">
+        <div class="card-body">
+          {% if price_breakdown.service %}
+            <p style="margin-bottom: 0px;">
+              <strong>Service</strong>
+            </p>
+            <div class="row">
+              <div class="col-9">
+                <p style="margin-bottom: 0px;">
+                  <em>
+                    {% for order_line_item in price_breakdown.service.items %}
+                      <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                        {{ order_line_item.units|lower }}
+                      {% endif %}
+                      {% if order_line_item.description %}
+                        ({{ order_line_item.description|lower }})
+                      {% endif %}
+                    {% endfor %}
+                  </em>
+                </p>
+              </div>
+              <div class="col-3">
+                <p style="text-align: right;margin-bottom: 0px;">
+                  <em><span class="price-item" data-price="{{ price_breakdown.service.total }}">{{ price_breakdown.service.total|currency }}</span></em>
+                </p>
+              </div>
+            </div>
+          {% endif %}
+          {% if price_breakdown.material %}
+            <p style="margin-bottom: 0px;">
+              <strong>Material</strong>
+            </p>
+            <div class="row">
+              <div class="col-9">
+                <p style="margin-bottom: 0px;">
+                  <em>
+                    {% for order_line_item in price_breakdown.material.items %}
+                      <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                        {{ order_line_item.units|lower }}
+                      {% endif %}
+                      {% if order_line_item.description %}
+                        ({{ order_line_item.description|lower }})
+                      {% endif %}
+                    {% endfor %}
+                  </em>
+                </p>
+              </div>
+              <div class="col-3">
+                <p style="text-align: right;margin-bottom: 0px;">
+                  <em><span class="price-item" data-price="{{ price_breakdown.material.total }}">{{ price_breakdown.material.total|currency }}</span></em>
+                </p>
+              </div>
+            </div>
+          {% endif %}
+          {% if price_breakdown.rental %}
+            <p style="margin-bottom: 0px;">
+              <strong>Rental</strong>
+            </p>
+            <div class="row">
+              <div class="col-9">
+                <p style="margin-bottom: 0px;">
+                  <em>
+                    {% for order_line_item in price_breakdown.rental.items %}
+                      <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                        {{ order_line_item.units|lower }}
+                      {% endif %}
+                      {% if order_line_item.description %}
+                        ({{ order_line_item.description|lower }})
+                      {% endif %}
+                    {% endfor %}
+                  </em>
+                </p>
+              </div>
+              <div class="col-3">
+                <p style="text-align: right;margin-bottom: 0px;">
+                  <em><span class="price-item" data-price="{{ price_breakdown.rental.total }}">{{ price_breakdown.rental.total|currency }}</span></em>
+                </p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <p style="margin-bottom: 0px;">
+                  <strong>Fuel and Fees</strong> ({{ price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%)
+                </p>
+              </div>
+              <div class="col">
+                <p style="text-align: right;margin-bottom: 0px;">
+                  <em><span class="price-item" data-price="{{ price_breakdown.other.fuel_and_environmental }}">{{ price_breakdown.other.fuel_and_environmental|currency }}</span></em>
+                </p>
+              </div>
+            </div>
+          {% endif %}
+          <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;border-bottom-style: solid;">
+            Per Service: <strong><span class="price-item" data-price="{{ price_breakdown.other.total }}">{{ price_breakdown.other.total|currency }}</span></strong>
+          </p>
+          <div id="freit-section">
+            {% if price_breakdown.delivery %}
+              <p style="margin-bottom: 0px;">
+                <strong>Delivery</strong>
+              </p>
+              <div class="row">
+                <div class="col-9">
+                  <p style="margin-bottom: 0px;">
+                    <em>
+                      {% for order_line_item in price_breakdown.delivery.items %}
+                        <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                          {{ order_line_item.units|lower }}
+                        {% endif %}
+                        {% if order_line_item.description %}
+                          ({{ order_line_item.description|lower }})
+                        {% endif %}
+                      {% endfor %}
+                    </em>
+                  </p>
+                </div>
+                <div class="col-3">
+                  <p style="text-align: right;margin-bottom: 0px;">
+                    <em><span class="price-item" data-price="{{ price_breakdown.delivery.total }}">{{ price_breakdown.delivery.total|currency }}</span></em>
+                  </p>
+                </div>
+              </div>
+            {% endif %}
+            {% if price_breakdown.removal %}
+              <p style="margin-bottom: 0px;">
+                <strong>Removal</strong>
+              </p>
+              <div class="row">
+                <div class="col-9">
+                  <p style="margin-bottom: 0px;">
+                    <em>
+                      {% for order_line_item in price_breakdown.removal.items %}
+                        <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                          {{ order_line_item.units|lower }}
+                        {% endif %}
+                        {% if order_line_item.description %}
+                          ({{ order_line_item.description|lower }})
+                        {% endif %}
+                      {% endfor %}
+                    </em>
+                  </p>
+                </div>
+                <div class="col-3">
+                  <p style="text-align: right;margin-bottom: 0px;">
+                    <em><span class="price-item" data-price="{{ price_breakdown.removal.total }}">{{ price_breakdown.removal.total|currency }}</span></em>
+                  </p>
+                </div>
+              </div>
+            {% endif %}
+            <div class="row">
+              <div class="col">
+                <p style="margin-bottom: 0px;">
+                  <strong>Fuel and Fees</strong> ({{ price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%)
+                </p>
+              </div>
+              <div class="col">
+                <p style="text-align: right;margin-bottom: 0px;">
+                  <em><span class="price-item" data-price="{{ price_breakdown.one_time.fuel_and_environmental }}">{{ price_breakdown.one_time.fuel_and_environmental|currency }}</span></em>
+                </p>
+              </div>
+            </div>
+            <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;border-bottom-style: solid;">
+              Freight (One time): <strong><span class="price-item" data-price="{{ price_breakdown.one_time.total }}">{{ price_breakdown.one_time.total|currency }}</span></strong>
+            </p>
+          </div>
+          <p style="padding-top:5px;margin-bottom: 0px;margin-top: 12px;text-align: right;">
+            Product Subtotal: <strong><span id="display-price" class="price-item" data-delivery-price="{{ price_breakdown.one_time.total }}" data-price-with-delivery="{{ price_breakdown.total }}" data-price="{{ price_breakdown.total }}">{{ price_breakdown.total|currency }}</span></strong>
+            <input type="hidden" class="total-price" value="{{ price_breakdown.total }}" />
+          </p>
+        </div>
+        {% if not request.user.is_staff %}
+          <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-success"><i class="fas fa-bolt"></i> Online Discount {{ discount|floatformat }}%</span>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
