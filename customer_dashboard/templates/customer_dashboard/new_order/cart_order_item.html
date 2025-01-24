@@ -92,7 +92,11 @@
                                     <div class="col" id="details-{{loopcount}}">
                                         <h3 class="subtitle">{{ item.main_product.name }}{% if order.order_group.agreement %}
                                             <a class="btn btn-link ps-2 p-0" href="{{ order.order_group.agreement.url }}" target="_blank" download><i class="fas fa-download" style="color: #018381;"></i></a>
-                                        {% endif %}</h3>
+                                        {% endif %}
+                                        {% if request.user.is_superuser %}
+                                                <a class="btn btn-link ps-2 p-0" role="button" href="/admin/api/order/{{order.id}}/change/" target="_blank"><i class="fas fa-link"></i></a>
+                                        {% endif %}
+                                    </h3>
                                         
                                         <p class="mb-1 order-descriptor">Service date: <span class="fw-light">{{ order.end_date }}</span>
                                             {% if not form %}
@@ -195,40 +199,33 @@
                                     <p class="total-price mb-0">Estimated Total ${{ item.total|floatformat:2|intcomma }}</p>
                                 </div>
                             </div>
-                            <div class="col-auto">
+                            <div class="col-auto m-2">
                                 <div class="row justify-content-center">
                                     <div class="col-auto">
-                                        <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ order.order_group.id }}" type="button"
-                                        data-id="{{ order.order_group.id }}" data-orderid="{{ order.id }}" data-price="{{ item.total }}" data-countid="count-{{ cart_address.address.id }}"
-                                        hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
-                                        onClick="event.stopPropagation();
-                                        Swal.fire(
-                                            {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
-                                            ).then((result)=>{
-                                                if(result.isConfirmed){removeItemFromCart(this);}
-                                                })">
-                                                <i class="fas fa-trash-alt"></i>&nbsp;
-                                                Delete
-                                                <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                                            </button>
+                                        {% if request.user.is_staff %}
+                                            <div class="row">
+                                                <button class="btn btn-danger mb-2" data-order-group-id="{{ order.order_group.id }}" hx-indicator=".htmx-indicator-card" hx-trigger="click" hx-get="{% url 'customer_order_group_edit_attachments' order.order_group.id %}" hx-target="#edit-attachments-modal" hx-swap="innerHTML" data-bs-toggle="modal" data-bs-target="#edit-attachments-modal" title="Edit Attachments">
+                                                    <i class="far fa-thumbs-down"></i>&nbsp;Lost
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                        <div class="row">
+                                            <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ order.order_group.id }}" type="button"
+                                            data-id="{{ order.order_group.id }}" data-orderid="{{ order.id }}" data-price="{{ item.total }}" data-countid="count-{{ cart_address.address.id }}"
+                                            hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
+                                            onClick="event.stopPropagation();
+                                            Swal.fire(
+                                                {title: 'Are you sure?', text:'This will delete the Order from your Cart.', icon: 'question', confirmButtonText: 'Delete'}
+                                                ).then((result)=>{
+                                                    if(result.isConfirmed){removeItemFromCart(this);}
+                                                    })">
+                                                    <i class="fas fa-trash-alt"></i>&nbsp;
+                                                    Delete
+                                                    <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    {% if request.user.is_superuser %}
-                                    <div class="row justify-content-center">
-                                        <div class="col-auto">
-                                            <a class="btn btn-link" role="button" href="/admin/api/order/{{order.id}}/change/">In database</a>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if request.user.is_staff %}
-                                    {% if not order.order_group.is_agreement_signed %}
-                                    {% if order.order_group.agreement %}
-                                    <a class="btn btn-sm btn-danger" href="{{ order.order_group.agreement.url }}" target="_blank" download><i class="far fa-file-pdf"></i>&nbsp; Agreement</a>
-                                    {% endif %}
-                                    {% elif order.requires_terms_agreement %}
-                                    <a class="btn btn-sm btn-success" href="{{ order.order_group.agreement.url }}" target="_blank" download><i class="far fa-file-pdf"></i>&nbsp; Agreement</a>
-                                    {% endif %}
-                                    {% endif %}
                                 </div>
                                 <script>
                                     var should_reload = {{ reload|yesno:"true,false" }};
