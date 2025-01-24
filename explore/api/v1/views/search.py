@@ -45,7 +45,9 @@ class SearchView(APIView):
 
         try:
             query = serializer.validated_data["q"]
-            main_products = MainProduct.objects.filter(name__icontains=query)
+            main_products = MainProduct.objects.filter(
+                name__icontains=query
+            ).prefetch_related("images")
             main_product_categories = MainProductCategory.objects.filter(
                 name__icontains=query
             )

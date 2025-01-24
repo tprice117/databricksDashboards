@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from api.models import MainProduct, MainProductCategory
 
 
@@ -10,9 +11,17 @@ class SearchRequestSerializer(serializers.Serializer):
 
 
 class MainProductSearchSerializer(serializers.ModelSerializer):
+    images = serializers.SerializerMethodField()
+
     class Meta:
         model = MainProduct
         fields = "__all__"
+
+    @extend_schema_field(serializers.ListField(child=serializers.URLField()))
+    def get_images(self, obj):
+        """Get images as a list of urls."""
+        images = obj.images.all()
+        return [image.image.url for image in images]
 
 
 class MainProductCategorySearchSerializer(serializers.ModelSerializer):
