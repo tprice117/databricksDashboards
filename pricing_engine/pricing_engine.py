@@ -1,5 +1,6 @@
 import datetime
 from decimal import Decimal
+import logging
 from typing import List, Optional, Tuple
 
 from api.models.user.user_address import UserAddress
@@ -12,6 +13,8 @@ from pricing_engine.sub_pricing_models.fuel_and_environmental import (
     FuelAndEnvironmentalPrice,
 )
 from pricing_engine.sub_pricing_models.removal import RemovalPrice
+
+logger = logging.getLogger(__name__)
 
 
 class PricingEngine:
@@ -85,16 +88,17 @@ class PricingEngine:
 
         # Validate the times_per_week parameter.
         # If the product does not support times_per_week, but the parameter is passed,
-        # raise an exception.
+        # give a warning and set times_per_week to None.
         # If the product supports times_per_week, but the parameter is not passed,
         # raise an exception.
         if (
             not seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
             and times_per_week is not None
         ):
-            raise Exception(
-                "This product does not support times_per_week. Please remove this parameter."
+            logger.warning(
+                f"{seller_product_seller_location.seller_product.product.main_product} does not support times_per_week. Please remove this parameter."
             )
+            times_per_week = None
         if (
             seller_product_seller_location.seller_product.product.main_product.has_service_times_per_week
             and times_per_week is None
@@ -189,9 +193,7 @@ class PricingEngine:
             response.append(fuel_and_environmental)
 
         # For each item in the response, add the take rate to the unit price.
-        effective_take_rate = (
-            seller_product_seller_location.seller_product.product.main_product.default_take_rate
-        )
+        effective_take_rate = seller_product_seller_location.seller_product.product.main_product.default_take_rate
 
         for _, items in response:
             for item in items:
