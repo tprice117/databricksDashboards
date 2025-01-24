@@ -1746,7 +1746,7 @@ def edit_attachments(request, order_group_id):
     )
 
     if request.method == "POST":
-        # Edit Details
+        # Edit Attachments
         if "attachments_card" in request.POST:
             attachments_formset = OrderGroupAttachmentsFormSet(
                 request.POST, request.FILES, instance=order_group
