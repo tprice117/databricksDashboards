@@ -1,10 +1,13 @@
 from decimal import Decimal
 from functools import lru_cache
+import uuid
 
-from django.db.models import Subquery, OuterRef
+from django.db.models import Subquery, OuterRef, Q
+
 
 from api.models.main_product.main_product_waste_type import MainProductWasteType
 from api.models.main_product.product import Product
+from api.models.seller.seller_location import SellerLocation
 from api.models.seller.seller_product_seller_location import SellerProductSellerLocation
 from api.models.seller.seller_product_seller_location_material_waste_type import (
     SellerProductSellerLocationMaterialWasteType,
@@ -28,12 +31,14 @@ class MatchingEngine:
         product: Product,
         user_address: UserAddress,
         waste_type: WasteType = None,
+        related_products: list[uuid.UUID] = None,
     ) -> list[SellerProductSellerLocation]:
         return MatchingEngine.get_possible_seller_product_seller_locations_by_lat_long(
             product=product,
             latitude=user_address.latitude,
             longitude=user_address.longitude,
             waste_type=waste_type,
+            related_products=related_products,
         )
 
     @staticmethod
@@ -42,32 +47,49 @@ class MatchingEngine:
         latitude: Decimal,
         longitude: Decimal,
         waste_type: WasteType = None,
+        related_products: list[uuid.UUID] = None,
     ) -> list[SellerProductSellerLocation]:
-        # Get all active SellerProductSellerLocation objects that match the product.
-        seller_product_seller_locations = (
-            SellerProductSellerLocation.objects.filter(
-                seller_product__product=product,
-            )
-            .get_active()
-            .annotate(
-                # with_ratings() and with_last_checkout() cannot be chained.
-                last_checkout=Subquery(
-                    SellerProductSellerLocation.objects.filter(pk=OuterRef("pk"))
-                    .with_last_checkout()
-                    .values("last_checkout")[:1]
-                ),
-                rating=Subquery(
-                    SellerProductSellerLocation.objects.filter(pk=OuterRef("pk"))
-                    .with_ratings()
-                    .values("rating")[:1]
-                ),
-            )
+        # Get all active listings
+        active_listings = SellerProductSellerLocation.objects.get_active()
+
+        # Filter SellerProductSellerLocation objects by Product.
+        product_filter = (
+            Q(seller_product__product=product)
+            | Q(seller_product__product__main_product_id__in=related_products)
+            if related_products
+            else Q(seller_product__product=product)
         )
-        # Select related fields to reduce the number of queries.
+
+        # Get all active SellerProductSellerLocation objects.
         seller_product_seller_locations = (
-            seller_product_seller_locations.select_related(
-                "seller_product__product", "seller_location"
-            )
+            active_listings.filter(product_filter)
+            # Select related fields to reduce the number of queries.
+            .select_related("seller_product__product__main_product", "seller_location")
+            .prefetch_related("seller_location__seller_product_seller_locations")
+        )
+
+        # Filter down results to locations which contain the main product being searched for.
+        # Use list() to force execution of the 'active_listings' query.
+        if related_products:
+            seller_product_seller_locations = seller_product_seller_locations.filter(
+                seller_location__seller_product_seller_locations__seller_product__product=product,
+                seller_location__seller_product_seller_locations__in=list(
+                    active_listings.values_list("pk", flat=True)
+                ),
+            ).distinct()
+
+        seller_product_seller_locations = seller_product_seller_locations.annotate(
+            # with_ratings() and with_last_checkout() cannot be chained.
+            last_checkout=Subquery(
+                SellerProductSellerLocation.objects.filter(pk=OuterRef("pk"))
+                .with_last_checkout()
+                .values("last_checkout")[:1]
+            ),
+            rating=Subquery(
+                SellerProductSellerLocation.objects.filter(pk=OuterRef("pk"))
+                .with_ratings()
+                .values("rating")[:1]
+            ),
         )
 
         # For each SellerProductSellerLocation, check if the ServiceRadius covers the UserAddress.
@@ -83,7 +105,9 @@ class MatchingEngine:
             if within_service_radius and seller_product_seller_location.is_complete:
                 # Does the SellerProductSellerLocation match the WasteType of the Product?
                 matches_waste_type = (
-                    MatchingEngine._seller_product_seller_location_matches_waste_type(
+                    seller_product_seller_location.seller_product.product.id
+                    != product.id
+                    or MatchingEngine._seller_product_seller_location_matches_waste_type(
                         seller_product_seller_location,
                         waste_type,
                     )

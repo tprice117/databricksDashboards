@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Q, Sum, Case, When, Max
+from django.db.models import Q, Count, Max
 
 
 class SellerProductSellerLocationQuerySet(models.QuerySet):
@@ -14,14 +14,12 @@ class SellerProductSellerLocationQuerySet(models.QuerySet):
     def with_ratings(self):
         """Annotate the queryset with the total number of thumbs up ratings."""
         return self.annotate(
-            rating=Sum(
-                Case(
-                    When(
-                        order_groups__orders__review__rating=True,
-                        then=1,
-                    ),
-                    default=0,
-                )
+            rating=Count(
+                "order_groups__orders__review",
+                filter=Q(
+                    order_groups__orders__review__rating=True,
+                ),
+                distinct=True,
             )
         )
 
