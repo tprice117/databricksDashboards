@@ -26,7 +26,7 @@
                         {% endfor %}
                     {% endif %}
                     {% if field.name == 'DELETE' %}
-                        <button type="button" class="btn btn-sm" onclick="this.closest('tr').remove();"><i class="fas fa-times-circle bs-danger"></i></button>
+                        <button type="button" class="btn btn-sm" onclick="this.closest('tr').remove();"><i class="fas fa-times-circle" style="color: #F32D13"></i></button>
                     {% else %}
                         {{ field }}
                     {% endif %}
