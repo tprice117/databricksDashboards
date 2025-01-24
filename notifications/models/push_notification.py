@@ -59,7 +59,7 @@ class PushNotification(BaseModel):
     objects = PushNotificationManager()
 
     class Meta:
-        ordering = ["-created_on"]
+        ordering = ["-sent_at"]
 
     def __str__(self):
         return f"{self.user.full_name} - {self.title}"
