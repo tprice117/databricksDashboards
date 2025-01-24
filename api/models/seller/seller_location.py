@@ -163,5 +163,37 @@ class SellerLocation(BaseModel):
         instance.latitude = latitude or 0
         instance.longitude = longitude or 0
 
+    @property
+    def last_checkout(self):
+        """
+        Get the total number of supplier listings for this product.
+
+        Prefetch "products__seller_products__seller_product_seller_locations" for efficiency.
+        """
+        if not hasattr(self, "seller_product_seller_locations"):
+            return None
+        return self.seller_product_seller_locations.aggregate(
+            last_checkout=models.Max(
+                "order_groups__orders__submitted_on",
+            ),
+        )["last_checkout"]
+
+    @property
+    def likes_count(self):
+        """
+        Get the total number of likes for this product.
+
+        Prefetch "products__seller_products__seller_product_seller_locations__order_groups__orders" for efficiency.
+        """
+        if not hasattr(self, "seller_product_seller_locations"):
+            return None
+        return self.seller_product_seller_locations.aggregate(
+            likes_count=models.Count(
+                "order_groups__orders__review",
+                filter=models.Q(order_groups__orders__review__rating=True),
+                distinct=True,
+            ),
+        )["likes_count"]
+
 
 pre_save.connect(SellerLocation.pre_save, sender=SellerLocation)

@@ -1031,7 +1031,7 @@ def new_order_4(request):
             and context["product_add_on_choices"][0] == ""
         ):
             context["product_add_on_choices"] = []
-        context["related_products"] = request.GET.getlist("related_products", [])
+        context["related_products"] = []  # request.GET.getlist("related_products", [])
         context["schedule_window"] = request.GET.get("schedule_window", "")
         context["times_per_week"] = request.GET.get("times_per_week", "")
         if context["times_per_week"]:

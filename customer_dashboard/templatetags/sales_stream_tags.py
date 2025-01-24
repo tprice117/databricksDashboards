@@ -21,6 +21,11 @@ def currency(value):
     """Format a number as currency"""
     if value is None:
         return "$0.00"
+    if not isinstance(value, float):
+        try:
+            value = float(value)
+        except ValueError:
+            return "$0.00"
     return "${:,.2f}".format(value)
 
 
