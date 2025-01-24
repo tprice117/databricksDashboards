@@ -435,6 +435,7 @@ class OrderGroupForm(forms.Form):
         ],
         widget=forms.RadioSelect(attrs={"class": "btn-check"}),
         help_text="Select the number of times per week",
+        initial=1,
         required=True,
     )
     # Create a choice field for shift count. Only required if the product has rental_multi_step.
@@ -479,11 +480,11 @@ class OrderGroupForm(forms.Form):
         user_addresses = kwargs.pop("user_addresses", None)
         product_waste_types = kwargs.pop("product_waste_types", None)
         product_add_ons = kwargs.pop("product_add_ons", None)
-        main_product = kwargs.pop("main_product", None)
+        self.main_product = kwargs.pop("main_product", None)
 
         super(OrderGroupForm, self).__init__(*args, **kwargs)
 
-        if main_product.has_material:
+        if self.main_product.has_material:
             self.fields["product_waste_types"].choices = list(
                 product_waste_types.values_list("id", "waste_type__name")
             )
@@ -497,9 +498,9 @@ class OrderGroupForm(forms.Form):
         self.fields["removal_date"].required = False
 
         if (
-            not main_product.has_rental
-            and not main_product.has_rental_one_step
-            and not main_product.has_rental_multi_step
+            not self.main_product.has_rental
+            and not self.main_product.has_rental_one_step
+            and not self.main_product.has_rental_multi_step
         ):
             # Hide delivery and removal date fields
             # Change label of delivery date to service date
@@ -508,15 +509,25 @@ class OrderGroupForm(forms.Form):
             # self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
             self.fields["removal_date"].required = False
             # self.fields["is_estimated_end_date"].required = False
-        if not main_product.has_service_times_per_week:
+        if not self.main_product.has_service_times_per_week:
             self.fields["times_per_week"].widget = forms.HiddenInput()
+            self.fields["times_per_week"].initial = None
             self.fields["times_per_week"].required = False
 
         # If the product does not have rental_multi_step, show the shift
         # count field.
-        if not main_product.has_rental_multi_step:
+        if not self.main_product.has_rental_multi_step:
             self.fields["shift_count"].widget = forms.HiddenInput()
             self.fields["shift_count"].required = False
+
+    def clean_times_per_week(self):
+        """Make sure not to pass times_per_week if the product does not support it."""
+        times_per_week = self.cleaned_data["times_per_week"]
+        if self.main_product.has_service_times_per_week and not times_per_week:
+            raise ValidationError("This field is required.")
+        if not self.main_product.has_service_times_per_week and times_per_week:
+            return None
+        return times_per_week
 
     def clean_delivery_date(self):
         # Do not allow delivery date to be on a Sunday.
