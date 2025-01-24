@@ -62,7 +62,7 @@ class PushNotification(BaseModel):
         ordering = ["-sent_at"]
 
     def __str__(self):
-        return f"{self.user.full_name} - {self.title}"
+        return f"{self.id} - {self.title}"
 
     def read(self, user_id):
         """Mark the push notification as read for the user with the given user_id."""
