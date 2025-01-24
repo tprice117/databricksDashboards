@@ -1,5 +1,5 @@
 {% load static %}
-<div class="modal-dialog modal-dialog-centered">
+<div class="modal-dialog modal-dialog-centered" role="document">
     <div id="htmx-indicator-loading-card" class="htmx-indicator htmx-indicator-card modal-content">
         <div class="modal-body d-flex justify-content-center align-items-center p-3" style="min-height: 500px;">
             <div class="spinner-border text-primary m-3" role="status"></div>
@@ -9,11 +9,11 @@
         <!-- prettier-ignore -->
         <form id="form-card-edit" 
           data-order-group-id="{{ order_group.id|default:'new' }}"
-          method="post" 
+          method="post" enctype="multipart/form-data"
           hx-post="{% url 'customer_order_group_edit_attachments' order_group.id %}" 
           hx-indicator="#htmx-indicator-save-btn" 
           hx-disabled-elt="button, .form-control, .form-select"
-          hx-swap="outerHTML"
+          hx-swap="innerHTML"
           hx-target="#edit-attachments-modal">
       {% csrf_token %}
       <div class="modal-header">
@@ -27,8 +27,11 @@
         <!--  End Form -->
       </div>
       <div class="modal-footer">
+        {% if success_text %}
+          <p class="text-muted">{{success_text}}</p>
+        {% endif %}
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-        <button type="submit" class="btn btn-success" name="edit_card">
+        <button type="submit" class="btn btn-success" name="attachments_card">
           Save
           <span id="htmx-indicator-save-btn" class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
         </button>

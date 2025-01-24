@@ -1744,8 +1744,38 @@ def edit_attachments(request, order_group_id):
         can_delete=True,
         extra=0,
     )
+
+    if request.method == "POST":
+        # Edit Details
+        if "attachments_card" in request.POST:
+            attachments_formset = OrderGroupAttachmentsFormSet(
+                request.POST, request.FILES, instance=order_group
+            )
+            if attachments_formset.is_valid():
+                if attachments_formset.has_changed():
+                    attachments_formset.instance = order_group
+                    attachments_formset.save()
+                    context["success_text"] = "Attachments saved successfully."
+                    # Reinitialize Formset
+                    attachments_formset = OrderGroupAttachmentsFormSet(
+                        instance=order_group
+                    )
+                else:
+                    context["success_text"] = "No changes detected."
+            else:
+                messages.error(
+                    request,
+                    f"Error saving lead {attachments_formset.non_field_errors().as_text()}",
+                )
+                # lead.refresh_from_db()
+
+            # Reinitialize Form
+            # lead_form = LeadDetailForm(instance=lead)
+    else:
+        attachments_formset = OrderGroupAttachmentsFormSet(instance=order_group)
+
     context["order_group"] = order_group
-    context["attachments_formset"] = OrderGroupAttachmentsFormSet(instance=order_group)
+    context["attachments_formset"] = attachments_formset
 
     return render(
         request,
