@@ -1,40 +1,4 @@
 {% load static %}
-{% block javascript %}
-    <script>
-        function loadAttachmentsFormset() {
-            const addAttachmentButton = document.getElementById("add-attachments");
-            const formsetDiv = document.getElementById("attachments-formset");
-            const totalForms = document.getElementById("id_attachments-TOTAL_FORMS");
-            const emptyFormTemplate = document.getElementById("attachments-empty").innerHTML;
-        
-            const attachmentForms = document.querySelectorAll(".attachments-form");
-            attachmentForms.forEach(function (form) {
-                const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]');
-                if (deleteInput && deleteInput.value === "on") {
-                    form.style.display = "none";
-                }
-            });
-        
-            addAttachmentButton.addEventListener("click", function () {
-                const currentFormCount = parseInt(totalForms.value);
-                const newFormCount = currentFormCount + 1;
-                const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount);
-        
-                formsetDiv.insertAdjacentHTML("beforeend", newFormHtml);
-                totalForms.value = newFormCount;
-                const emptyText = document.querySelectorAll(".empty-text");
-                emptyText.forEach(function (text) {
-                    text.style.display = "none";
-                });
-            });
-        }
-        document.body.addEventListener("htmx:afterRequest", function (evt) {
-            if (evt.detail.target.id.startsWith("edit-attachments-modal")) {
-                loadAttachmentsFormset();
-            }
-        });
-    </script>
-{% endblock %}
 <div class="modal-dialog modal-dialog-centered">
     <div id="htmx-indicator-loading-card" class="htmx-indicator htmx-indicator-card modal-content">
         <div class="modal-body d-flex justify-content-center align-items-center p-3" style="min-height: 500px;">

@@ -25,7 +25,11 @@
                             {{ hidden }}
                         {% endfor %}
                     {% endif %}
-                    {{ field }}
+                    {% if field.name == 'DELETE' %}
+                        <button type="button" class="btn btn-sm" onclick="this.closest('tr').remove();"><i class="fas fa-times-circle bs-danger"></i></button>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
                     {% if field.errors %}
                         <small class="text-danger">{{ field.errors|join:', ' }}</small>
                     {% endif %}

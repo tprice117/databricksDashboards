@@ -261,6 +261,54 @@
             Swal.fire(JSON.stringify(formValues));
           }
       }
+      function loadAttachmentsFormset() {
+        let addAttachmentButton = document.getElementById("add-attachments");
+        let attachmentForms = document.querySelectorAll(".attachments-form");
+        attachmentForms.forEach(function (form) {
+            const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]');
+            if (deleteInput && deleteInput.value === "on") {
+                form.style.display = "none";
+            }
+        });
+    
+        addAttachmentButton.addEventListener("click", function () {
+            let formsetDiv = document.getElementById("attachments-formset");
+            let totalForms = document.getElementById("id_attachments-TOTAL_FORMS");
+            let emptyFormTemplate = document.getElementById("attachments-empty").innerHTML;
+            if (!formsetDiv) {
+                console.error("Formset div not found");
+                return;
+            } else if (!totalForms) {
+                console.error("Total forms input not found");
+                return;
+            } else if (!emptyFormTemplate) {
+                console.error("Empty form template not found");
+                return;
+            }
+            const currentFormCount = parseInt(totalForms.value);
+            const newFormCount = currentFormCount + 1;
+            const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount);
+    
+            // Insert the empty row at the end of the #attachments-formset > tbody
+            let formsetTbody = formsetDiv.querySelector("tbody");
+            if (formsetTbody) {
+                formsetTbody.insertAdjacentHTML("beforeend", newFormHtml);
+            } else {
+                console.warn("Formset tbody not found");
+                formsetDiv.insertAdjacentHTML("beforeend", newFormHtml);
+            }
+            totalForms.value = newFormCount;
+            const emptyText = document.querySelectorAll(".empty-text");
+            emptyText.forEach(function (text) {
+                text.style.display = "none";
+            });
+        });
+    }
+    document.body.addEventListener("htmx:afterRequest", function (evt) {
+        if (evt.detail.target.id.startsWith("edit-attachments-modal")) {
+            loadAttachmentsFormset();
+        }
+    });
     </script>
 {% endblock %}
 {% block content %}

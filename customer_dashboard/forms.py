@@ -192,7 +192,7 @@ class OrderGroupAttachmentsForm(forms.ModelForm):
         model = OrderGroupAttachment
         fields = ["file"]
         widgets = {
-            "file": forms.FileInput(attrs={"class": "form-control"}),
+            "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
 
 
