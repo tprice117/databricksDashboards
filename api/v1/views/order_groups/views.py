@@ -231,6 +231,9 @@ class OrderGroupUpdatePlacementDetailsView(APIView):
         order_group = OrderGroup.objects.get(id=order_group_id)
         try:
             order_group.placement_details = serializer.validated_data["access_details"]
+            order_group.delivered_to_street = serializer.validated_data[
+                "delivered_to_street"
+            ]
             order_group.save()
             return Response(OrderGroupSerializer(order_group).data)
         except Exception as e:
