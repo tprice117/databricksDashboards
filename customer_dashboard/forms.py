@@ -411,6 +411,7 @@ class OrderGroupForm(forms.Form):
                 "min": datetime.date.today() + datetime.timedelta(days=1),
             }
         ),
+        required=True,
     )
     removal_date = forms.DateField(
         validators=[validate_start_date],
@@ -426,21 +427,38 @@ class OrderGroupForm(forms.Form):
     times_per_week = forms.ChoiceField(
         label="Service Times Per Week",
         choices=[
-            (1, "1 time per week"),
-            (2, "2 times per week"),
-            (3, "3 times per week"),
-            (4, "4 times per week"),
-            (5, "5 times per week"),
+            (1, "1"),
+            (2, "2"),
+            (3, "3"),
+            (4, "4"),
+            (5, "5"),
         ],
-        widget=forms.Select(attrs={"class": "form-select"}),
+        widget=forms.RadioSelect(attrs={"class": "btn-check"}),
+        help_text="Select the number of times per week",
+        initial=1,
         required=True,
     )
     # Create a choice field for shift count. Only required if the product has rental_multi_step.
-    shift_count = forms.ChoiceField(
-        label="Service Times Per Week",
-        choices=OrderGroup.ShiftCount.choices,
+    schedule_window = forms.ChoiceField(
+        choices=[
+            ("Anytime (7am-4pm)", "Anytime (7am-4pm)"),
+            ("Morning (7am-11am)", "Morning (7am-11am)"),
+            ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
+        ],
         widget=forms.Select(attrs={"class": "form-select"}),
+        label="Preferred Time of Day",
         required=True,
+    )
+    shift_count = forms.ChoiceField(
+        label="Utilization",
+        choices=[
+            (OrderGroup.ShiftCount.ONE_SHIFT, "0 to 8 hours per day"),
+            (OrderGroup.ShiftCount.TWO_SHIFTS, "9 to 16 hours per day"),
+            (OrderGroup.ShiftCount.THREE_SHIFTS, "17 to 24 hours per day"),
+        ],
+        widget=forms.RadioSelect(attrs={"class": "btn-check"}),
+        required=True,
+        initial=OrderGroup.ShiftCount.ONE_SHIFT,
     )
     # Add is estimated end date checkbox
     # NOTE: Maybe also say that we will assume monthly rental for now.
@@ -451,37 +469,22 @@ class OrderGroupForm(forms.Form):
     #     ),
     #     required=False,
     # )
-    schedule_window = forms.ChoiceField(
-        choices=[
-            ("Anytime (7am-4pm)", "Anytime (7am-4pm)"),
-            ("Morning (7am-11am)", "Morning (7am-11am)"),
-            ("Afternoon (12pm-4pm)", "Afternoon (12pm-4pm)"),
-        ],
-        widget=forms.Select(attrs={"class": "form-select"}),
-    )
     quantity = forms.IntegerField(
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        widget=forms.HiddenInput(),
         initial=1,
         required=True,
         help_text="Note: Currently, the prices on the next page are always for one.",
-    )
-    project_id = forms.CharField(
-        max_length=50,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        required=False,
-        label="PO ID (optional)",
-        help_text="This is added to the booking, which is also added to the invoice.",
     )
 
     def __init__(self, *args, **kwargs):
         user_addresses = kwargs.pop("user_addresses", None)
         product_waste_types = kwargs.pop("product_waste_types", None)
         product_add_ons = kwargs.pop("product_add_ons", None)
-        main_product = kwargs.pop("main_product", None)
+        self.main_product = kwargs.pop("main_product", None)
 
         super(OrderGroupForm, self).__init__(*args, **kwargs)
 
-        if main_product.has_material:
+        if self.main_product.has_material:
             self.fields["product_waste_types"].choices = list(
                 product_waste_types.values_list("id", "waste_type__name")
             )
@@ -495,9 +498,9 @@ class OrderGroupForm(forms.Form):
         self.fields["removal_date"].required = False
 
         if (
-            not main_product.has_rental
-            and not main_product.has_rental_one_step
-            and not main_product.has_rental_multi_step
+            not self.main_product.has_rental
+            and not self.main_product.has_rental_one_step
+            and not self.main_product.has_rental_multi_step
         ):
             # Hide delivery and removal date fields
             # Change label of delivery date to service date
@@ -506,15 +509,25 @@ class OrderGroupForm(forms.Form):
             # self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
             self.fields["removal_date"].required = False
             # self.fields["is_estimated_end_date"].required = False
-        if not main_product.has_service_times_per_week:
+        if not self.main_product.has_service_times_per_week:
             self.fields["times_per_week"].widget = forms.HiddenInput()
+            self.fields["times_per_week"].initial = None
             self.fields["times_per_week"].required = False
 
         # If the product does not have rental_multi_step, show the shift
         # count field.
-        if not main_product.has_rental_multi_step:
+        if not self.main_product.has_rental_multi_step:
             self.fields["shift_count"].widget = forms.HiddenInput()
             self.fields["shift_count"].required = False
+
+    def clean_times_per_week(self):
+        """Make sure not to pass times_per_week if the product does not support it."""
+        times_per_week = self.cleaned_data["times_per_week"]
+        if self.main_product.has_service_times_per_week and not times_per_week:
+            raise ValidationError("This field is required.")
+        if not self.main_product.has_service_times_per_week and times_per_week:
+            return None
+        return times_per_week
 
     def clean_delivery_date(self):
         # Do not allow delivery date to be on a Sunday.

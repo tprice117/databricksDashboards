@@ -2,7 +2,7 @@ from api.models.order.common.order_item import OrderItem
 
 
 class OrderMaterialFee(OrderItem):
-    pass
+    order_line_item_type_code = "MATERIAL"
 
     class Meta:
         verbose_name = "Transaction Material Fee"

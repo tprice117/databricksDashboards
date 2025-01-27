@@ -20,7 +20,8 @@
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'user_addresses_dashboard' %}active{% endif %}" href="{% url 'user_addresses_dashboard' %}"><i class="fas fa-address-book"></i><span>User Addresses Dashboard</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'auto_renewal_list_dashboard' %}active{% endif %}" href="{% url 'auto_renewal_list_dashboard' %}"><i class="fas fa-sync-alt"></i><span>Auto Renewal List Dashboard</span></a></li>
         <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'time_to_acceptance' %}active{% endif %}" href="{% url 'time_to_acceptance' %}"><i class="fas fa-clock"></i><span>Time to Acceptance/Completion Dashboard</span></a></li>
-
+        <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'customer_first_order' %}active{% endif %}" href="{% url 'customer_first_order' %}"><i class="fas fa-shopping-cart"></i><span>Customer First Order</span></a></li>
+        
       </ul>
       <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
   </div>

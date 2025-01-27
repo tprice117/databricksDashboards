@@ -62,7 +62,7 @@ class OrderRescheduleView(APIView):
             200: OrderSerializer(),
         },
     )
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
         Reschedules an Order.
         Returns:
@@ -79,7 +79,8 @@ class OrderRescheduleView(APIView):
         order = Order.objects.get(id=order_id)
 
         try:
-            order.reschedule_order(request.data["date"])
+            service_date = serializer.validated_data["date"]
+            order.reschedule_order(service_date)
             return Response(OrderSerializer(order).data)
         except ValidationError as e:
             raise DRFValidationError(str(e))

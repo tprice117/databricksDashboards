@@ -288,7 +288,9 @@ class Lead(BaseModel):
                     if last_lead:
                         # Assign to next sales team member
                         # Will not take into account manually assigned leads, but will never assign to the same person twice in a row
-                        self.owner = sales_team_list[last_lead.id + 1 % len(sales_team)]
+                        self.owner = sales_team_list[
+                            (last_lead.id + 1) % len(sales_team)
+                        ]
                     else:
                         # Assign to first sales team member
                         self.owner = sales_team_list[0]
