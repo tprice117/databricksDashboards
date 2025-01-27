@@ -927,6 +927,7 @@ def new_order_3(request, product_id):
         "schedule_window": "fa-clock",
         "delivery_date": "fa-calendar-check",
         "times_per_week": "fa-calendar-alt",
+        "quantity": "fa-boxes",
     }
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
