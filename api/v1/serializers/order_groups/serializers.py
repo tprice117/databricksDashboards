@@ -15,4 +15,4 @@ class OrderGroupAccessDetailsRequestSerializer(serializers.Serializer):
 
 class OrderGroupPlacementDetailsRequestSerializer(serializers.Serializer):
     placement_details = serializers.CharField(required=True)
-    delivered_to_street = serializers.CharField(required=True)
+    delivered_to_street = serializers.BooleanField(required=True)
