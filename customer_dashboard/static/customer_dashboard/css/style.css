@@ -2,14 +2,18 @@
 Buttons
 */
 .btn {
-    transition:all .2s ease-in-out
+    transition:all .2s ease-in-out;
 }
 
 .btn:hover {
-    transform:translateY(-1px)
+    transform:translateY(-1px);
 }
 .btn-check:focus + .btn:hover, .btn:focus:hover, .btn.focus:hover, .btn:active:hover, .btn.active:hover {
-    transform:translateY(0)
+    transform:translateY(0);
+}
+
+.btn-primary.shadow {
+    box-shadow:0 6px 16px -8px var(--bs-primary) !important;
 }
 
 /* Default styles for the radio buttons and labels within .btn-group */
@@ -58,6 +62,37 @@ html:not([dir=rtl]) .form-control:not([readonly]):focus::placeholder {
 
 [dir=rtl] .form-control:not([readonly]):focus::placeholder {
     transform:translateX(-5px)
+}
+
+/* Range */
+.form-range-primary {
+    -webkit-appearance: none;
+    appearance: none;
+    accent-color: var(--bs-primary);
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.form-range-primary::-webkit-slider-thumb {
+    background: var(--bs-primary);
+}
+
+.form-range-primary:-moz-range-thumb, .form-range-primary::-moz-range-progress {
+    background: var(--bs-primary);
+}
+
+.form-range-primary::-ms-thumb, .form-range-primary::-ms-fill-lower {
+    background: var(--bs-primary);
+}
+
+.form-range-primary::-webkit-slider-thumb:active {
+    background-color: var(--bs-primary);
+}
+.form-range-primary::-webkit-slider-thumb,
+.form-range-primary:focus::-webkit-slider-thumb, 
+.form-range-primary:focus::-moz-range-thumb,
+.form-range-primary:focus::-ms-thumb {
+    box-shadow: var(--bs-primary);
 }
 
 /* Default styles for the form-check-label */

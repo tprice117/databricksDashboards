@@ -1031,7 +1031,7 @@ def new_order_4(request):
             and context["product_add_on_choices"][0] == ""
         ):
             context["product_add_on_choices"] = []
-        context["related_products"] = []  # request.GET.getlist("related_products", [])
+        context["related_products"] = request.GET.getlist("related_products", [])
         context["schedule_window"] = request.GET.get("schedule_window", "")
         context["times_per_week"] = request.GET.get("times_per_week", "")
         if context["times_per_week"]:
@@ -1043,6 +1043,15 @@ def new_order_4(request):
         context["removal_date"] = request.GET.get("removal_date", "")
         context["quantity"] = int(request.GET.get("quantity"))
         context["project_id"] = request.GET.get("project_id")
+
+        if context["delivery_date"]:
+            context["delivery_date"] = datetime.datetime.strptime(
+                context["delivery_date"], "%Y-%m-%d"
+            ).date()
+        if context["removal_date"]:
+            context["removal_date"] = datetime.datetime.strptime(
+                context["removal_date"], "%Y-%m-%d"
+            ).date()
 
         # Get Product and AddOns
         products = Product.objects.filter(main_product_id=context["product_id"])
@@ -1098,6 +1107,7 @@ def new_order_4(request):
             waste_type_id = waste_type.id
         if waste_type_id:
             context["waste_type"] = waste_type_id
+            context["waste_type_name"] = waste_type.name
 
         # SellerProductSellerLocations
         user_address_obj = UserAddress.objects.filter(
@@ -1143,6 +1153,12 @@ def new_order_4(request):
                     seller_product_seller_location
                 )
 
+                if seller_product_seller_location.seller_product.product.product_add_on_choices.exists():
+                    seller_d["product_add_ons"] = [
+                        choice.add_on_choice.name
+                        for choice in seller_product_seller_location.seller_product.product.product_add_on_choices.all()
+                    ]
+
                 main_product = (
                     seller_product_seller_location.seller_product.product.main_product
                 )
@@ -1152,12 +1168,8 @@ def new_order_4(request):
                         id=context["user_address"],
                     ),
                     seller_product_seller_location=seller_product_seller_location,
-                    start_date=datetime.datetime.strptime(
-                        context["delivery_date"], "%Y-%m-%d"
-                    ).date(),
-                    end_date=datetime.datetime.strptime(
-                        context["delivery_date"], "%Y-%m-%d"
-                    ).date(),
+                    start_date=context["delivery_date"],
+                    end_date=context["delivery_date"],
                     waste_type=(
                         WasteType.objects.get(id=waste_type_id)
                         if waste_type_id

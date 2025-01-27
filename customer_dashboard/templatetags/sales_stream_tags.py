@@ -1,4 +1,7 @@
+from datetime import datetime, timedelta
 from django import template
+from django.utils import timezone
+from humanize import naturaltime
 
 register = template.Library()
 
@@ -33,3 +36,16 @@ def currency(value):
 def get_dict_value(dictionary, key):
     """Get a value from a dictionary"""
     return dictionary.get(key, None)
+
+
+@register.filter
+def downstream_naturaltime(value):
+    if not value:
+        return ""
+    now = timezone.now()
+    if isinstance(value, datetime):
+        if now - value > timedelta(days=1):
+            return value.strftime("%b %d, %Y")
+        else:
+            return naturaltime(value)
+    return value

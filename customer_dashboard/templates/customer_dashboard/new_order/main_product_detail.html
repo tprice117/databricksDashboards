@@ -6,71 +6,7 @@
   Select Options
 {% endblock %}
 {% block stylesheet %}
-  {% comment %}TODO: Delete all styling once style.css updates on server.{% endcomment %}
-  <style>
-    .btn-group {
-      background-color: #f2f2f2;
-      border-radius: 8px;
-    }
-    
-    .btn-group .btn-check + .btn {
-      background-color: #f2f2f2;
-      color: var(--bas-secondary-color);
-      border: 1px solid #f2f2f2;
-    }
-    
-    .btn-group .btn-check:checked + .btn {
-      background-color: #fff;
-      color: rgb(var(--bs-primary-rgb));
-      border: 1px solid #f2f2f2;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-    }
-    
-    .btn-group .btn-check + .btn,
-    .btn-group .btn-check:checked + .btn {
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .downstream-radio .form-check-input:checked {
-      background-color: var(--bs-primary);
-      border-color: var(--bs-primary);
-    }
-    
-    .downstream-radio .form-check-input {
-      width: 1.5rem;
-      height: 1.5rem;
-      transition: background-color 0.1s;
-      cursor: pointer;
-    }
-    
-    .downstream-radio .form-check-label {
-      margin-left: 0.5em;
-      text-align: center;
-      vertical-align: middle;
-      cursor: pointer;
-    }
-    .carousel-indicators button[data-bs-target] {
-      width: 50px;
-      height: 100%;
-      border: none;
-      border-radius: 8px;
-    }
-    .carousel-indicators button img {
-      object-fit: cover;
-      height: 50px;
-      border-radius: 8px;
-    }
-    .carousel-indicators {
-      opacity: 0.8;
-    }
-    .carousel-indicators button.active {
-      opacity: 1;
-      border: 1px solid var(--bs-primary);
-    }
-    .carousel-indicators {
-      position: static;
-    }
-  </style>
+  <style></style>
 {% endblock %}
 {% block javascript %}
   <script>

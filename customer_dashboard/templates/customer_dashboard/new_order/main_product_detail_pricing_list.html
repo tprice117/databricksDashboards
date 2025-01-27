@@ -1,16 +1,15 @@
 {% load static %}
 {% load humanize %}
+{% load sales_stream_tags %}
 {% for item in seller_product_seller_locations %}
-  {% if forloop.first %}
-    <hr />
-  {% endif %}
   {% with seller_product_seller_location=item.listing.seller_product_seller_location %}
     <div class="supplier-item" data-allow-pickup="{{ seller_product_seller_location.allows_pick_up }}">
-      <div id="item-{{ forloop.counter }}" class="row mb-4">
-        <div class="row mb-3">
+      <div id="item-{{ forloop.counter }}" class="row card p-4 mb-4 border-dark rounded-3" style="border: 3px solid;">
+        <div class="row mb-4">
           {% with location=item.location %}
-            <div class="col-lg-4 col me-3">
-              <img class="img-thumbnail img-fluid"
+            <!-- Listing/Location Details -->
+            <div class="col-xl-4 col me-3 mb-4">
+              <img class="img-thumbnail img-fluid border-0"
                 alt="Seller logo"
                 width="200"
                 height="200"
@@ -19,32 +18,18 @@
                 {% else %}
                   {% static 'customer_dashboard/img/defualt_logo.png' %}
                 {% endif %}" />
-              <h3 class="mt-1 supplier-name">{{ location.name }}</h3>
-              <p>
-                <a class="card-link" href="https://www.google.com/maps/place/{{ location.formatted_address|urlencode }}" target="_blank">{{ location.formatted_address }}</a>
+              <h4 class="mt-1 supplier-name text-dark"><strong>{{ location.name }}</strong></h4>
+              <p class="mb-0">
+                <a class="card-link text-decoration-none" href="https://www.google.com/maps/place/{{ location.formatted_address|urlencode }}" target="_blank">{{ location.formatted_address }}</a>
               </p>
               <div class="distance-element" style="display: none;">
                 <input type="hidden" class="distance" value="{{ item.distance }}" />
-                <p style="margin-bottom: 0px;">
-                  <strong>Distance</strong>
+                <p class="mb-0 text-dark">
+                  <i class="far fa-map-marker-alt me-2"></i> {{ item.distance|floatformat:1|intcomma }} miles away
                 </p>
-                <p>{{ item.distance|floatformat:1|intcomma }} miles</p>
               </div>
-              {% if request.user.is_staff %}
-                {% with last_checkout=location.last_checkout %}
-                  <input type="hidden" class="last-checkout" value="{{ last_checkout|date:'Y-m-d' }}" />
-                  <p>
-                    {% if last_checkout %}
-                      <strong>Last Checkout:</strong>
-                      {{ last_checkout|timesince }} ago
-                    {% else %}
-                      No Transaction History
-                    {% endif %}
-                  </p>
-                {% endwith %}
-              {% endif %}
-              {% with likes_count=location.likes_count %}
-                <div class="d-flex flex-row align-items-center">
+              {% with likes_count=seller_product_seller_location.rating %}
+                <div class="d-flex flex-row align-items-center text-dark mb-0">
                   {% if likes_count > 0 %}
                     <i class="fas fa-thumbs-up text-success mb-0 me-2"></i>
                     <span>{{ likes_count }}</span>
@@ -54,15 +39,57 @@
                   <input type="hidden" class="rating" value="{{ likes_count }}" />
                 </div>
               {% endwith %}
+              {% if request.user.is_staff %}
+                {% with last_checkout=seller_product_seller_location.last_checkout %}
+                  <input type="hidden" class="last-checkout" value="{{ last_checkout|date:'Y-m-d' }}" />
+                  <p class="mb-0 text-dark">
+                    {% if last_checkout %}
+                      Last Transaction:
+                      {{ last_checkout|downstream_naturaltime }}
+                    {% else %}
+                      No Transaction History
+                    {% endif %}
+                  </p>
+                {% endwith %}
+              {% endif %}
             </div>
           {% endwith %}
-          <div class="col">
-            {% include 'customer_dashboard/new_order/main_product_detail_pricing_breakdown.html' with price_breakdown=item.listing.price_breakdown %}
-            {% for listing in item.related %}
-              {% include 'customer_dashboard/new_order/main_product_detail_pricing_breakdown.html' with price_breakdown=listing.price_breakdown %}
-            {% endfor %}
+          <!-- Price Breakdown -->
+          <div class="col-lg">
+            <div class="mb-2 px-2">
+              {% if not request.user.is_staff %}
+                <p class="text-center">
+                  <span class="d-inline badge rounded-pill bg-success"><i class="fas fa-bolt"></i> Online Discount {{ discount|floatformat }}%</span>
+                </p>
+              {% endif %}
+              {% include 'customer_dashboard/new_order/main_product_detail_pricing_breakdown.html' with listing=item.listing %}
+              {% for listing in item.related %}
+                {% include 'customer_dashboard/new_order/main_product_detail_pricing_breakdown.html' with listing=listing %}
+              {% endfor %}
+            </div>
+            <div class="card border-dark text-primary w-100" style="border-radius: 18px; background-color: rgba(var(--bs-primary-rgb), 0.1);">
+              <div class="card-body py-2 d-flex flex-row justify-content-between">
+                {% with main_product=seller_product_seller_location.seller_product.product.main_product %}
+                  <span>
+                    <strong>
+                      {% if main_product.has_rental_multi_step %}
+                        Estimated Total
+                      {% elif main_product.has_rental_one_step %}
+                        Total Per Month
+                      {% else %}
+                        Total Per Service
+                      {% endif %}
+                    </strong>
+                  </span>
+                {% endwith %}
+                <strong><span id="display-price" class="price-item" data-delivery-price="{{ item.listing.price_breakdown.one_time.total }}" data-price-with-delivery="{{ item.total }}" data-price="{{ item.total }}">{{ item.total|currency }}</span></strong>
+                {% comment %}Input for sorting supplier items{% endcomment %}
+                <input type="hidden" class="total-price" value="{{ item.total }}" />
+              </div>
+            </div>
           </div>
         </div>
+        <!-- Order Form -->
         <div class="row">
           <form id="newOrderForm{{ forloop.counter }}" action="{% url 'customer_cart' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
@@ -75,8 +102,8 @@
             <input name="schedule_window" type="hidden" value="{{ schedule_window }}" />
             <input name="times_per_week" type="hidden" value="{{ times_per_week }}" />
             <input name="shift_count" type="hidden" value="{{ shift_count }}" />
-            <input name="delivery_date" type="hidden" value="{{ delivery_date }}" />
-            <input name="removal_date" type="hidden" value="{{ removal_date }}" />
+            <input name="delivery_date" type="hidden" value="{{ delivery_date|date:'Y-m-d' }}" />
+            <input name="removal_date" type="hidden" value="{{ removal_date|date:'Y-m-d' }}" />
             <input name="quantity" type="hidden" value="{{ quantity }}" />
             <input name="project_id" type="hidden" value="{{ project_id }}" />
             <input name="related_products" type="hidden" value="{{ item.related_ids }}" />
@@ -85,13 +112,15 @@
               <input class="order-form-discount" type="hidden" name="discount" value="{{ discount }}" />
             {% endif %}
             <div class="d-flex justify-content-center">
-              <button class="btn btn-primary w-100" type="button" name="action_button" id="submit-button-order-form-{{ forloop.counter }}">Add to Cart</button>
+              <button class="btn btn-primary shadow p-2 w-100" type="button" name="action_button" id="submit-button-order-form-{{ forloop.counter }}"><small>Add to Cart</small></button>
             </div>
             <script>
               submitButton = document.getElementById('submit-button-order-form-{{ forloop.counter }}')
               if (submitButton) {
                 submitButton.addEventListener('click', () => {
-                  if (pickupButton.checked) {
+                  is_pickup = document.querySelector('input[name="delivery-radio"]:checked').value === 'False'
+                  console.log(is_pickup)
+                  if (is_pickup) {
                     Swal.fire({
                       title: 'Pickup Order',
                       text: 'You will need to pick up this item yourself',
@@ -113,7 +142,7 @@
           </form>
         </div>
       </div>
-      <hr />
+      <br />
     </div>
   {% endwith %}
 {% empty %}
