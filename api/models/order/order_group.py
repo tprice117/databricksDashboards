@@ -401,7 +401,7 @@ class OrderGroup(BaseModel):
             order_group_start_equal = delivery_date == self.start_date
             if not order_group_start_equal:
                 raise Exception(
-                    f"Cannot create a delivery because Order has a different start date than OrderGroup [{delivery_date}!={self.start_date}]."
+                    f"Cannot create a one time because Order has a different start date than OrderGroup [{delivery_date}!={self.start_date}]."
                 )
             with transaction.atomic():
                 self.end_date = delivery_date
