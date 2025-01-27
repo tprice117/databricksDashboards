@@ -1729,6 +1729,23 @@ def new_order_5(request):
     )
 
 
+def new_bundle(request):
+    context = get_user_context(request)
+    # save all the bundles being submitted
+    if request.method == "POST":
+        # get the bundle items
+        bundles = request.POST.get("bundles")
+        bundles = json.loads(bundles)
+        for bundle in bundles:
+            # new bundle with using ids passed in the request
+            # recreate the order line items with no delivery cost
+            orderIds = bundle
+            # for orderIds in bundle:
+            #     order = Order.objects.get(id=orderIds)
+            #     order.
+    return HttpResponseRedirect(reverse("customer_cart"))
+
+
 @login_required(login_url="/admin/login/")
 @catch_errors()
 def new_order_6(request, order_group_id):
