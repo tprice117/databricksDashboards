@@ -265,7 +265,9 @@ class OrderGroupUpdatePlacementDetailsView(APIView):
 
         order_group = OrderGroup.objects.get(id=order_group_id)
         try:
-            order_group.placement_details = serializer.validated_data["access_details"]
+            order_group.placement_details = serializer.validated_data[
+                "placement_details"
+            ]
             order_group.delivered_to_street = serializer.validated_data[
                 "delivered_to_street"
             ]
