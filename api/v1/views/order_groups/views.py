@@ -1,5 +1,6 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, viewsets
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -65,7 +66,7 @@ class OrderGroupDeliveryView(APIView):
             order = order_group.create_delivery(
                 delivery_date, schedule_window=schedule_window
             )
-            return Response(OrderSerializer(order).data)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             raise APIException(str(e))
 
@@ -100,7 +101,7 @@ class OrderGroupOneTimeView(APIView):
             order = order_group.create_onetime(
                 delivery_date, schedule_window=schedule_window
             )
-            return Response(OrderSerializer(order).data)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             raise APIException(str(e))
 
@@ -135,7 +136,7 @@ class OrderGroupPickupView(APIView):
             order = order_group.create_pickup(
                 pickup_date, schedule_window=schedule_window
             )
-            return Response(OrderSerializer(order).data)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             raise APIException(str(e))
 
@@ -168,7 +169,7 @@ class OrderGroupSwapView(APIView):
         schedule_window = serializer.validated_data["schedule_window"]
         try:
             order = order_group.create_swap(swap_date, schedule_window=schedule_window)
-            return Response(OrderSerializer(order).data)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             raise APIException(str(e))
 
@@ -203,7 +204,7 @@ class OrderGroupRemovalView(APIView):
             order = order_group.create_removal(
                 removal_date, schedule_window=schedule_window
             )
-            return Response(OrderSerializer(order).data)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             raise APIException(str(e))
 

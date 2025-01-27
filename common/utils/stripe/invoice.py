@@ -138,8 +138,6 @@ class Invoice:
         try:
             # Get the Stripe Invoice object.
             invoice = stripe.Invoice.retrieve(invoice_id)
-            if invoice.status == "paid" or invoice.status == "void":
-                return True, invoice
 
             # Get the Stripe Customer object.
             customer = Customer.get(invoice["customer"])
@@ -149,6 +147,14 @@ class Invoice:
                 stripe_customer_id=invoice["customer"]
             )
             user_address_id = str(user_address.id)
+
+            if invoice.status == "paid" or invoice.status == "void":
+                if update_invoice_db:
+                    # Update the invoice.
+                    DownstreamInvoice.update_or_create_from_invoice(
+                        invoice, user_address
+                    )
+                return True, invoice
 
             if customer.invoice_settings.default_payment_method:
                 payment_method = StripePaymentMethod.get(
