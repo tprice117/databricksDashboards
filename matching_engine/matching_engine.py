@@ -65,7 +65,10 @@ class MatchingEngine:
             active_listings.filter(product_filter)
             # Select related fields to reduce the number of queries.
             .select_related("seller_product__product__main_product", "seller_location")
-            .prefetch_related("seller_location__seller_product_seller_locations")
+            .prefetch_related(
+                "seller_location__seller_product_seller_locations",
+                "seller_product__product__product_add_on_choices",
+            )
         )
 
         # Filter down results to locations which contain the main product being searched for.
