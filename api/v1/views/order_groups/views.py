@@ -70,6 +70,41 @@ class OrderGroupDeliveryView(APIView):
             raise APIException(str(e))
 
 
+class OrderGroupOneTimeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=OrderGroupNewTransactionRequestSerializer,
+        responses={
+            201: OrderSerializer(),
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        """
+        Creates a new one time(Order) for the OrderGroup.
+        Returns:
+          The Order.
+        """
+        order_group_id = self.kwargs.get("order_group_id")
+        # Convert request into serializer.
+        serializer = OrderGroupNewTransactionRequestSerializer(data=request.data)
+
+        # Validate serializer.
+        if not serializer.is_valid():
+            raise DRFValidationError(serializer.errors)
+
+        order_group = OrderGroup.objects.get(id=order_group_id)
+        delivery_date = serializer.validated_data["date"]
+        schedule_window = serializer.validated_data["schedule_window"]
+        try:
+            order = order_group.create_onetime(
+                delivery_date, schedule_window=schedule_window
+            )
+            return Response(OrderSerializer(order).data)
+        except Exception as e:
+            raise APIException(str(e))
+
+
 class OrderGroupPickupView(APIView):
     permission_classes = [IsAuthenticated]
 
