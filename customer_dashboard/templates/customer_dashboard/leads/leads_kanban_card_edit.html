@@ -13,14 +13,12 @@
           hx-post="{% if lead %}{% url 'customer_leads_card' lead.id %}{% else %}{% url 'customer_leads_board' %}{% endif %}" 
           hx-indicator="#htmx-indicator-save-btn" 
           hx-disabled-elt="button, .form-control, .form-select"
+          hx-include="{% if not lead %}#filter-form{% endif %}"
           hx-swap="outerHTML"
           hx-target="{% if lead %}#card-{{ lead.id }}{% else %}#board{% endif %}">
       {% csrf_token %}
       <div class="modal-header">
         <h5 class="modal-title">{% if lead %}Edit Lead{% else %}New Lead{% endif %}</h5>
-        {% if lead %}
-          <a href="{% url 'customer_lead_detail' lead.id %}" class="btn btn-sm btn-light"><i class="fas fa-external-link-alt"></i> View Details</a>
-        {% endif %}
       </div>
       <div class="modal-body">
         <!-- Form -->

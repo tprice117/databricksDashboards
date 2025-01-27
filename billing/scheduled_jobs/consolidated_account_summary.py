@@ -40,6 +40,10 @@ def get_account_summary(user_group) -> AccountSummary:
     invoices = Invoice.objects.filter(user_address__user_group=user_group).filter(
         ~Q(status=Invoice.Status.PAID) & ~Q(status=Invoice.Status.VOID)
     )
+    # Get the check buffer date (14 days ago).
+    two_weeks_ago = timezone.now() - timezone.timedelta(days=14)
+    # Annotate check_past_due to invoice if check_sent_at is 14 days ago.
+    invoices = invoices.annotate(check_past_due=Q(check_sent_at__lt=two_weeks_ago))
 
     total_invoices_not_paid_or_void = sum(
         [invoice.amount_remaining for invoice in invoices]
@@ -74,6 +78,8 @@ def get_account_summary(user_group) -> AccountSummary:
                 "number": invoice.number,
                 "invoice_due_date": invoice.due_date,
                 "invoice_status": invoice.status,
+                "check_sent_at": invoice.check_sent_at,
+                "check_past_due": invoice.check_past_due,
                 "invoice_past_due": invoice.due_date < now_midnight
                 if invoice.due_date
                 else False,

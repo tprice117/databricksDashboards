@@ -9,12 +9,12 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.db.models import Q
-from django.db.models.signals import post_delete, pre_save
+from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.template.loader import render_to_string
 
-from api.managers import CustomerTeamManager
+from api.managers import CustomerTeamManager, SalesTeamManager
 from api.models.order.order import Order
 from api.models.track_data import track_data
 from api.models.user.user_group import UserGroup
@@ -156,6 +156,7 @@ class User(AbstractUser):
     # Managers
     objects = UserManager()  # Default manager
     customer_team_users = CustomerTeamManager()
+    sales_team_users = SalesTeamManager()
 
     def __str__(self):
         return self.email
@@ -420,6 +421,21 @@ def user_pre_save(sender, instance: User, *args, **kwargs):
 
         if not instance.type:
             instance.type = UserType.ADMIN
+
+
+@receiver(post_save, sender=User)
+def user_post_save(sender, instance, created: bool, **kwargs):
+    """Post save signal for creating a new Lead when a User signs up."""
+    if created and not instance.is_staff:
+        # Perform actions after a new user is created
+        # Create a Lead for New SignUp
+        from crm.utils import LeadUtils
+
+        try:
+            lead = LeadUtils.create_new_sign_up(instance)
+            logger.info(f"New lead created: {lead}")
+        except Exception as e:
+            logger.error(f"Error creating new lead: {e}", exc_info=e)
 
 
 class CompanyUtils:

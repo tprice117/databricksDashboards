@@ -6,9 +6,8 @@ from typing import List, Optional
 import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.db import models
+from django.db.models.signals import post_save, post_delete
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
@@ -18,7 +17,6 @@ from api.models.disposal_location.disposal_location import DisposalLocation
 from api.models.order.order_line_item import OrderLineItem
 from api.models.order.order_line_item_type import OrderLineItemType
 from api.models.track_data import track_data
-from api.models.waste_type import WasteType
 from api.utils.auth0 import get_password_change_url, get_user_data
 from api.utils.utils import encrypt_string
 from billing.models import Invoice
@@ -354,7 +352,7 @@ class Order(BaseModel):
     def get_order_type(self):
         # Pre-calculate conditions
         first_order = self.order_group.orders.order_by("created_on").first()
-        is_first_order = str(first_order.id) == str(self.id)
+        is_first_order = str(first_order.id) == str(self.id) if first_order else False
         order_start_end_equal = self.start_date == self.end_date
         order_group_start_equal = self.start_date == self.order_group.start_date
         order_group_end_equal = self.end_date == self.order_group.end_date
@@ -749,6 +747,18 @@ class Order(BaseModel):
             else:
                 instance.order_group.end_date = instance.order_group.start_date
                 instance.order_group.save()
+
+    @staticmethod
+    def post_delete(sender, instance: "Order", **kwargs):
+        # If this order was a removal, then reset order_group.end_date to null
+        # Check for one time because on removal, the order type will come back as that.
+        if (
+            instance.order_type == Order.Type.REMOVAL
+            or instance.order_type == Order.Type.RETURN
+            or instance.order_type == Order.Type.ONE_TIME
+        ):
+            instance.order_group.end_date = None
+            instance.order_group.save()
 
     def admin_policy_checks(self, orders=None):
         """Check if Order violates any Admin Policies and sets the Order status to Approval if necessary.
@@ -1440,3 +1450,4 @@ class Order(BaseModel):
 
 
 post_save.connect(Order.post_save, sender=Order)
+post_delete.connect(Order.post_delete, sender=Order)

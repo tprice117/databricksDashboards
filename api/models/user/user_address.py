@@ -3,7 +3,7 @@ from typing import List
 
 from django.db import models
 from django.db.models import Q
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 
 from api.managers import UserAddressManager
 from api.models.order.order import Order
@@ -233,8 +233,21 @@ class UserAddress(BaseModel):
 
         instance.update_stripe()
 
+    def post_save(sender, instance, created, *args, **kwargs):
+        """Post save signal for creating a new Lead when a new location is added."""
+        if created and instance.user:
+            # Create a Lead for New Location
+            from crm.utils import LeadUtils
+
+            try:
+                lead = LeadUtils.create_new_location(instance.user, instance)
+                logger.info(f"New lead created: {lead}")
+            except Exception as e:
+                logger.error(f"Error creating new location lead: {e}")
+
 
 pre_save.connect(UserAddress.pre_save, sender=UserAddress)
+post_save.connect(UserAddress.post_save, sender=UserAddress)
 
 
 class CompanyUtils:

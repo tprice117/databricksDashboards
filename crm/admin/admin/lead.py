@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib import admin
 
 from api.models import User
@@ -15,6 +14,7 @@ class LeadAdmin(BaseModelAdmin):
         "user_address",
         "owner",
         "status",
+        "type",
         "created_on",
         "created_by",
     )

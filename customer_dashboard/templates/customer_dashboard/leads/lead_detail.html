@@ -18,6 +18,11 @@
         inputOptions[option.value] = option.text
       })
     
+    function disableSubmitButton(form) {
+      const submitButton = form.querySelector('button[type="submit"]')
+      submitButton.disabled = true
+    }
+    
     function markAsJunk() {
       // Send a modal popup asking for Lost Reason
       Swal.fire({
@@ -72,6 +77,81 @@
         }
       })
     }
+    
+    // Lead Detail Form START
+    // Removes the dropdown results from an element
+    function removeAutocompleteDropdown() {
+      let dropdownItems = document.querySelectorAll('.my-dropdown-item')
+      dropdownItems.forEach(function (item) {
+        item.remove()
+      })
+    }
+    
+    // Sets dropdown selection to input[#id_user_address] value
+    function addUserAddressAutocompleteListeners() {
+      let dropdownItems = document.querySelectorAll('.my-dropdown-item')
+      dropdownItems.forEach(function (item) {
+        if (item.getAttribute('data-id') === '') {
+          // Empty element
+          document.getElementById('id_user_address').value = null
+          return
+        }
+        item.addEventListener('click', function () {
+          // Update the display field with the user_address's name
+          document.getElementById('user_address-search').value = item.getAttribute('data-name')
+          // Update the hidden field with the user_address's ID
+          document.getElementById('id_user_address').value = item.getAttribute('data-id')
+          removeAutocompleteDropdown()
+        })
+      })
+    }
+    
+    // On Click event, close the dropdown unless the user is clicking on the search input
+    document.addEventListener('click', function (e) {
+      if (e.target != document.getElementById('user_address-search')) {
+        removeAutocompleteDropdown()
+      }
+    })
+    
+    document.addEventListener('DOMContentLoaded', function () {
+      // Clear the input field if the user clears the search field
+      const userAddressInput = document.getElementById('user_address-search')
+      if (userAddressInput) {
+        userAddressInput.addEventListener('input', function (e) {
+          if (!e.currentTarget.value && !e.inputType) {
+            document.getElementById('id_user_address').value = null
+          }
+        })
+      }
+    
+      // Make the user select searchable
+      const userSelect = content.querySelectorAll('.form-select').forEach((userSelect) => {
+        new Choices(userSelect, {
+          searchEnabled: true,
+          searchChoices: true,
+          removeItemButton: true,
+          itemSelectText: '',
+          noResultsText: 'No results found.',
+          shouldSort: false
+        })
+      })
+    
+      // Prevent the form from submitting when Enter is pressed
+      // This is so the form isn't accidently submitted while searching for an address
+      const form = content.querySelector('form')
+      if (form) {
+        form.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+          }
+        })
+      }
+    })
+    
+    htmx.onLoad(function (content) {
+      addUserAddressAutocompleteListeners()
+    })
+    // Lead Detail Form END
   </script>
 {% endblock %}
 {% block content %}
@@ -90,6 +170,8 @@
             <h5 class="text-primary mb-1"><strong>{{ lead.user.full_name|default_if_none:lead.user.email }}</strong></h5>
             {% if lead.user_address %}
               <h5 class="text-dark mb-1">{{ lead.user_address }}</h5>
+            {% else %}
+              <h6 class="text-muted mb-1">----</h6>
             {% endif %}
           </div>
         </div>
@@ -201,65 +283,146 @@
                     <h6 class="alert-heading mb-0"><strong>Lead Converted</strong></h6>
                   </div>
                 {% endif %}
-                <div class="row">
-                  <div class="col">
-                    {% with user=lead.user %}
+                <!-- Lead Details Display -->
+                <div id="text-details">
+                  <div class="d-flex flex-row-reverse">
+                    <button class="btn btn-light btn-sm" onclick="toggleEdit('details'); return false;" title="Edit Details"><i class="fas fa-edit me-2"></i>Edit</button>
+                  </div>
+                  <div class="row">
+                    <div class="col">
+                      {% with user=lead.user %}
+                        <table class="table small">
+                          <tbody>
+                            <tr>
+                              <td class="text-muted">Name</td>
+                              <td>{{ user.full_name|default:'' }}</td>
+                            </tr>
+                            <tr>
+                              <td class="text-muted">Email</td>
+                              <td>{{ user.email }}</td>
+                            </tr>
+                            <tr>
+                              <td class="text-muted">Address</td>
+                              <td>{{ lead.user_address|default:'' }}</td>
+                            </tr>
+                            <tr>
+                              <td class="text-muted">Company</td>
+                              <td>{{ user.user_group|default:'' }}</td>
+                            </tr>
+                            <tr>
+                              <td class="text-muted">Phone</td>
+                              <td>{{ user.phone|default:'' }}</td>
+                            </tr>
+                            <tr>
+                              <td class="text-muted">Estimated Conversion Date</td>
+                              <td>{{ lead.est_conversion_date }}</td>
+                            </tr>
+                            <tr>
+                              <td class="text-muted">Estimated Value</td>
+                              <td>{{ lead.est_value|currency }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      {% endwith %}
+                    </div>
+                    <div class="col">
                       <table class="table small">
                         <tbody>
                           <tr>
-                            <td class="text-muted">Name</td>
-                            <td>{{ user.full_name|default:'' }}</td>
+                            <td class="text-muted">Lead Number</td>
+                            <td>{{ lead.id }}</td>
                           </tr>
                           <tr>
-                            <td class="text-muted">Company</td>
-                            <td>{{ user.user_group|default:'' }}</td>
+                            <td class="text-muted">Lead Status</td>
+                            <td>{{ lead.get_status_display }}</td>
                           </tr>
                           <tr>
-                            <td class="text-muted">Email</td>
-                            <td>{{ user.email }}</td>
+                            <td class="text-muted">Lead Owner</td>
+                            <td>
+                              {% if lead.owner %}
+                                {{ lead.owner.full_name|default:lead.owner.email }}
+                              {% endif %}
+                            </td>
                           </tr>
                           <tr>
-                            <td class="text-muted">Phone</td>
-                            <td>{{ user.phone|default:'' }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-muted">Estimated Conversion Date</td>
-                            <td>{{ lead.est_conversion_date }}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-muted">Estimated Value</td>
-                            <td>{{ lead.est_value|currency }}</td>
+                            <td class="text-muted">Lead Type</td>
+                            <td>{{ lead.get_type_display }}</td>
                           </tr>
                         </tbody>
                       </table>
-                    {% endwith %}
+                    </div>
                   </div>
-                  <div class="col">
-                    <table class="table small">
-                      <tbody>
-                        <tr>
-                          <td class="text-muted">Lead Number</td>
-                          <td>{{ lead.id }}</td>
-                        </tr>
-                        <tr>
-                          <td class="text-muted">Lead Status</td>
-                          <td>{{ lead.get_status_display }}</td>
-                        </tr>
-                        <tr>
-                          <td class="text-muted">Lead Owner</td>
-                          <td>
-                            {% if lead.owner %}
-                              {{ lead.owner.full_name|default:lead.owner.email }}
-                            {% endif %}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td class="text-muted">Lead Type</td>
-                          <td>{{ lead.get_type_display }}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                </div>
+                <!-- Lead Details Form -->
+                <div id="text-edit-details" class="d-none">
+                  <form method="post">
+                    {% csrf_token %}
+                    {% for hidden in lead_form.hidden_fields %}
+                      {{ hidden }}
+                    {% endfor %}
+                    <div class="d-flex flex-row-reverse">
+                      <button class="btn btn-primary btn-sm" type="submit" title="Save Details" name="lead-form">Save</button>
+                      <button class="btn btn-danger btn-sm me-2" onclick="toggleEdit('details'); return false;" title="Cancel Edit"><i class="fas fa-times me-2"></i>Cancel</button>
+                    </div>
+                    <div class="row">
+                      <div class="col">
+                        {% with user=lead.user %}
+                          <table class="table small">
+                            <tbody>
+                              <tr>
+                                <td class="text-muted">User</td>
+                                <td>{{ lead_form.user }}</td>
+                              </tr>
+                              <tr>
+                                <td class="text-muted">
+                                  Address
+                                  <span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+                                </td>
+                                <td>
+                                  <div class="dropdown mb-3" hx-disabled-elt=".form-control, button">
+                                    <!-- prettier-ignore -->
+                                    <input id="user_address-search" class="form-control" autocomplete="off" type="search" name="q" value="{{ lead.user_address|default:'' }}" hx-get="{% url 'customer_user_address_search' %}" hx-trigger="input changed delay:500ms, search" hx-swap="innerHTML" hx-target="#user_address-search-results" hx-indicator="#htmx-indicator-loading" hx-include="#id_user" />
+                                    {% comment %}Hidden input field for user_address ID is added by forms.py id=id_user_address{% endcomment %}
+                                    <div class="dropdown-content" id="user_address-search-results"></div>
+                                  </div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td class="text-muted">Estimated Conversion Date</td>
+                                <td>{{ lead_form.est_conversion_date }}</td>
+                              </tr>
+                              <tr>
+                                <td class="text-muted">Estimated Value</td>
+                                <td>{{ lead_form.est_value }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        {% endwith %}
+                      </div>
+                      <div class="col">
+                        <table class="table small">
+                          <tbody>
+                            <tr>
+                              <td class="text-muted">Lead Number</td>
+                              <td>{{ lead.id }}</td>
+                            </tr>
+                            <tr>
+                              <td class="text-muted">Lead Status</td>
+                              <td>{{ lead_form.status }}</td>
+                            </tr>
+                            <tr>
+                              <td class="text-muted">Lead Owner</td>
+                              <td>{{ lead_form.owner }}</td>
+                            </tr>
+                            <tr>
+                              <td class="text-muted">Lead Type</td>
+                              <td>{{ lead_form.type }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </form>
                 </div>
               </div>
               <div class="tab-pane fade" id="activity" role="tabpanel" aria-labelledby="activity-tab">
@@ -275,7 +438,7 @@
           <div class="card-body">
             <h5 class="card-title mb-3"><i class="fas fa-comments me-3"></i>Lead Notes</h5>
             <div class="card-text">
-              <form id="note-formset" method="post">
+              <form id="note-formset" method="post" onsubmit="disableSubmitButton(this);">
                 {% csrf_token %}
                 {{ lead_note_formset.management_form }}
                 <input type="hidden" name="note-formset" />
@@ -298,49 +461,51 @@
                   {% else %}
                     {% with note=form.instance %}
                       {% with user=note.created_by %}
-                        <div class="d-flex mb-3 small">
-                          <div class="me-2">
-                            {% if user.photo %}
-                              <img class="border rounded-circle img-profile object-fit-cover p-0" style="height: 2rem; width: 2rem;" src="{{ user.photo.url }}" />
-                            {% else %}
-                              <span class="border rounded-circle img-profile d-flex justify-content-center align-items-center" style="height: 2rem; width: 2rem;"><i class="fas fa-user"></i></span>
-                            {% endif %}
-                          </div>
-                          <div class="col">
-                            <div class="d-flex justify-content-between">
-                              <small class="me-1">{{ user.full_name|default:user.email }}</small>
-                              <small class="text-end">
-                                {{ note.created_on|naturaltime }}
-                                {% comment %}Check for difference in Create/Update time, down to second.{% endcomment %}
-                                {% if note.created_on|date:'Y-m-d H:i:s' != note.updated_on|date:'Y-m-d H:i:s' %} (Edited){% endif %}
-                              </small>
+                        {% if user %}
+                          <div class="d-flex mb-3 small">
+                            <div class="me-2">
+                              {% if user.photo %}
+                                <img class="border rounded-circle img-profile object-fit-cover p-0" style="height: 2rem; width: 2rem;" src="{{ user.photo.url }}" />
+                              {% else %}
+                                <span class="border rounded-circle img-profile d-flex justify-content-center align-items-center" style="height: 2rem; width: 2rem;"><i class="fas fa-user"></i></span>
+                              {% endif %}
                             </div>
-                            {% if user == request.user %}
-                              {% for hidden in form.hidden_fields %}
-                                {{ hidden }}
-                              {% endfor %}
-                              {% comment %}Form prefix is "notes-X" where X is the id number of the form. We need to extract the number from the prefix to use it in the javascript functions and view, to save the correct form.{% endcomment %}
-                              {% with form_number=form.prefix|slice:'6:' %}
-                                <div id="text-edit-{{ form_number }}" class="d-none">
-                                  {{ form.text }}
-                                  <small class="d-inline">
-                                    <button class="btn btn-sm p-0 me-1 text-muted" onclick="toggleEdit({{ form_number }}); return false;">Cancel</button>
-                                    <button class="btn btn-sm btn-primary py-0 px-1" onclick="editNote({{ form_number }}); return false;">Save</button>
-                                  </small>
-                                </div>
-                                <div id="text-{{ form_number }}">
-                                  <p class="mb-2">{{ note.text }}</p>
-                                  <small class="d-inline">
-                                    <button class="btn btn-sm p-0 me-1 text-primary" onclick="toggleEdit({{ form_number }}); return false;">Edit</button>
-                                    <button class="btn btn-sm p-0 text-danger" onclick="deleteNote({{ form_number }}, '{{ form.DELETE.auto_id }}'); return false;">Delete</button>
-                                  </small>
-                                </div>
-                              {% endwith %}
-                            {% else %}
-                              <p class="mb-2">{{ note.text }}</p>
-                            {% endif %}
+                            <div class="col">
+                              <div class="d-flex justify-content-between">
+                                <small class="me-1">{{ user.full_name|default:user.email }}</small>
+                                <small class="text-end">
+                                  {{ note.created_on|naturaltime }}
+                                  {% comment %}Check for difference in Create/Update time, down to second.{% endcomment %}
+                                  {% if note.created_on|date:'Y-m-d H:i:s' != note.updated_on|date:'Y-m-d H:i:s' %} (Edited){% endif %}
+                                </small>
+                              </div>
+                              {% if user == request.user %}
+                                {% for hidden in form.hidden_fields %}
+                                  {{ hidden }}
+                                {% endfor %}
+                                {% comment %}Form prefix is "notes-X" where X is the id number of the form. We need to extract the number from the prefix to use it in the javascript functions and view, to save the correct form.{% endcomment %}
+                                {% with form_number=form.prefix|slice:'6:' %}
+                                  <div id="text-edit-{{ form_number }}" class="d-none">
+                                    {{ form.text }}
+                                    <small class="d-inline">
+                                      <button class="btn btn-sm p-0 me-1 text-muted" onclick="toggleEdit({{ form_number }}); return false;">Cancel</button>
+                                      <button class="btn btn-sm btn-primary py-0 px-1" onclick="editNote({{ form_number }}); return false;">Save</button>
+                                    </small>
+                                  </div>
+                                  <div id="text-{{ form_number }}">
+                                    <p class="mb-2">{{ note.text }}</p>
+                                    <small class="d-inline">
+                                      <button class="btn btn-sm p-0 me-1 text-primary" onclick="toggleEdit({{ form_number }}); return false;">Edit</button>
+                                      <button class="btn btn-sm p-0 text-danger" onclick="deleteNote({{ form_number }}, '{{ form.DELETE.auto_id }}'); return false;">Delete</button>
+                                    </small>
+                                  </div>
+                                {% endwith %}
+                              {% else %}
+                                <p class="mb-2">{{ note.text }}</p>
+                              {% endif %}
+                            </div>
                           </div>
-                        </div>
+                        {% endif %}
                       {% endwith %}
                     {% endwith %}
                   {% endif %}

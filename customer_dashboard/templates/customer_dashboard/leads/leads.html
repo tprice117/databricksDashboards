@@ -97,7 +97,7 @@
         removeItemButton: true,
         noResultsText: 'No results found.',
         shouldSort: false
-      })
+      }).setChoiceByValue('{{ request.user.id }}')
     }
     
     htmx.onLoad(function (content) {
@@ -149,6 +149,17 @@
     
       // Card Edit Form functionality START
       addUserAddressAutocompleteListeners()
+    
+      // Clear the input field if the user clears the search field
+      const userAddressInput = content.querySelector('#user_address-search')
+      if (userAddressInput) {
+        userAddressInput.addEventListener('input', function (e) {
+          console.log(e)
+          if (!e.currentTarget.value && !e.inputType) {
+            document.getElementById('id_user_address').value = null
+          }
+        })
+      }
     
       // Make the user select searchable
       const userSelect = content.querySelectorAll('.select-user').forEach((userSelect) => {
@@ -217,7 +228,7 @@
               <option value="">All</option>
               <option value="unassigned">Unassigned</option>
               {% for owner in owners %}
-                <option value="{{ owner.id }}">{{ owner }}</option>
+                <option value="{{ owner.id }}">{{ owner.full_name|default:owner }}</option>
               {% endfor %}
             </select>
           </div>

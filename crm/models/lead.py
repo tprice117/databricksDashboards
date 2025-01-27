@@ -143,6 +143,17 @@ class Lead(BaseModel):
         return f"Lead({self.id}) - {self.user} - {self.status}"
 
     def clean(self):
+        # Prevent duplicates
+        if (
+            self.is_active
+            and Lead.active_leads.filter(user=self.user, user_address=self.user_address)
+            .exclude(id=self.id)
+            .exists()
+        ):
+            raise ValidationError(
+                _("Active lead for this user and location already exists.")
+            )
+
         # Clean the User Address
         if self.user_address:
             # Check available UserAddresses for the User
@@ -151,6 +162,16 @@ class Lead(BaseModel):
             ).values_list("id", flat=True)
             if self.user_address.id not in available_user_addresses:
                 raise ValidationError(_("UserAddress is not associated with the User."))
+
+            # Check for open carts
+            if not self.pk and (
+                OrderGroup.objects.filter(
+                    user_address=self.user_address, orders__submitted_on__isnull=True
+                )
+                .distinct()
+                .exists()
+            ):
+                raise ValidationError("Address already has an open cart.")
         else:
             # UserAddress is required for an interested lead
             if self.status == Lead.Status.INTERESTED:
@@ -165,7 +186,9 @@ class Lead(BaseModel):
             raise ValidationError(_("Lost Reason is required for a junk lead only."))
 
         # Clean the Type
-        if self.type == Lead.Type.SELLER and not self.user.user_group.seller:
+        if self.type == Lead.Type.SELLER and not (
+            self.user.user_group and self.user.user_group.seller
+        ):
             # Seller leads must have a user associated with a seller
             raise ValidationError(
                 _("Seller leads must have a user associated with a seller.")
@@ -186,7 +209,11 @@ class Lead(BaseModel):
                 # Default to Manual
                 self.status = Lead.Status.MANUAL
 
+            # Assign the owner
+            self.assign_owner()
+
         self.update_expiration_status()
+        # Potentially overcomplicated to update conversion status on save. Consider removing.
         self.update_conversion_status()
 
         return super().save(*args, **kwargs)
@@ -240,6 +267,31 @@ class Lead(BaseModel):
         ):
             # Convert lead
             self.status = Lead.Status.CONVERTED
+
+    def assign_owner(self):
+        """
+        Assign the lead to the owner.
+
+        If the lead is not already assigned to an owner, assign it to the user's UserGroup's account_owner.
+        If there is no UserGroup/Account owner, assign via Round Robin to sales team members.
+        """
+        if not self.owner:
+            if self.user.user_group and self.user.user_group.account_owner:
+                # Use the UserGroup account owner
+                self.owner = self.user.user_group.account_owner
+            else:
+                # Round Robin to sales team members
+                sales_team = User.sales_team_users.all().order_by("id")
+                if sales_team:
+                    sales_team_list = list(sales_team)
+                    last_lead = Lead.objects.all().order_by("-id").first()
+                    if last_lead:
+                        # Assign to next sales team member
+                        # Will not take into account manually assigned leads, but will never assign to the same person twice in a row
+                        self.owner = sales_team_list[last_lead.id + 1 % len(sales_team)]
+                    else:
+                        # Assign to first sales team member
+                        self.owner = sales_team_list[0]
 
 
 class UserSelectableLeadStatus(models.TextChoices):

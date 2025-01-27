@@ -41,6 +41,10 @@ def get_account_past_due(user_group) -> AccountPastDue:
     invoices = Invoice.objects.filter(user_address__user_group=user_group).filter(
         ~Q(status=Invoice.Status.PAID) & ~Q(status=Invoice.Status.VOID)
     )
+    # Get the check buffer date (14 days ago).
+    two_weeks_ago = timezone.now() - timezone.timedelta(days=14)
+    # Annotate check_past_due to invoice if check_sent_at is 14 days ago.
+    invoices = invoices.annotate(check_past_due=Q(check_sent_at__lt=two_weeks_ago))
 
     now_midnight = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -69,6 +73,8 @@ def get_account_past_due(user_group) -> AccountPastDue:
                 "number": invoice.number,
                 "invoice_due_date": invoice.due_date,
                 "invoice_status": invoice.status,
+                "check_sent_at": invoice.check_sent_at,
+                "check_past_due": invoice.check_past_due,
                 "invoice_past_due": invoice.due_date < now_midnight
                 if invoice.due_date
                 else False,

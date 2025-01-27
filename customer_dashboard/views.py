@@ -93,7 +93,8 @@ from .forms import (
     AccessDetailsForm,
     BrandingFormSet,
     CreditApplicationForm,
-    LeadForm,
+    NewLeadForm,
+    LeadDetailForm,
     LeadNoteForm,
     BaseLeadNoteFormset,
     OrderGroupForm,
@@ -1177,10 +1178,15 @@ def customer_cart_date_edit(request, order_id):
             )
             .first()
         )
+        customer_price = order.customer_price()
+        customer_price_with_tax = order.customer_price_with_tax()
+        context["cart_address"] = {"address": order.order_group.user_address}
         context["item"] = {
             "order": order,
             "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
-            "customer_price": order.customer_price(),
+            "subtotal": customer_price,
+            "tax": customer_price_with_tax - customer_price,
+            "total": customer_price_with_tax,
         }
         context["loopcount"] = request.POST.get("loopcount")
 
@@ -1469,9 +1475,15 @@ def new_order_5(request):
 
             # Create the order (Let submitted on null, this indicates that the order is in the cart)
             # The first order of an order group always gets the same start and end date.
-            order = order_group.create_delivery(
-                delivery_date, schedule_window=schedule_window
-            )
+            if is_delivery:
+                order = order_group.create_delivery(
+                    delivery_date, schedule_window=schedule_window
+                )
+            else:
+                order = order_group.create_pickup(
+                    delivery_date, schedule_window=schedule_window
+                )
+
         # context["cart"][order_group.id] = {
         #     "order_group": order_group,
         #     "price": order.customer_price()
@@ -1508,10 +1520,12 @@ def new_order_5(request):
                 ).first()
                 if sub_obj:
                     sub_obj.delete()
-                for ordr in order_group.orders.all():
-                    # del_subtotal += order.customer_price()
-                    ordr.ordermaterialfee_set.all().delete()
-                    ordr.delete()
+                for order in order_group.orders.all():
+                    # Need to delete all related objects to the order.
+                    # Because they are all Protected
+                    order.ordermaterialfee_set.all().delete()
+                    order.orderpermitfee_set.all().delete()
+                    order.delete()
                 order_group.delete()
             elif order:
                 order.delete()
@@ -3928,13 +3942,48 @@ def invoice_detail(request, invoice_id):
     context["payment_methods"] = payment_methods.order_by("-created_on")
 
     if request.method == "POST":
-        payment_method_id = request.POST.get("payment_method")
-        if payment_method_id:
-            payment_method = PaymentMethod.objects.get(id=payment_method_id)
-            context["invoice"].pay_invoice(payment_method)
-            messages.success(request, "Successfully paid!")
+        if "check_sent_at_submit" in request.POST:
+            check_sent_at = request.POST.get("check_sent_at")
+            if check_sent_at:
+                try:
+                    # Parse the date string into a datetime object
+                    check_sent_at = datetime.datetime.strptime(
+                        check_sent_at, "%Y-%m-%d"
+                    )
+                    # Make the datetime object timezone-aware
+                    check_sent_at = timezone.make_aware(
+                        check_sent_at, timezone.get_current_timezone()
+                    )
+                    # Do not allow a date more than 2 days in the future
+                    cutoff_date = datetime.date.today() + datetime.timedelta(days=2)
+                    if check_sent_at.date() > cutoff_date:
+                        # Set the error message to may not select a date after 2 days in the future
+                        messages.error(
+                            request, f"May not select a date after {cutoff_date}."
+                        )
+                        return HttpResponseRedirect(
+                            reverse(
+                                "customer_invoice_detail",
+                                kwargs={"invoice_id": context["invoice"].id},
+                            )
+                        )
+                    # Assign the date to the invoice and save
+                    context["invoice"].check_sent_at = check_sent_at.date()
+                    context["invoice"].save()
+                except ValueError:
+                    # Handle the case where the date string is not in the expected format
+                    messages.error(request, "Invalid date format.")
+            else:
+                context["invoice"].check_sent_at = None
+                context["invoice"].save()
         else:
-            messages.error(request, "Invalid payment method.")
+            payment_method_id = request.POST.get("payment_method")
+            if payment_method_id:
+                payment_method = PaymentMethod.objects.get(id=payment_method_id)
+                context["invoice"].pay_invoice(payment_method)
+                messages.success(request, "Successfully paid!")
+            else:
+                messages.error(request, "Invalid payment method.")
 
     return render(request, "customer_dashboard/invoice_detail.html", context)
 
@@ -4731,6 +4780,7 @@ def create_lead_board(leads):
     Create a board structure from the given leads queryset.
     """
     board = []
+    # TODO: handle scale of leads (i.e. limit number of results, filter lanes)
     for status, status_name in Lead.Status.get_ordered_choices():
         board.append(
             {
@@ -4748,10 +4798,6 @@ def leads(request):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("customer_home"))
 
-    if settings.ENVIRONMENT == "TEST":
-        messages.info(request, "This feature is not ready yet! Check again later.")
-        return HttpResponseRedirect(reverse("customer_home"))
-
     context.update(
         {
             "selectable_statuses": [
@@ -4760,8 +4806,7 @@ def leads(request):
             "lost_reasons": {
                 value: text for value, text in Lead.LostReason.choices if value
             },
-            "owners": User.customer_team_users.all(),
-            "new_lead_form": LeadForm(),
+            "owners": User.sales_team_users.all(),
         }
     )
 
@@ -4803,7 +4848,7 @@ def leads_board(request):
                         request, f"Error updating lead: {','.join(e.messages)}"
                     )
         elif "new_card" in request.POST:
-            form = LeadForm(request.POST)
+            form = NewLeadForm(request.POST)
             if form.is_valid():
                 form.save()
                 messages.success(request, "Lead created successfully.")
@@ -4858,7 +4903,7 @@ def leads_card(request, lead_id):
     lead = Lead.objects.get(id=lead_id)
 
     if request.method == "POST":
-        form = LeadForm(request.POST, instance=lead)
+        form = NewLeadForm(request.POST, instance=lead)
         if form.is_valid():
             lead = form.save()
             messages.success(request, "Lead saved successfully")
@@ -4885,10 +4930,16 @@ def leads_card_edit(request, lead_id=None):
             return HttpResponse("Not found", status=404)
 
         lead = Lead.objects.get(id=lead_id)
-        form = LeadForm(instance=lead)
+        form = NewLeadForm(instance=lead)
     else:
         lead = None
-        form = LeadForm()
+        # Load New Lead form with Owner preset to current user if user is in sales team
+        initial_data = (
+            {"owner": request.user}
+            if User.sales_team_users.filter(id=request.user.id).exists()
+            else {}
+        )
+        form = NewLeadForm(initial=initial_data)
 
     context.update(
         {
@@ -4910,17 +4961,14 @@ def lead_detail(request, lead_id):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("customer_home"))
 
-    if settings.ENVIRONMENT == "TEST":
-        messages.info(request, "This feature is not ready yet! Check again later.")
-        return HttpResponseRedirect(reverse("customer_home"))
-
     lead = Lead.objects.prefetch_related("notes").filter(id=lead_id).first()
     if not lead:
         messages.error(request, "Lead not found.")
         return HttpResponseRedirect(reverse("customer_leads"))
 
-    lead_note_queryset = lead.notes.order_by("created_on")
     lead_statuses = Lead.Status.get_ordered_choices()
+    lead_form = LeadDetailForm(instance=lead)
+    lead_note_queryset = lead.notes.order_by("created_on")
 
     LeadNoteFormset = inlineformset_factory(
         Lead,
@@ -4935,8 +4983,30 @@ def lead_detail(request, lead_id):
     )
 
     if request.method == "POST":
+        # Edit Details
+        if "lead-form" in request.POST:
+            lead_form = LeadDetailForm(request.POST, instance=lead)
+            if lead_form.is_valid():
+                if lead_form.has_changed():
+                    lead = lead_form.save()
+                    if lead.status != lead_form.instance.status:
+                        messages.info(request, "Lead closed automatically.")
+                    else:
+                        messages.success(request, "Lead saved successfully.")
+                else:
+                    messages.info(request, "No changes detected.")
+            else:
+                messages.error(
+                    request,
+                    f"Error saving lead {lead_form.non_field_errors().as_text()}",
+                )
+                lead.refresh_from_db()
+
+            # Reinitialize Form
+            lead_form = LeadDetailForm(instance=lead)
+
         # Note Formset
-        if "note-formset" in request.POST:
+        elif "note-formset" in request.POST:
             lead_note_formset = LeadNoteFormset(
                 request.POST,
                 instance=lead,
@@ -4944,16 +5014,12 @@ def lead_detail(request, lead_id):
             )
             action = request.POST.get("action", "create")
 
-            if "add_note" in request.POST:
+            if action == "create":
                 # Handle creation
                 for form in lead_note_formset.extra_forms:
                     if form.is_valid():
                         form.save()
                         messages.success(request, "Note added successfully.")
-                        lead_note_formset = LeadNoteFormset(
-                            instance=lead,
-                            queryset=lead_note_queryset,
-                        )
                         break
                     else:
                         messages.error(
@@ -4975,10 +5041,6 @@ def lead_detail(request, lead_id):
                         if form.is_valid():
                             form.save()
                             messages.success(request, "Notes saved successfully.")
-                            lead_note_formset = LeadNoteFormset(
-                                instance=lead,
-                                queryset=lead_note_queryset,
-                            )
                         else:
                             messages.error(
                                 request,
@@ -4988,19 +5050,11 @@ def lead_detail(request, lead_id):
                         messages.info(request, "No changes detected.")
                 elif action == "delete":
                     # Handle deletion
-                    for keep_form in lead_note_formset:
-                        # Reset all the other forms so that they aren't altered
-                        if keep_form.instance != form.instance:
-                            keep_form = LeadNoteForm(instance=keep_form.instance)
-
-                    if lead_note_formset.is_valid():
-                        # Saving the formset handles the deletion
-                        lead_note_formset.save()
+                    if lead_note := LeadNote.objects.filter(
+                        id=form.instance.id
+                    ).first():
+                        lead_note.delete()
                         messages.success(request, "Notes saved successfully.")
-                        lead_note_formset = LeadNoteFormset(
-                            instance=lead,
-                            queryset=lead_note_queryset,
-                        )
                     else:
                         messages.error(
                             request,
@@ -5008,6 +5062,12 @@ def lead_detail(request, lead_id):
                         )
                 else:
                     messages.error(request, "Invalid action.")
+
+            # Reload formset
+            lead_note_formset = LeadNoteFormset(
+                instance=lead,
+                queryset=lead_note_queryset,
+            )
 
         # Mark as Junk
         elif "update_status" in request.POST:
@@ -5031,6 +5091,7 @@ def lead_detail(request, lead_id):
     context.update(
         {
             "lead": lead,
+            "lead_form": lead_form,
             "lead_note_formset": lead_note_formset,
             "lead_statuses": lead_statuses,
             "lead_status_index": [status for (status, _) in lead_statuses].index(

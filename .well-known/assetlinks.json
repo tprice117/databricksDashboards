@@ -1,0 +1,12 @@
+[
+    {
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.trydownstream.marketplace",
+        "sha256_cert_fingerprints": [
+          "E2:26:B5:73:2A:2F:8D:3E:4C:63:2C:34:65:7C:35:24:9C:1C:F9:53:C9:84:23:C2:27:C5:68:29:60:08:78:77"
+        ]
+      }
+    }
+  ]

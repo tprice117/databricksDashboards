@@ -777,7 +777,9 @@ class CartUtils:
                         {
                             "main_product": MainProduct,
                             "order": Order,
-                            "customer_price": Decimal,
+                            "subtotal": Decimal,
+                            "tax": Decimal,
+                            "total": Decimal,
                         },
                         ...
                     ],
