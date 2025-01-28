@@ -1,4 +1,5 @@
 import ast
+from collections import defaultdict
 import datetime
 import json
 import logging
@@ -842,10 +843,14 @@ def user_address_search(request):
                 .order_by("-created_on")
             )
     else:
-        context.update(get_user_context(request))
-        user_addresses = get_location_objects(
-            request, context["user"], context["user_group"], search_q=search
-        )
+        try:
+            user_address_id = uuid.UUID(search)
+            user_addresses = UserAddress.objects.filter(id=user_address_id)
+        except ValueError:
+            context.update(get_user_context(request))
+            user_addresses = get_location_objects(
+                request, context["user"], context["user_group"], search_q=search
+            )
 
     context["user_addresses"] = user_addresses
 
@@ -861,7 +866,9 @@ def user_address_search(request):
 def new_order_2(request, category_id):
     context = get_user_context(request)
     main_product_category = MainProductCategory.objects.filter(id=category_id)
-    main_product_category = main_product_category.prefetch_related("main_products")
+    main_product_category = main_product_category.prefetch_related(
+        "main_products__mainproductinfo_set"
+    )
     main_product_category = main_product_category.first()
     main_products = main_product_category.main_products.all().order_by("sort")
     # if this is a search then filter the main products
@@ -1024,6 +1031,7 @@ def new_order_4(request):
             and context["product_add_on_choices"][0] == ""
         ):
             context["product_add_on_choices"] = []
+        context["related_products"] = request.GET.getlist("related_products", [])
         context["schedule_window"] = request.GET.get("schedule_window", "")
         context["times_per_week"] = request.GET.get("times_per_week", "")
         if context["times_per_week"]:
@@ -1035,6 +1043,15 @@ def new_order_4(request):
         context["removal_date"] = request.GET.get("removal_date", "")
         context["quantity"] = int(request.GET.get("quantity"))
         context["project_id"] = request.GET.get("project_id")
+
+        if context["delivery_date"]:
+            context["delivery_date"] = datetime.datetime.strptime(
+                context["delivery_date"], "%Y-%m-%d"
+            ).date()
+        if context["removal_date"]:
+            context["removal_date"] = datetime.datetime.strptime(
+                context["removal_date"], "%Y-%m-%d"
+            ).date()
 
         # Get Product and AddOns
         products = Product.objects.filter(main_product_id=context["product_id"])
@@ -1090,6 +1107,7 @@ def new_order_4(request):
             waste_type_id = waste_type.id
         if waste_type_id:
             context["waste_type"] = waste_type_id
+            context["waste_type_name"] = waste_type.name
 
         # SellerProductSellerLocations
         user_address_obj = UserAddress.objects.filter(
@@ -1100,24 +1118,46 @@ def new_order_4(request):
                 context["product"],
                 user_address_obj,
                 waste_type,
+                related_products=context["related_products"],
             )
         )
-        context["seller_product_seller_locations"] = []
+
+        listing_buckets = defaultdict(
+            lambda: {
+                "location": None,
+                "distance": None,
+                "listing": {},
+                "related": [],
+                "related_ids": [],
+                "total": 0.0,
+            }
+        )
 
         for seller_product_seller_location in seller_product_seller_locations:
             seller_d = {}
             try:
                 # Include because SellerProductSellerLocationSerializer does not include waste types info needed for price_details_modal.
+                seller_location = seller_product_seller_location.seller_location
+                bucket = listing_buckets[seller_location.id]
+                if not bucket["location"]:
+                    bucket["location"] = seller_location
+                    # show distance if they want to do a pickup
+                    bucket["distance"] = DistanceUtils.get_driving_distance(
+                        seller_location.latitude,
+                        seller_location.longitude,
+                        user_address_obj.latitude,
+                        user_address_obj.longitude,
+                    )
+
                 seller_d["seller_product_seller_location"] = (
                     seller_product_seller_location
                 )
-                # show distance if they want to do a pickup
-                seller_d["distance"] = DistanceUtils.get_driving_distance(
-                    seller_product_seller_location.seller_location.latitude,
-                    seller_product_seller_location.seller_location.longitude,
-                    user_address_obj.latitude,
-                    user_address_obj.longitude,
-                )
+
+                if seller_product_seller_location.seller_product.product.product_add_on_choices.exists():
+                    seller_d["product_add_ons"] = [
+                        choice.add_on_choice.name
+                        for choice in seller_product_seller_location.seller_product.product.product_add_on_choices.all()
+                    ]
 
                 main_product = (
                     seller_product_seller_location.seller_product.product.main_product
@@ -1128,12 +1168,8 @@ def new_order_4(request):
                         id=context["user_address"],
                     ),
                     seller_product_seller_location=seller_product_seller_location,
-                    start_date=datetime.datetime.strptime(
-                        context["delivery_date"], "%Y-%m-%d"
-                    ).date(),
-                    end_date=datetime.datetime.strptime(
-                        context["delivery_date"], "%Y-%m-%d"
-                    ).date(),
+                    start_date=context["delivery_date"],
+                    end_date=context["delivery_date"],
                     waste_type=(
                         WasteType.objects.get(id=waste_type_id)
                         if waste_type_id
@@ -1156,21 +1192,35 @@ def new_order_4(request):
                 seller_d["price_breakdown"] = QuoteUtils.get_price_breakdown(
                     price_data,
                     seller_product_seller_location,
-                    context["product"].main_product,
+                    main_product,
                     user_group=context["user_group"],
                 )
+                if main_product.is_related:
+                    bucket["related"].append(seller_d)
+                    bucket["related_ids"].append(seller_product_seller_location.id)
+                else:
+                    bucket["listing"] = seller_d
 
-                context["seller_product_seller_locations"].append(seller_d)
+                bucket["total"] += seller_d["price_breakdown"]["total"]
             except Exception as e:
                 logger.error(
                     f"new_order_4:Error getting pricing [SellerProductSellerLocation: {seller_product_seller_location.id}]-[{e}]-[{request.build_absolute_uri()}]",
                     exc_info=e,
                 )
 
+        # Filter out results that don't have a listing or all the related products.
+        # Maybe in the future we'll still want to show these off to the side somewhere.
+        related_product_count = len(context["related_products"])
+        context["seller_product_seller_locations"] = [
+            obj
+            for obj in listing_buckets.values()
+            if obj["listing"] and len(obj["related_ids"]) == related_product_count
+        ]
+
         try:
             # Sort the seller_product_seller_locations by total price (low to high).
             context["seller_product_seller_locations"].sort(
-                key=lambda x: x["price_breakdown"]["total"],
+                key=lambda x: x["total"],
             )
         except Exception as e:
             logger.error(f"Error sorting seller_product_seller_locations: {e}")

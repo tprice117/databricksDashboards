@@ -61,7 +61,11 @@ class OrderAdmin(admin.ModelAdmin):
         "total_invoiced_from_seller",
         "seller_invoice_status",
     )
-    raw_id_fields = ("order_group", "checkout_order", "created_by", "updated_by")
+    raw_id_fields = (
+        "order_group",
+        "checkout_order",
+    )
+    readonly_fields = ("created_by", "updated_by", "created_on", "updated_on")
     ordering = ("-created_on",)
     list_filter = (
         "status",
