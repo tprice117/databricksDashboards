@@ -1,77 +1,75 @@
 {% load static %}
 {% block javascript %}
-    <script>
-        function addSetFocusListener() {
-            let dropdownToggle = document.querySelector(".dropdown-toggle");
-            if (dropdownToggle) {
-                dropdownToggle.addEventListener("click", function () {
-                    let dropdownMenu = document.querySelector(".navbar-search-dropdown");
-                    if (dropdownMenu && dropdownMenu.classList.contains("show")) {
-                        let input = document.querySelector('input[name="search"]');
-                        if (input) {
-                            setTimeout(() => {
-                                input.focus();
-                            }, 300);
-                        }
-                    }
-                });
+  <script>
+    function addSetFocusListener() {
+      let dropdownToggle = document.querySelector('.dropdown-toggle')
+      if (dropdownToggle) {
+        dropdownToggle.addEventListener('click', function () {
+          let dropdownMenu = document.querySelector('.navbar-search-dropdown')
+          if (dropdownMenu && dropdownMenu.classList.contains('show')) {
+            let input = document.querySelector('input[name="search"]')
+            if (input) {
+              setTimeout(() => {
+                input.focus()
+              }, 300)
             }
+          }
+        })
+      }
+    }
+    document.body.addEventListener('htmx:afterSettle', function (event) {
+      let dropdownMenu = document.querySelector('.navbar-search-dropdown')
+      if (dropdownMenu && dropdownMenu.classList.contains('show')) {
+        let input = document.querySelector('input[name="search"]')
+        if (input) {
+          input.focus()
         }
-        document.body.addEventListener("htmx:afterSettle", function (event) {
-            let dropdownMenu = document.querySelector(".navbar-search-dropdown");
-            if (dropdownMenu && dropdownMenu.classList.contains("show")) {
-                let input = document.querySelector('input[name="search"]');
-                if (input) {
-                    input.focus();
-                }
-            }
-        });
-        document.addEventListener("DOMContentLoaded", function () {
-            addSetFocusListener();
-        });
-    </script>
+      }
+    })
+    document.addEventListener('DOMContentLoaded', function () {
+      addSetFocusListener()
+    })
+  </script>
 {% endblock %}
-<nav class="navbar navbar-expand bg-white shadow mb-4 topbar static-top navbar-light">
-    <div class="container-fluid">
-        <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
-        <ul class="navbar-nav flex-nowrap ms-auto">
-            {% if request.user.is_staff %}
-                <a href="{% url 'sales_leaderboard' %}" style="margin-top: 24px; margin-right: 24px;">
-                    <i class="fas fa-money-bill"></i> Sales Leaderboard
-                </a>
-                {% if user_group %}
-                    <p class="text-center fw-bold" style="margin: auto;">{{ user_group.name }} |&nbsp;</p>
-                {% elif request.session.customer_user_id %}
-                    <p class="text-center" style="margin: auto;">
-                        <span class="fst-italic">{{ user.user_group.name }}</span>&nbsp;|&nbsp;
-                    </p>
-                {% endif %}
-                {% if request.session.customer_user_id %}
-                    <p class="text-center fw-bold" style="margin: auto;">Impersonating {{ user.first_name }}</p>
-                    <a class="btn btn-link" style="margin-top:auto;margin-bottom:auto;" href="{% url 'customer_impersonation_stop' %}"><i class="fas fa-times-circle" style="color: red;"></i></a>
-                {% endif %}
-                <li class="nav-item dropdown no-arrow">
-                    <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>
-                    <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in navbar-search-dropdown" aria-labelledby="searchDropdown" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-                        <h3>Search Customers<span class="htmx-indicator" id="htmx-indicator-seller-search"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></h3>
-                        <input class="form-control" type="search" name="search" placeholder="Begin Typing To Search Customers..." hx-post="{% url 'customer_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#search-results" hx-indicator="#htmx-indicator-seller-search" />
+<nav class="navbar navbar-expand bg-white shadow-sm topbar static-top navbar-light">
+  <div class="container-fluid">
+    <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
+    <ul class="navbar-nav flex-nowrap ms-auto">
+      {% if request.user.is_staff %}
+        <a href="{% url 'sales_leaderboard' %}" style="margin-top: 24px; margin-right: 24px;"><i class="fas fa-money-bill"></i> Sales Leaderboard</a>
+        {% if user_group %}
+          <p class="text-center fw-bold" style="margin: auto;">{{ user_group.name }} |&nbsp;</p>
+        {% elif request.session.customer_user_id %}
+          <p class="text-center" style="margin: auto;">
+            <span class="fst-italic">{{ user.user_group.name }}</span>&nbsp;|&nbsp;
+          </p>
+        {% endif %}
+        {% if request.session.customer_user_id %}
+          <p class="text-center fw-bold" style="margin: auto;">Impersonating {{ user.first_name }}</p>
+          <a class="btn btn-link" style="margin-top:auto;margin-bottom:auto;" href="{% url 'customer_impersonation_stop' %}"><i class="fas fa-times-circle" style="color: red;"></i></a>
+        {% endif %}
+        <li class="nav-item dropdown no-arrow">
+          <a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#"><i class="fas fa-search"></i></a>
+          <div class="dropdown-menu dropdown-menu-end p-3 animated--grow-in navbar-search-dropdown" aria-labelledby="searchDropdown" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
+            <h3>Search Customers<span class="htmx-indicator" id="htmx-indicator-seller-search"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></h3>
+            <input class="form-control" type="search" name="search" placeholder="Begin Typing To Search Customers..." hx-post="{% url 'customer_search' %}" hx-trigger="input changed delay:500ms, search" hx-target="#search-results" hx-indicator="#htmx-indicator-seller-search" />
 
-                        <div class="table-responsive">
-                            <table class="table navbar-search-dropdown">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="search-results"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </li>
-            {% endif %}
-            <div class="d-none d-sm-block topbar-divider"></div>
-            {% include 'customer_dashboard/snippets/profile_dropdown.html' %}
-        </ul>
-    </div>
+            <div class="table-responsive">
+              <table class="table navbar-search-dropdown">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="search-results"></tbody>
+              </table>
+            </div>
+          </div>
+        </li>
+      {% endif %}
+      <div class="d-none d-sm-block topbar-divider"></div>
+      {% include 'customer_dashboard/snippets/profile_dropdown.html' %}
+    </ul>
+  </div>
 </nav>
