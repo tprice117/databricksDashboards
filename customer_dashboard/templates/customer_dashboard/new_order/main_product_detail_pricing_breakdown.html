@@ -64,22 +64,24 @@
           </div>
         </div>
         <!-- Material Tonnage -->
-        <div class="row d-flex text-center mb-2">
-          <div class="col border p-2">
-            <p class="mb-0 text-primary">
-              <strong>Included Tons</strong>
-            </p>
-            <p class="mb-0">{{ price_breakdown.material.items.0.quantity|intcomma }}</p>
+        {% if product.main_product.has_material %}
+          <div class="row d-flex text-center mb-2">
+            <div class="col border p-2">
+              <p class="mb-0 text-primary">
+                <strong>Included Tons</strong>
+              </p>
+              <p class="mb-0">{{ price_breakdown.material.items.0.quantity|intcomma }}</p>
+            </div>
+            <div class="col border p-2">
+              <p class="mb-0 text-primary">
+                <strong>Price / Additional Ton</strong>
+              </p>
+              <p class="mb-0">
+                <span class="price-item" data-price="{{ price_breakdown.material.items.0.unit_price }}">{{ price_breakdown.material.items.0.unit_price|currency }}</span>
+              </p>
+            </div>
           </div>
-          <div class="col border p-2">
-            <p class="mb-0 text-primary">
-              <strong>Price / Additional Ton</strong>
-            </p>
-            <p class="mb-0">
-              <span class="price-item" data-price="{{ price_breakdown.material.items.0.unit_price }}">{{ price_breakdown.material.items.0.unit_price|currency }}</span>
-            </p>
-          </div>
-        </div>
+        {% endif %}
       {% else %}
         {% comment %}Any other product.{% endcomment %}
         <!-- Quote Breakdown -->
