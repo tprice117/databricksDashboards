@@ -113,7 +113,7 @@ def create_auto_renewal_orders():
                     start_date=most_recent_submitted_order_end_date,
                     end_date=most_recent_submitted_order_end_date
                     + timezone.timedelta(days=28),
-                    status=Order.Status.PENDING,
+                    status=Order.Status.SCHEDULED,
                     submitted_on=timezone.now(),
                 )
 
