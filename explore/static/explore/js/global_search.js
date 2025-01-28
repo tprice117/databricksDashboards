@@ -116,26 +116,56 @@ document.addEventListener('DOMContentLoaded', function () {
                 const resultsList = document.createElement('ul');
                 resultsList.classList.add('results-list');
 
-                const allResults = [...data.main_products, ...data.main_product_categories];
+                const allResults = [...data.main_products, ...data.main_product_categories, ...data.main_product_category_groups];
                 const totalPages = 1
-                const totalResults = allResults.length;
-                allResults.forEach(result => {
+                const totalResults = data.main_products.length + data.main_product_categories.length + data.main_product_category_groups.length;
+                data.main_product_categories.forEach(category => {
                     const listItem = document.createElement('li');
                     const link = document.createElement('a');
                     const image = document.createElement('img');
                     const text = document.createElement('span');
-
-                    if (result.images) {
-                        // https://portal.trydownstream.com/customer/order/new/product/5edb42d6-929c-4d79-ab8f-ea8f7624400c/
-                        link.href = `https://portal.trydownstream.com/customer/order/new/product/${result.main_product_category}`;
-                        image.src = result.images[0];
-                        text.textContent = `Product: ${result.name}`;
+                    if (category.group) {
+                        text.textContent = `Category: ${category.name}`;
+                        link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${category.group}`;
                     } else {
-                        // https://portal.trydownstream.com/customer/order/new/?q=&group_id=e14ef474-eacf-4e13-8f15-b67bb9f68413
-                        link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${result.group}`;
-                        image.src = result.icon;
-                        text.textContent = `Category: ${result.name}`;
+                        text.textContent = `Category Group: ${category.name}`;
+                        link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${category.id}`;
                     }
+                    image.src = category.icon;
+                    link.target = '_blank';
+                    link.appendChild(image);
+                    link.appendChild(text);
+                    listItem.appendChild(link);
+                    resultsList.appendChild(listItem);
+                    const categoryProducts = data.main_products.filter(product => product.main_product_category === category.id);
+                    categoryProducts.forEach(product => {
+                        const listItem = document.createElement('li');
+                        listItem.style.paddingLeft = '40px';
+                        const link = document.createElement('a');
+                        const image = document.createElement('img');
+                        const text = document.createElement('span');
+                        link.href = `https://portal.trydownstream.com/customer/order/new/product/${product.main_product_category}`;
+                        if (product.images.length > 0) {
+                            image.src = product.images[0];
+                        } else {
+                            image.src = category.icon;
+                        }
+                        text.textContent = `Product: ${product.name}`;
+                        link.target = '_blank';
+                        link.appendChild(image);
+                        link.appendChild(text);
+                        listItem.appendChild(link);
+                        resultsList.appendChild(listItem);
+                    });
+                });
+                data.main_product_category_groups.forEach(group => {
+                    const listItem = document.createElement('li');
+                    const link = document.createElement('a');
+                    const image = document.createElement('img');
+                    const text = document.createElement('span');
+                    text.textContent = `Category Group: ${group.name}`;
+                    link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${group.id}`;
+                    image.src = group.icon;
                     link.target = '_blank';
                     link.appendChild(image);
                     link.appendChild(text);
