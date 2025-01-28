@@ -66,6 +66,23 @@
               {% for listing in item.related %}
                 {% include 'customer_dashboard/new_order/main_product_detail_pricing_breakdown.html' with listing=listing %}
               {% endfor %}
+              <!-- Freight -->
+              <div class="freight-section text-dark text-nowrap">
+                <div class="col-12 align-self-end">
+                  <p class="mb-1 text-end">
+                    Delivery:
+                    <span class="price-item" data-price="{{ item.delivery }}">{{ item.delivery|currency }}</span>
+                  </p>
+                  <p class="mb-1 text-end">
+                    Removal:
+                    <span class="price-item" data-price="{{ item.removal }}">{{ item.removal|currency }}</span>
+                  </p>
+                  <p class="mb-1 text-end">
+                    Fuel &amp; Fees:
+                    <span class="price-item" data-price="{{ item.fuel_and_environmental }}">{{ item.fuel_and_environmental|currency }}</span>
+                  </p>
+                </div>
+              </div>
             </div>
             <div class="card border-dark text-primary w-100" style="border-radius: 18px; background-color: rgba(var(--bs-primary-rgb), 0.1);">
               <div class="card-body py-2 d-flex flex-row justify-content-between">
@@ -74,15 +91,13 @@
                     <strong>
                       {% if main_product.has_rental_multi_step %}
                         Estimated Total
-                      {% elif main_product.has_rental_one_step %}
-                        Total Per Month
                       {% else %}
-                        Total Per Service
+                        Total
                       {% endif %}
                     </strong>
                   </span>
                 {% endwith %}
-                <strong><span id="display-price" class="price-item" data-delivery-price="{{ item.listing.price_breakdown.one_time.total }}" data-price-with-delivery="{{ item.total }}" data-price="{{ item.total }}">{{ item.total|currency }}</span></strong>
+                <strong><span id="display-price" class="price-item" data-delivery-price="{{ item.freight }}" data-price-with-delivery="{{ item.total }}" data-price="{{ item.total }}">{{ item.total|currency }}</span></strong>
                 {% comment %}Input for sorting supplier items{% endcomment %}
                 <input type="hidden" class="total-price" value="{{ item.total }}" />
               </div>
