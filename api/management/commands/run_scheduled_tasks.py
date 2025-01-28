@@ -20,17 +20,17 @@ from api.utils.payouts import PayoutUtils
 from billing.scheduled_jobs.attempt_charge_for_past_due_invoices import (
     attempt_charge_for_past_due_invoices,
 )
+from billing.scheduled_jobs.consolidated_account_past_due import (
+    send_account_past_due_emails,
+)
+from billing.scheduled_jobs.consolidated_account_summary import (
+    send_account_summary_emails,
+)
 from billing.scheduled_jobs.ensure_invoice_settings_default_payment_method import (
     ensure_invoice_settings_default_payment_method,
 )
 from billing.scheduled_jobs.supplier_remittance import send_supplier_remittance_emails
 from billing.scheduled_jobs.sync_invoices import sync_invoices
-from billing.scheduled_jobs.consolidated_account_summary import (
-    send_account_summary_emails,
-)
-from billing.scheduled_jobs.consolidated_account_past_due import (
-    send_account_past_due_emails,
-)
 from billing.utils.billing import BillingUtils
 from crm.utils import LeadUtils
 from notifications.scheduled_jobs.send_emails import (
@@ -190,7 +190,7 @@ class Command(BaseCommand):
         scheduler.add_job(
             create_auto_renewal_orders,
             trigger=CronTrigger(
-                hour="3",
+                hour="1",
                 jitter=640,
             ),
             id="create_auto_renewal_orders",
