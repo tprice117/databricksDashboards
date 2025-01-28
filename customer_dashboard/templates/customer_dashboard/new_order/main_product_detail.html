@@ -236,6 +236,7 @@
           {% endif %}
           <!-- Other fields -->
           {% for field in form.visible_fields %}
+            {% comment %}Radio Select Fields, ex: shift count, times per week{% endcomment %}
             {% if field.name == 'shift_count' or field.name == 'times_per_week' %}
               <div class="mb-3">
                 <label for="{{ field.id_for_label }}" class="form-label">
@@ -256,7 +257,42 @@
                   <small class="text-danger">{{ field.errors }}</small>
                 {% endif %}
               </div>
+            {% elif field.name == 'delivery_date' and main_product.has_rental_multi_step %}
+              <div class="mb-3 row">
+                <!-- Date Fields -->
+                <div class="col">
+                  <label for="{{ field.id_for_label }}" class="form-label">
+                    <strong class="text-dark me-3"><i class="far {{ field_icons|get_dict_value:field.name }} me-2"></i>{{ field.label }}</strong>{{ field.label_suffix }}
+                    <small class="{{ field.field.required|yesno:'required' }} text-muted"><strong>{{ field.field.required|yesno:'Required,Optional' }}</strong></small>
+                  </label>
+                  {{ field }}
+                  {% if field.help_text %}
+                    <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                  {% endif %}
+                  {% if field.errors %}
+                    <small class="text-danger">{{ field.errors }}</small>
+                  {% endif %}
+                </div>
+                {% with field=form.removal_date %}
+                  <div class="col">
+                    <label for="{{ field.id_for_label }}" class="form-label">
+                      <strong class="text-dark me-3"><i class="far {{ field_icons|get_dict_value:field.name }} me-2"></i>{{ field.label }}</strong>{{ field.label_suffix }}
+                      <small class="{{ field.field.required|yesno:'required' }} text-muted"><strong>{{ field.field.required|yesno:'Required,Optional' }}</strong></small>
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                      <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                      <small class="text-danger">{{ field.errors }}</small>
+                    {% endif %}
+                  </div>
+                {% endwith %}
+              </div>
+            {% elif field.name == 'removal_date' %}
+              {% comment %}Do nothing{% endcomment %}
             {% else %}
+              {% comment %}Regular Fields{% endcomment %}
               <div class="mb-3">
                 <label for="{{ field.id_for_label }}" class="form-label">
                   <strong class="text-dark me-3">
