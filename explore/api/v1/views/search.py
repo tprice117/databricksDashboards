@@ -11,7 +11,7 @@ from rest_framework.exceptions import (
     ValidationError as DRFValidationError,
 )
 
-from api.models import MainProduct, MainProductCategory
+from api.models import MainProduct, MainProductCategory, MainProductCategoryGroup
 from explore.api.v1.serializers import SearchRequestSerializer, SearchSerializer
 
 
@@ -26,7 +26,7 @@ class SearchView(APIView):
                 name="q",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="Search query. This will search MainProducts and MainProductCategories.",
+                description="Search query. This will search MainProducts, MainProductCategories, and MainProductCategoryGroups.",
                 required=True,
             ),
         ],
@@ -36,20 +36,18 @@ class SearchView(APIView):
         },
     )
     def get(self, request, *args, **kwargs):
-        """Searches for matching MainProducts and MainProductCategories."""
+        """Searches for matching MainProducts, MainProductCategories, and MainProductCategoryGroups."""
         # Convert request into serializer.
         serializer = SearchRequestSerializer(data=request.query_params)
-        # serializer = SearchRequestSerializer(data=request.data)
         # Validate serializer.
         if not serializer.is_valid():
             raise DRFValidationError(serializer.errors)
 
         try:
             query = serializer.validated_data["q"]
-            # Search for MainProducts and MainProductCategories
+            # Search for MainProducts, MainProductCategories, and MainProductCategoryGroups.
             main_products = (
                 MainProduct.objects.filter(name__icontains=query)
-                .select_related("main_product_category")
                 .prefetch_related("images")
                 .order_by("sort")
             )
@@ -58,11 +56,15 @@ class SearchView(APIView):
                 .select_related("group")
                 .order_by("sort")
             )
+            main_product_category_groups = MainProductCategoryGroup.objects.filter(
+                name__icontains=query
+            ).order_by("sort")
             # Serialize the main products and categories
             data = SearchSerializer(
                 {
                     "main_products": main_products,
                     "main_product_categories": main_product_categories,
+                    "main_product_category_groups": main_product_category_groups,
                 }
             ).data
             return Response(data)

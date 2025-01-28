@@ -31,8 +31,6 @@ class MainProductCategoryGroupSerializer(serializers.ModelSerializer):
 
 
 class MainProductCategorySearchSerializer(serializers.ModelSerializer):
-    group = MainProductCategoryGroupSerializer()
-
     class Meta:
         model = MainProductCategory
         fields = "__all__"
@@ -41,3 +39,4 @@ class MainProductCategorySearchSerializer(serializers.ModelSerializer):
 class SearchSerializer(serializers.Serializer):
     main_products = MainProductSearchSerializer(many=True)
     main_product_categories = MainProductCategorySearchSerializer(many=True)
+    main_product_category_groups = MainProductCategoryGroupSerializer(many=True)
