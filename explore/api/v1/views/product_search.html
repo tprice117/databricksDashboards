@@ -227,9 +227,9 @@
                         const resultsList = document.createElement('ul');
                         resultsList.classList.add('results-list');
 
-                        const allResults = [...data.main_products, ...data.main_product_categories];
+                        const allResults = [...data.main_products, ...data.main_product_categories, ...data.main_product_category_groups];
                         const totalPages = 1
-                        const totalResults = allResults.length;
+                        const totalResults = data.main_products.length + data.main_product_categories.length + data.main_product_category_groups.length;
                         allResults.forEach(result => {
                             const listItem = document.createElement('li');
                             const link = document.createElement('a');
@@ -239,13 +239,26 @@
                             if (result.images) {
                                 // https://portal.trydownstream.com/customer/order/new/product/5edb42d6-929c-4d79-ab8f-ea8f7624400c/
                                 link.href = `https://portal.trydownstream.com/customer/order/new/product/${result.main_product_category}`;
-                                image.src = result.images[0];
+                                if (result.images.length > 0) {
+                                    image.src = result.images[0];
+                                } else {
+                                    // Loop categories to find category this product belongs to, and use that category's icon
+                                    const category = data.main_product_categories.find(category => category.id === result.main_product_category);
+                                    if (category) {
+                                        image.src = category.icon;
+                                    }
+                                }
                                 text.textContent = `Product: ${result.name}`;
                             } else {
                                 // https://portal.trydownstream.com/customer/order/new/?q=&group_id=e14ef474-eacf-4e13-8f15-b67bb9f68413
-                                link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${result.group}`;
+                                if (result.group) {
+                                    text.textContent = `Category: ${result.name}`;
+                                    link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${result.group}`;
+                                } else {
+                                    text.textContent = `Category Group: ${result.name}`;
+                                    link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${result.id}`;
+                                }
                                 image.src = result.icon;
-                                text.textContent = `Category: ${result.name}`;
                             }
                             link.target = '_blank';
                             link.appendChild(image);
