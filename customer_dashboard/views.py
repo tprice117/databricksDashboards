@@ -1131,6 +1131,10 @@ def new_order_4(request):
                 "related": [],
                 "related_ids": [],
                 "total": 0.0,
+                "delivery": 0.0,
+                "removal": 0.0,
+                "fuel_and_environmental": 0.0,
+                "freight": 0.0,
             }
         )
 
@@ -1173,7 +1177,7 @@ def new_order_4(request):
                     end_date=context["removal_date"],
                     waste_type=(
                         WasteType.objects.get(id=waste_type_id)
-                        if waste_type_id
+                        if waste_type_id and main_product.has_material
                         else None
                     ),
                     times_per_week=(
@@ -1183,7 +1187,9 @@ def new_order_4(request):
                         else None
                     ),
                     shift_count=(
-                        context["shift_count"] if context["shift_count"] else None
+                        context["shift_count"]
+                        if context["shift_count"] and main_product.has_rental_multi_step
+                        else None
                     ),
                     discount=discount,
                 )
@@ -1202,6 +1208,17 @@ def new_order_4(request):
                 else:
                     bucket["listing"] = seller_d
 
+                # Update running totals
+                if seller_d["price_breakdown"]["delivery"]:
+                    bucket["delivery"] += seller_d["price_breakdown"]["delivery"][
+                        "total"
+                    ]
+                if seller_d["price_breakdown"]["removal"]:
+                    bucket["removal"] += seller_d["price_breakdown"]["removal"]["total"]
+                bucket["fuel_and_environmental"] += seller_d["price_breakdown"][
+                    "one_time"
+                ]["fuel_and_environmental"]
+                bucket["freight"] += seller_d["price_breakdown"]["one_time"]["total"]
                 bucket["total"] += seller_d["price_breakdown"]["total"]
             except Exception as e:
                 logger.error(

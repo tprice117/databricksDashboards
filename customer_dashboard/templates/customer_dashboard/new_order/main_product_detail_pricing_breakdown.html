@@ -181,26 +181,6 @@
         <strong>Product Subtotal: <span class="price-item" data-price="{{ price_breakdown.other.total }}">{{ price_breakdown.other.total|currency }}</span></strong>
       </p>
       <hr class="my-2" style="opacity: 0.5; border-top: 3px solid;" />
-      <!-- Freight -->
-      <div class="freight-section">
-        <div class="col-12 align-self-end">
-          <p class="mb-1 text-end">
-            Delivery:
-            <span class="price-item" data-price="{{ price_breakdown.delivery.total }}">{{ price_breakdown.delivery.total|currency }}</span>
-          </p>
-          <p class="mb-1 text-end">
-            Removal:
-            <span class="price-item" data-price="{{ price_breakdown.removal.total }}">{{ price_breakdown.removal.total|currency }}</span>
-          </p>
-          <p class="mb-1 text-end">
-            Fuel &amp; Fees ({{ price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%):
-            <span class="price-item" data-price="{{ price_breakdown.one_time.fuel_and_environmental }}">{{ price_breakdown.one_time.fuel_and_environmental|currency }}</span>
-          </p>
-          <p class="mb-2 text-end">
-            <strong>Freight Subtotal: <span class="price-item" data-price="{{ price_breakdown.one_time.total }}">{{ price_breakdown.one_time.total|currency }}</span></strong>
-          </p>
-        </div>
-      </div>
     </div>
   {% endwith %}
 {% endwith %}
