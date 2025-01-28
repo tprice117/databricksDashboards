@@ -933,6 +933,7 @@ def new_order_3(request, product_id):
         "shift_count": "fa-sync-alt",
         "schedule_window": "fa-clock",
         "delivery_date": "fa-calendar-check",
+        "removal_date": "fa-calendar-times",
         "times_per_week": "fa-calendar-alt",
         "quantity": "fa-boxes",
     }
@@ -1169,7 +1170,7 @@ def new_order_4(request):
                     ),
                     seller_product_seller_location=seller_product_seller_location,
                     start_date=context["delivery_date"],
-                    end_date=context["delivery_date"],
+                    end_date=context["removal_date"],
                     waste_type=(
                         WasteType.objects.get(id=waste_type_id)
                         if waste_type_id

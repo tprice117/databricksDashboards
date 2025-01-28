@@ -12,12 +12,11 @@
         {{ waste_type_name }} |
       {% endif %}
     </strong>
-    {% comment %}Uncomment when est removal date is implemented{% if product.main_product.has_rental_multi_step %}
+    {% if product.main_product.has_rental_multi_step %}
       {{ delivery_date|date:'m/d/Y' }} - {{ removal_date|date:'m/d/Y' }}
     {% else %}
       {{ delivery_date|date:'m/d/Y' }}
-    {% endif %} {% endcomment %}
-    {{ delivery_date|date:'m/d/Y' }}
+    {% endif %}
   </h6>
   <!-- Pricing Section -->
   {% with price_breakdown=listing.price_breakdown %}
@@ -44,40 +43,8 @@
             </div>
           {% endfor %}
         </div>
-        {% comment %}Uncomment for est removal date <!-- Quote Breakdown -->
-        <div class="row">
-          <div class="col-9">
-            <p class="mb-0">
-              <strong>Quote Breakdown</strong>
-            </p>
-          </div>
-          <div class="col-3">
-            <p class="mb-0 text-end">
-              <strong>Total</strong>
-            </p>
-          </div>
-        </div>
-        <!-- Rental -->
-        <div class="row">
-          <div class="col-9">
-            <p class="mb-0">
-              {% for order_line_item in price_breakdown.rental.items %}
-                <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
-                  {{ order_line_item.units|lower }}
-                {% endif %}
-                {% if order_line_item.description %}
-                  ({{ order_line_item.description|lower }})
-                {% endif %}
-              {% endfor %}
-            </p>
-          </div>
-          <div class="col-3">
-            <p class="mb-0 text-end">
-              <span class="price-item" data-price="{{ price_breakdown.rental.total }}">{{ price_breakdown.rental.total|currency }}</span>
-            </p>
-          </div>
-        </div> {% endcomment %}
-      {% elif product.main_product.has_rental %}
+      {% endif %}
+      {% if product.main_product.has_rental %}
         {% comment %}Two-Step Rental (Dumpsters){% endcomment %}
         <!-- Included Days -->
         <div class="row d-flex text-center mb-2">
@@ -87,14 +54,6 @@
             </p>
             <p class="mb-0">{{ price_breakdown.rental.items.0.quantity|intcomma }}</p>
           </div>
-          {% comment %} <div class="col border p-2">
-            <p class="mb-0 text-primary">
-              <strong>Price / Day</strong>
-            </p>
-            <p class="mb-0">
-              <span class="price-item" data-price="{{ price_breakdown.rental.items.0.unit_price }}">{{ price_breakdown.rental.items.0.unit_price|currency }}</span>
-            </p>
-          </div> {% endcomment %}
           <div class="col border p-2">
             <p class="mb-0 text-primary">
               <strong>Price / Additional Day</strong>
@@ -138,69 +97,70 @@
         </div>
         {% if price_breakdown.rental %}
           <!-- Rental -->
-          <div class="row">
-            <div class="col-9">
-              <p class="mb-0">
-                {% for order_line_item in price_breakdown.rental.items %}
-                  <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+          {% for order_line_item in price_breakdown.rental.items %}
+            <div class="row">
+              <div class="col-9">
+                <p class="mb-0">
+                  <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span>
+                  / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
                     {{ order_line_item.units|lower }}
                   {% endif %}
                   {% if order_line_item.description %}
                     ({{ order_line_item.description|lower }})
                   {% endif %}
-                {% endfor %}
-              </p>
+                </p>
+              </div>
+              <div class="col-3">
+                <p class="mb-0 text-end">
+                  <span class="price-item" data-price="{{ order_line_item.total }}">{{ order_line_item.total|currency }}</span>
+                </p>
+              </div>
             </div>
-            <div class="col-3">
-              <p class="mb-0 text-end">
-                <span class="price-item" data-price="{{ price_breakdown.rental.total }}">{{ price_breakdown.rental.total|currency }}</span>
-              </p>
-            </div>
-          </div>
+          {% endfor %}
         {% endif %}
         {% if price_breakdown.material %}
           <!-- Material -->
-          <div class="row">
-            <div class="col-9">
-              <p class="mb-0">
-                {% for order_line_item in price_breakdown.material.items %}
+          {% for order_line_item in price_breakdown.material.items %}
+            <div class="row">
+              <div class="col-9">
+                <p class="mb-0">
                   <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
                     {{ order_line_item.units|lower }}
                   {% endif %}
                   {% if order_line_item.description %}
                     ({{ order_line_item.description|lower }})
                   {% endif %}
-                {% endfor %}
-              </p>
+                </p>
+              </div>
+              <div class="col-3">
+                <p class="mb-0 text-end">
+                  <span class="price-item" data-price="{{ order_line_item.total }}">{{ order_line_item.total|currency }}</span>
+                </p>
+              </div>
             </div>
-            <div class="col-3">
-              <p class="mb-0 text-end">
-                <span class="price-item" data-price="{{ price_breakdown.material.total }}">{{ price_breakdown.material.total|currency }}</span>
-              </p>
-            </div>
-          </div>
+          {% endfor %}
         {% endif %}
         {% if price_breakdown.service %}
           <!-- Service -->
-          <div class="row">
-            <div class="col-9">
-              <p class="mb-0">
-                {% for order_line_item in price_breakdown.service.items %}
+          {% for order_line_item in price_breakdown.service.items %}
+            <div class="row">
+              <div class="col-9">
+                <p class="mb-0">
                   <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
                     {{ order_line_item.units|lower }}
                   {% endif %}
                   {% if order_line_item.description %}
                     ({{ order_line_item.description|lower }})
                   {% endif %}
-                {% endfor %}
-              </p>
+                </p>
+              </div>
+              <div class="col-3">
+                <p class="mb-0 text-end">
+                  <span class="price-item" data-price="{{ order_line_item.total }}">{{ order_line_item.total|currency }}</span>
+                </p>
+              </div>
             </div>
-            <div class="col-3">
-              <p class="mb-0 text-end">
-                <span class="price-item" data-price="{{ price_breakdown.service.total }}">{{ price_breakdown.service.total|currency }}</span>
-              </p>
-            </div>
-          </div>
+          {% endfor %}
         {% endif %}
         <!-- Fuel & Fees -->
         <div class="row">
@@ -214,7 +174,8 @@
           </div>
         </div>
       {% endif %}
-      <p class="pt-1 mb-0 mt-3 text-end">
+      <!-- Subtotal -->
+      <p class="pt-1 mb-0 text-end">
         <strong>Product Subtotal: <span class="price-item" data-price="{{ price_breakdown.other.total }}">{{ price_breakdown.other.total|currency }}</span></strong>
       </p>
       <hr class="my-2" style="opacity: 0.5; border-top: 3px solid;" />
