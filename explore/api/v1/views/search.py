@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from django.db.models import Q
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from rest_framework.response import Response
@@ -51,14 +52,22 @@ class SearchView(APIView):
                 .prefetch_related("images")
                 .order_by("sort")
             )
+            # get a distinct list of category ids from main products
+            category_ids = []
+            for main_product in main_products:
+                if main_product.main_product_category_id not in category_ids:
+                    category_ids.append(main_product.main_product_category_id)
             main_product_categories = (
-                MainProductCategory.objects.filter(name__icontains=query)
+                MainProductCategory.objects.filter(
+                    Q(name__icontains=query) | Q(id__in=category_ids)
+                )
                 .select_related("group")
                 .order_by("sort")
             )
             main_product_category_groups = MainProductCategoryGroup.objects.filter(
                 name__icontains=query
             ).order_by("sort")
+
             # Serialize the main products and categories
             data = SearchSerializer(
                 {
