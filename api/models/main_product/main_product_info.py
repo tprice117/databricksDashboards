@@ -6,7 +6,7 @@ from common.models import BaseModel
 
 class MainProductInfo(BaseModel):
     name = models.CharField(max_length=80)
-    description = models.CharField(max_length=255)
+    description = models.CharField(max_length=255, null=True, blank=True)
     main_product = models.ForeignKey(MainProduct, models.CASCADE)
     sort = models.IntegerField(default=0)
 
