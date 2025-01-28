@@ -927,6 +927,7 @@ def new_order_3(request, product_id):
         "schedule_window": "fa-clock",
         "delivery_date": "fa-calendar-check",
         "times_per_week": "fa-calendar-alt",
+        "quantity": "fa-boxes",
     }
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
@@ -1118,6 +1119,10 @@ def new_order_4(request):
                     user_address_obj.longitude,
                 )
 
+                main_product = (
+                    seller_product_seller_location.seller_product.product.main_product
+                )
+
                 pricing = PricingEngine.get_price(
                     user_address=UserAddress.objects.get(
                         id=context["user_address"],
@@ -1135,7 +1140,10 @@ def new_order_4(request):
                         else None
                     ),
                     times_per_week=(
-                        context["times_per_week"] if context["times_per_week"] else None
+                        context["times_per_week"]
+                        if context["times_per_week"]
+                        and main_product.has_service_times_per_week
+                        else None
                     ),
                     shift_count=(
                         context["shift_count"] if context["shift_count"] else None

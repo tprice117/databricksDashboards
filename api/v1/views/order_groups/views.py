@@ -1,5 +1,6 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, viewsets
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -65,7 +66,42 @@ class OrderGroupDeliveryView(APIView):
             order = order_group.create_delivery(
                 delivery_date, schedule_window=schedule_window
             )
-            return Response(OrderSerializer(order).data)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            raise APIException(str(e))
+
+
+class OrderGroupOneTimeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=OrderGroupNewTransactionRequestSerializer,
+        responses={
+            201: OrderSerializer(),
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        """
+        Creates a new one time(Order) for the OrderGroup.
+        Returns:
+          The Order.
+        """
+        order_group_id = self.kwargs.get("order_group_id")
+        # Convert request into serializer.
+        serializer = OrderGroupNewTransactionRequestSerializer(data=request.data)
+
+        # Validate serializer.
+        if not serializer.is_valid():
+            raise DRFValidationError(serializer.errors)
+
+        order_group = OrderGroup.objects.get(id=order_group_id)
+        delivery_date = serializer.validated_data["date"]
+        schedule_window = serializer.validated_data["schedule_window"]
+        try:
+            order = order_group.create_onetime(
+                delivery_date, schedule_window=schedule_window
+            )
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             raise APIException(str(e))
 
@@ -100,7 +136,7 @@ class OrderGroupPickupView(APIView):
             order = order_group.create_pickup(
                 pickup_date, schedule_window=schedule_window
             )
-            return Response(OrderSerializer(order).data)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             raise APIException(str(e))
 
@@ -133,7 +169,7 @@ class OrderGroupSwapView(APIView):
         schedule_window = serializer.validated_data["schedule_window"]
         try:
             order = order_group.create_swap(swap_date, schedule_window=schedule_window)
-            return Response(OrderSerializer(order).data)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             raise APIException(str(e))
 
@@ -168,7 +204,7 @@ class OrderGroupRemovalView(APIView):
             order = order_group.create_removal(
                 removal_date, schedule_window=schedule_window
             )
-            return Response(OrderSerializer(order).data)
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             raise APIException(str(e))
 
@@ -230,7 +266,12 @@ class OrderGroupUpdatePlacementDetailsView(APIView):
 
         order_group = OrderGroup.objects.get(id=order_group_id)
         try:
-            order_group.placement_details = serializer.validated_data["access_details"]
+            order_group.placement_details = serializer.validated_data[
+                "placement_details"
+            ]
+            order_group.delivered_to_street = serializer.validated_data[
+                "delivered_to_street"
+            ]
             order_group.save()
             return Response(OrderGroupSerializer(order_group).data)
         except Exception as e:

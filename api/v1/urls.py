@@ -7,6 +7,7 @@ from api.v1.views import (
     OrderCancelView,
     OrderRescheduleView,
     OrderGroupDeliveryView,
+    OrderGroupOneTimeView,
     OrderGroupPickupView,
     OrderGroupRemovalView,
     OrderGroupSwapView,
@@ -25,6 +26,11 @@ urlpatterns += [
         "order-groups/<uuid:order_group_id>/order/delivery/",
         OrderGroupDeliveryView.as_view(),
         name="api_booking_delivery",
+    ),
+    path(
+        "order-groups/<uuid:order_group_id>/order/one-time/",
+        OrderGroupOneTimeView.as_view(),
+        name="api_booking_one_time",
     ),
     path(
         "order-groups/<uuid:order_group_id>/order/pickup/",

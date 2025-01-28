@@ -351,9 +351,7 @@ class Order(BaseModel):
         )
 
     def full_price(self):
-        default_take_rate = (
-            self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
-        )
+        default_take_rate = self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
         return self.seller_price() * (1 + (default_take_rate / 100))
 
     @property
@@ -402,9 +400,7 @@ class Order(BaseModel):
         order_start_end_equal = self.start_date == self.end_date
         order_group_start_equal = self.start_date == self.order_group.start_date
         order_group_end_equal = self.end_date == self.order_group.end_date
-        auto_renews = (
-            self.order_group.seller_product_seller_location.seller_product.product.main_product.auto_renews
-        )
+        auto_renews = self.order_group.seller_product_seller_location.seller_product.product.main_product.auto_renews
         order_count = Order.objects.filter(order_group=self.order_group).count()
         one_day_rental = self.order_group.start_date == self.order_group.end_date
 
@@ -525,7 +521,11 @@ class Order(BaseModel):
         super().clean()
 
         # Ensure submitted_on is not NULL if status is not PENDING.
-        if self.status != Order.Status.PENDING and not self.submitted_on:
+        if (
+            self.status != Order.Status.CANCELLED
+            and self.status != Order.Status.PENDING
+            and not self.submitted_on
+        ):
             raise ValidationError(
                 "Submitted On (which means Order has been checked out) must be set if status is not PENDING"
             )
@@ -585,9 +585,7 @@ class Order(BaseModel):
                     and order_group_orders.count() > 1
                 )
 
-                is_equiptment_order = (
-                    self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
-                )
+                is_equiptment_order = self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
 
                 # if it is a not a dilivery order delivery_fee is $0
                 delivery_fee = 0
@@ -1058,9 +1056,7 @@ class Order(BaseModel):
                 # Get all emails for this seller_location_id.
                 # Ensure all emails are non empty and unique.
                 to_emails = []
-                if (
-                    self.order_group.seller_product_seller_location.seller_location.order_email
-                ):
+                if self.order_group.seller_product_seller_location.seller_location.order_email:
                     to_emails.append(
                         self.order_group.seller_product_seller_location.seller_location.order_email
                     )
@@ -1394,7 +1390,7 @@ class Order(BaseModel):
                 self.submitted_on = timezone.now()
                 self.save()
 
-    def cancel_order(self, o):
+    def cancel_order(self):
         """This method is used to cancel an Order (set status to CANCELLED)."""
         if self.status != Order.Status.CANCELLED:
             self.status = Order.Status.CANCELLED
