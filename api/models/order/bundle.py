@@ -1,6 +1,5 @@
 from django.db import models
 from common.models import BaseModel
-from api.models.user.user_address import UserAddress
 
 
 class Bundle(BaseModel):
@@ -23,3 +22,11 @@ class Bundle(BaseModel):
 
     def __str__(self):
         return f"{self.name or 'bundle'}"
+
+    def delete(self):
+        # recalculate all the order line items
+        for order_group in self.order_groups.all():
+            for order in order_group.orders.all():
+                order.order_line_items.all().delete()
+                order.add_line_items(True)
+        super().delete()

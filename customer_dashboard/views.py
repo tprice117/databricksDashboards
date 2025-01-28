@@ -44,6 +44,7 @@ from common.forms import HiddenDeleteFormSet
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
     AddOn,
+    Bundle,
     MainProduct,
     MainProductCategory,
     MainProductCategoryGroup,
@@ -56,6 +57,7 @@ from api.models import (
     Product,
     ProductAddOnChoice,
     Seller,
+    SellerLocation,
     SellerProductSellerLocation,
     Subscription,
     TimeSlot,
@@ -1711,8 +1713,21 @@ def new_order_5(request):
                     item["seller_address"] = (
                         order.order_group.seller_product_seller_location.seller_location
                     )
-                    if item["seller_address"] not in context["seller_addresses"]:
-                        context["seller_addresses"].append(item["seller_address"])
+                    if not any(
+                        item["seller_address"] == addr["address"]
+                        for addr in context["seller_addresses"]
+                    ):
+                        context["seller_addresses"].append(
+                            {"address": item["seller_address"]}
+                        )
+                        # if this address has a bundle give the price
+                    if item["order"].order_group.bundle:
+                        context["seller_addresses"][-1]["delivery_fee"] = item[
+                            "order"
+                        ].order_group.bundle.delivery_fee
+                        context["seller_addresses"][-1]["removal_fee"] = item[
+                            "order"
+                        ].order_group.bundle.removal_fee
                 if (
                     checkout_order
                     and supplier_total == checkout_order.seller_price
@@ -1744,6 +1759,10 @@ def new_order_5(request):
             # items that can be bundled if they are from a location with 2 or more
             countRentalMultiStep = 0
             for item in bucket["items"]:
+                # show the edit bundle button
+                if item["order"].order_group.bundle:
+                    bucket["show_edit_bundle_button"] = True
+                    item["isBundled"] = True
                 # if hasattr(item["order"].order_group, "rental_multi_step"):
                 if item["order"].order_type == Order.Type.DELIVERY:
                     if (
@@ -1756,7 +1775,8 @@ def new_order_5(request):
                         countRentalMultiStep += 1
             # whether to even to show the bundle button
             if countRentalMultiStep >= 2:
-                bucket["show_bundle_button"] = True
+                if "show_edit_bundle_button" not in bucket:
+                    bucket["show_bundle_button"] = True
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
     context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"
@@ -1767,20 +1787,99 @@ def new_order_5(request):
     )
 
 
+@login_required(login_url="/admin/login/")
 def new_bundle(request):
     context = get_user_context(request)
     # save all the bundles being submitted
-    if request.method == "POST":
-        # get the bundle items
-        bundles = request.POST.get("bundles")
-        bundles = json.loads(bundles)
-        for bundle in bundles:
-            # new bundle with using ids passed in the request
-            # recreate the order line items with no delivery cost
-            orderIds = bundle
-            # for orderIds in bundle:
-            #     order = Order.objects.get(id=orderIds)
-            #     order.
+    if request.user.is_staff:
+        if request.method == "POST":
+            # get the bundle items
+            bundles = request.POST.get("bundles")
+            bundles = json.loads(bundles)
+            for bundle in bundles:
+                # new bundle with using ids passed in the request
+                # recreate the order line items with no delivery cost
+                # safety checks:
+                # 1. there are 2 or more items in the bundle
+                # 2. the items are from the same seller address
+                # 3. the items are from the same company address
+                # 4. the items are not already in a bundle then delete the bundle and create a new one
+
+                if "empty" in bundle:
+                    for orderId in bundle["items"]:
+                        order = Order.objects.get(id=orderId)
+                        if order.order_group.bundle:
+                            order.order_group.bundle.delete()
+                            break
+                else:
+                    if len(bundle["items"]) < 2:
+                        # if this is a bundle delete it
+                        messages.error(request, "Bundle must have at least 2 items.")
+                        return HttpResponseRedirect(reverse("customer_cart"))
+
+                    matchSellerAddress = Order.objects.get(
+                        id=bundle["items"][0]
+                    ).order_group.seller_product_seller_location.seller_location.id
+                    for orderId in bundle["items"]:
+                        order = Order.objects.get(id=orderId)
+                        if (
+                            order.order_group.seller_product_seller_location.seller_location.id
+                            != matchSellerAddress
+                        ):
+                            messages.error(
+                                request,
+                                "Items in bundle must be from the same seller address.",
+                            )
+                            return HttpResponseRedirect(reverse("customer_cart"))
+
+                    matchCompanyAddress = Order.objects.get(
+                        id=bundle["items"][0]
+                    ).order_group.user_address.id
+                    for orderId in bundle["items"]:
+                        order = Order.objects.get(id=orderId)
+                        if order.order_group.user_address.id != matchCompanyAddress:
+                            messages.error(
+                                request,
+                                "Items in bundle must be for the same user address.",
+                            )
+                            return HttpResponseRedirect(reverse("customer_cart"))
+
+                    for orderId in bundle["items"]:
+                        order = Order.objects.get(id=orderId)
+                        if order.order_group.bundle:
+                            old_bundle = order.order_group.bundle
+                            # delete will handle recalculating the order line items
+                            old_bundle.delete()
+                            break
+                            # messages.error(request, f"Item {order.id} is already in a bundle.")
+                            # return HttpResponseRedirect(reverse("customer_cart"))
+
+                    firstHasDelivery = False
+                    new_bundle = Bundle(
+                        name="bundle",
+                        delivery_fee=bundle["deliveryCost"],
+                        removal_fee=bundle["removalCost"],
+                    )
+                    new_bundle.save()
+                    for orderId in bundle["items"]:
+                        order = Order.objects.get(id=orderId)
+                        order.order_line_items.all().delete()
+                        if not firstHasDelivery:
+                            firstHasDelivery = True
+                            order.add_line_items(
+                                True,
+                                custom_delivery_fee=bundle["deliveryCost"],
+                                custom_removal_fee=bundle["removalCost"],
+                            )
+                        else:
+                            order.add_line_items(
+                                True, custom_delivery_fee=0, custom_removal_fee=0
+                            )
+                        order.order_group.bundle = new_bundle
+                        order.order_group.save()
+        messages.success(request, "Bundle saved.")
+    else:
+        messages.error(request, "You do not have permission to save bundles.")
     return HttpResponseRedirect(reverse("customer_cart"))
 
 

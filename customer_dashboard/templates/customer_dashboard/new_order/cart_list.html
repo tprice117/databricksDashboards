@@ -37,10 +37,16 @@
             {% include 'customer_dashboard/new_order/cart_order_item.html' with loopcount=forloop.counter %}
           {% endfor %}
           <div class="row justify-content-end mb-2 mt-4">
-            {% if cart_address.show_bundle_button %}
-              <div class="col-auto">
-                <button class="btn btn-outline-danger" id="bundle-button-{{forloop.counter}}" type="button" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal">Bundled Delivery</button>
-              </div>
+            {% if user.is_staff %}
+              {% if cart_address.show_edit_bundle_button %}
+                <div class="col-auto">
+                  <button class="btn btn-outline-danger" id="bundle-button-{{forloop.counter}}" type="button" data-edit="true" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal">Edit Bundle</button>
+                </div>
+              {% elif cart_address.show_bundle_button %}
+                <div class="col-auto">
+                  <button class="btn btn-outline-danger" id="bundle-button-{{forloop.counter}}" type="button" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal">Bundled Delivery</button>
+                </div>
+              {% endif %}
             {% endif %}
             {% if request.user.is_staff and cart_address.show_quote %}
               <div class="col-auto">

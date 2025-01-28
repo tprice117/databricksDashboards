@@ -140,6 +140,7 @@
         cartBundleBuckets.each(function(index, bucket) {
             var cartItems = jQuery(bucket).find("[id^='cart-bundled-confirm-item-']")
             var numberChecked = cartBucketItemChecked[index].filter(Boolean).length;
+            var seller_address_id = bucket.getAttribute("data-seller-address")
             if (numberChecked >= 2) {
                 var orderItems = []
                 cartItems.each(function(index2, item) {
@@ -154,6 +155,19 @@
                 console.log(deliveryCost)
                 console.log(removalCost)
                 bundles.push({items:orderItems,deliveryCost:deliveryCost,removalCost:removalCost})
+            } else {
+                // this will delete the bundle if it has less than 2 items
+                // pass the items so you know which bundle to delete
+                if (cartItems[0]!= null) {
+                    var orderItems = []
+                    cartItems.each(function(index2, item) {
+                        if (cartBucketItemChecked[index][index2]) {
+                            var orderId = jQuery(item).attr("data-order-id")
+                            orderItems.push(orderId)
+                        }
+                    })
+                    bundles.push({empty:true,items:orderItems})
+                }
             }
         })
         const form = jQuery("#bundle-form")
@@ -257,12 +271,21 @@
                     }
                 }
             })
-            // set the default delivery const
-            var deliveryInput = jQuery(bucket).find("[id^='delivery-rate-']")
-            var removalInput = jQuery(bucket).find("[id^='removal-rate-']")
-            console.log(deliveryInput)
-            jQuery(deliveryInput).attr('value', highestDeliveryPrice);
-            jQuery(removalInput).attr('value', highestRemovalPrice);
+            // set the default delivery cost
+            var default_delivery_price_button = jQuery(bucket).find("#default-delivery-price")
+            var default_removal_price_button = jQuery(bucket).find("#default-removal-price")
+            var default_delivery_price_text = default_delivery_price_button.next();
+            var default_removal_price_text = default_removal_price_button.next();
+            default_delivery_price_text.text("default is: $"+highestDeliveryPrice)
+            default_removal_price_text.text("default is: $"+highestRemovalPrice)
+            default_delivery_price_button.bind("click", function() {
+                var deliveryInput = jQuery(bucket).find("[id^='delivery-rate-']")
+                deliveryInput.attr('value', highestDeliveryPrice);
+            })
+            default_removal_price_button.bind("click", function() {
+                var removalInput = jQuery(bucket).find("[id^='removal-rate-']")
+                removalInput.attr('value', highestRemovalPrice);
+            })
         })
         // show warning if there are no bundles
         var emptyBundlesWarning = jQuery(`#empty-bundle-warning-${bundleId}`)
@@ -294,58 +317,6 @@
         })
       })
 		
-      var back =jQuery(".prev");
-      var next = jQuery(".next");
-      var steps = jQuery(".step");
-      
-      next.bind("click", function() { 
-        // if this is the last step, show the checkout button
-        if (jQuery(steps[steps.length-3]).hasClass('done')) {
-          next.text("Checkout");
-        }
-        // if the last step is done, show the last step is done
-        if (jQuery(steps[steps.length - 2]).hasClass('done')) {
-          jQuery(steps[steps.length-1]).removeClass('current').addClass('done');
-          next.unbind("click");
-          back.unbind("click");
-          // unfinished
-        }
-        // if this is the middle step, show the bundles
-        if (jQuery(steps[steps.length-3]).hasClass('current')) {
-          showBundles()
-        }
-        back.removeClass('disabled');
-        // show the correct content
-        const oldClass = ".step" + (jQuery(".current").attr("id")) + "-body";
-        const newClass = ".step" + (parseInt(jQuery(".current").attr("id"))+1) + "-body";
-        jQuery(oldClass).hide()
-        jQuery(newClass).show()
-        jQuery.each( steps, function( i ) {
-          if (!jQuery(steps[i]).hasClass('current') && !jQuery(steps[i]).hasClass('done')) {
-            jQuery(steps[i]).addClass('current');
-            jQuery(steps[i - 1]).removeClass('current').addClass('done');
-            return false;
-          }
-        })
-      });
-      back.bind("click", function() {
-        next.text("Next");
-        if (!jQuery(steps[1]).hasClass('done')) {
-          back.addClass('disabled');
-        }
-        // show the correct content
-        const oldClass = ".step" + (jQuery(".current").attr("id")) + "-body";
-        const newClass = ".step" + (parseInt(jQuery(".current").attr("id"))-1) + "-body";
-        jQuery(oldClass).hide()
-        jQuery(newClass).show()
-        jQuery.each( steps, function( i ) {
-          if (jQuery(steps[i]).hasClass('done') && jQuery(steps[i + 1]).hasClass('current')) {
-            jQuery(steps[i + 1]).removeClass('current');
-            jQuery(steps[i]).removeClass('done').addClass('current');
-            return false;
-          }
-        })
-      });
       var closeButton1 = jQuery("#close-1")
       var setPricingButton1 =jQuery("#set-pricing-1")
       var backButton2 = jQuery("#back-2")
@@ -428,18 +399,18 @@
                                                             <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#bundle-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="bundle-results .item-{{ forloop.counter }}">
                                                                 <div>
                                                                     <span>
-                                                                        {% if seller_address.name %}
-                                                                            {{ seller_address.name }}
+                                                                        {% if seller_address.address.name %}
+                                                                            {{ seller_address.address.name }}
                                                                         {% endif %}
                                                                     </span> -
                                                                     <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
-                                                                    <span id="count-{{ seller_address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
+                                                                    <span id="count-{{ seller_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
                                                                 </div>
                                                                 <div class="ms-auto align-items-end">
                                                                     {% if user.is_staff %}
                                                                         <span class="ms-2">
-                                                                            [{% if seller_address.seller.name %}
-                                                                                {{ seller_address.seller.name }}
+                                                                            [{% if seller_address.address.seller.name %}
+                                                                                {{ seller_address.address.seller.name }}
                                                                             {% endif %}]
                                                                         </span>
                                                                     {% endif %}
@@ -453,14 +424,14 @@
                                                                 <div class="accordion-body">
                                                                     <div class="card-container" style="display: flex; flex-wrap: wrap;">
                                                                         {% for item in cart_address.items %}
-                                                                            {% if item.seller_address.id == seller_address.id %}
+                                                                            {% if item.seller_address.id == seller_address.address.id %}
                                                                                 {% if item.canBundle %}
                                                                                     <div class="col-md-6 cart-item" id="cart-item-{{forloop.counter}}" data-delivery-price="{{item.total}}">
                                                                                         <div class="card" style="margin: 5px 5px;">
                                                                                             <div class="card-body" style="background: var(--bs-card-cap-bg);">
                                                                                                 <div class="row d-flex align-items-center">
                                                                                                     <div class="col-auto my-auto">
-                                                                                                        <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle">
+                                                                                                        <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" {% if item.isBundled %}checked{% endif %}>
                                                                                                     </div>
                                                                                                     <div class="col-auto">
                                                                                                         <img class="img-thumbnail img-fluid"
@@ -553,18 +524,18 @@
                                                             <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#bundle-results-2 .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="bundle-results-2 .item-{{ forloop.counter }}">
                                                                 <div>
                                                                     <span>
-                                                                        {% if seller_address.name %}
-                                                                            {{ seller_address.name }}
+                                                                        {% if seller_address.address.name %}
+                                                                            {{ seller_address.address.name }}
                                                                         {% endif %}
                                                                     </span> -
                                                                     <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
-                                                                    <span id="count-{{ seller_address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
+                                                                    <span id="count-{{ seller_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
                                                                 </div>
                                                                 <div class="ms-auto align-items-end">
                                                                     {% if user.is_staff %}
                                                                         <span class="ms-2">
-                                                                        [{% if seller_address.seller.name %}
-                                                                            {{ seller_address.seller.name }}
+                                                                        [{% if seller_address.address.seller.name %}
+                                                                            {{ seller_address.address.seller.name }}
                                                                         {% endif %}]
                                                                         </span>
                                                                     {% endif %}
@@ -578,7 +549,7 @@
                                                                 <div class="accordion-body">
                                                                     <div class="card-container" style="display: flex; flex-wrap: wrap;">
                                                                         {% for item in cart_address.items %}
-                                                                            {% if item.seller_address.id == seller_address.id %}
+                                                                            {% if item.seller_address.id == seller_address.address.id %}
                                                                                 {% if item.canBundle %}
                                                                                     <div class="col-md-6 cart-item" id="cart-bundled-item-{{forloop.counter}}" data-delivery-price="{{item.total}}">
                                                                                         <div class="card" style="margin: 5px 5px;">
@@ -623,11 +594,15 @@
                                                                     </div>
                                                                     <div class="row" style="width: 150px">
                                                                         <label for="currency">Delivery Rate:</label> 
-                                                                        $<input type="number" id="delivery-rate-{{forloop.counter}}" name="delivery-rate" step="0.01" min="0" placeholder="0.00" required> 
+                                                                        $<input type="number" id="delivery-rate-{{forloop.counter}}" name="delivery-rate" style="width: 100px;" step="0.01" min="0" placeholder="0.00" value={% if seller_address.delivery_fee %}"{{seller_address.delivery_fee}}"{% endif %} required>
+                                                                        <button type="button" class="btn btn-primary" id="default-delivery-price">Use Default</button>
+                                                                        <p>default is: $</p>
                                                                     </div>
                                                                     <div class="row" style="width: 150px">
                                                                         <label for="currency">Removal Rate:</label> 
-                                                                        $<input type="number" id="removal-rate-{{forloop.counter}}" name="removal-rate" step="0.01" min="0" placeholder="0.00" required> 
+                                                                        $<input type="number" id="removal-rate-{{forloop.counter}}" name="removal-rate" step="0.01" min="0" placeholder="0.00" value={% if seller_address.removal_fee %}"{{seller_address.removal_fee}}"{% endif %} required>
+                                                                        <button type="button" class="btn btn-primary" id="default-removal-price">Use Default</button>
+                                                                        <p>default is: $</p>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -684,24 +659,24 @@
                                                 <div class="accordion" role="tablist" id="bundle-results-3">
                                                     <i class="fas fa-exclamation-triangle text-danger" id="empty-bundle-warning-{{forloop.counter}}" style="display: none;">No items in this bundle!</i>
                                                     {% for seller_address in seller_addresses %}
-                                                        <div class="accordion-item" id="bundle-confirm-seller-address-{{forloop.counter}}">
+                                                        <div class="accordion-item" id="bundle-confirm-seller-address-{{forloop.counter}}" data-seller-address="{{seller_address.id}}">
                                                             {{cart_address.seller_addresses}}
                                                             <h2 class="accordion-header" role="tab">
                                                             <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#bundle-results-3 .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="bundle-results-3 .item-{{ forloop.counter }}">
                                                                 <div>
                                                                     <span>
-                                                                        {% if seller_address.name %}
-                                                                            {{ seller_address.name }}
+                                                                        {% if seller_address.address.name %}
+                                                                            {{ seller_address.address.name }}
                                                                         {% endif %}
                                                                     </span> -
                                                                     <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
-                                                                    <span id="count-{{ seller_address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
+                                                                    <span id="count-{{ seller_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
                                                                 </div>
                                                                 <div class="ms-auto align-items-end">
                                                                     {% if user.is_staff %}
                                                                         <span class="ms-2">
-                                                                        [{% if seller_address.seller.name %}
-                                                                            {{ seller_address.seller.name }}
+                                                                        [{% if seller_address.address.seller.name %}
+                                                                            {{ seller_address.address.seller.name }}
                                                                         {% endif %}]
                                                                         </span>
                                                                     {% endif %}
@@ -715,7 +690,7 @@
                                                                 <div class="accordion-body">
                                                                     <div class="card-container" style="display: flex; flex-wrap: wrap;">
                                                                         {% for item in cart_address.items %}
-                                                                            {% if item.seller_address.id == seller_address.id %}
+                                                                            {% if item.seller_address.id == seller_address.address.id %}
                                                                                 {% if item.canBundle %}
                                                                                     <div class="col-md-6 cart-item" id="cart-bundled-confirm-item-{{forloop.counter}}" data-delivery-price="{{item.total}}" data-order-id="{{item.order.id}}">
                                                                                         <div class="card" style="margin: 5px 5px;">

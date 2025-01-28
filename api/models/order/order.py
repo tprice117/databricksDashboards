@@ -339,9 +339,7 @@ class Order(BaseModel):
         )
 
     def full_price(self):
-        default_take_rate = (
-            self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
-        )
+        default_take_rate = self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
         return self.seller_price() * (1 + (default_take_rate / 100))
 
     @property
@@ -390,9 +388,7 @@ class Order(BaseModel):
         order_start_end_equal = self.start_date == self.end_date
         order_group_start_equal = self.start_date == self.order_group.start_date
         order_group_end_equal = self.end_date == self.order_group.end_date
-        auto_renews = (
-            self.order_group.seller_product_seller_location.seller_product.product.main_product.auto_renews
-        )
+        auto_renews = self.order_group.seller_product_seller_location.seller_product.product.main_product.auto_renews
         order_count = Order.objects.filter(order_group=self.order_group).count()
         one_day_rental = self.order_group.start_date == self.order_group.end_date
 
@@ -552,7 +548,9 @@ class Order(BaseModel):
                     "This Order overlaps with another Order for this OrderGroup"
                 )
 
-    def add_line_items(self, created):
+    def add_line_items(
+        self, created, custom_delivery_fee=None, custom_removal_fee=None
+    ):
         order_line_items = OrderLineItem.objects.filter(order=self)
         # if self.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
@@ -573,15 +571,15 @@ class Order(BaseModel):
                     and order_group_orders.count() > 1
                 )
 
-                is_equiptment_order = (
-                    self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
-                )
+                is_equiptment_order = self.order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
 
                 # if it is a not a dilivery order delivery_fee is $0
                 delivery_fee = 0
                 if is_first_order and self.order_group.is_delivery:
                     new_order_line_items.extend(
-                        self._add_order_line_item_delivery(),
+                        self._add_order_line_item_delivery(
+                            custom_delivery_fee=custom_delivery_fee
+                        ),
                     )
                     if (
                         self.order_group.seller_product_seller_location.delivery_fee
@@ -598,10 +596,16 @@ class Order(BaseModel):
                 # only charge if oder_group is a delivery
                 if self.order_group.is_delivery:
                     if is_first_order:
-                        new_order_line_items.extend(self._add_order_line_item_removal())
+                        new_order_line_items.extend(
+                            self._add_order_line_item_removal(
+                                custom_removal_fee=custom_removal_fee
+                            )
+                        )
                     elif is_last_order:
                         new_order_line_items.extend(
-                            self._add_order_line_item_removal(add_empty=True)
+                            self._add_order_line_item_removal(
+                                add_empty=True, custom_removal_fee=custom_removal_fee
+                            )
                         )
 
                 # If the OrderGroup has Material, add those line items.
@@ -679,13 +683,19 @@ class Order(BaseModel):
             except Exception as e:
                 logger.error(f"Order.post_save: [{self.id}]-[{e}]", exc_info=e)
 
-    def _add_order_line_item_delivery(self) -> Optional[List[OrderLineItem]]:
+    def _add_order_line_item_delivery(
+        self, custom_delivery_fee=None
+    ) -> Optional[List[OrderLineItem]]:
         return (
             [
                 OrderLineItem(
                     order=self,
                     order_line_item_type=OrderLineItemType.objects.get(code="DELIVERY"),
-                    rate=self.order_group.seller_product_seller_location.delivery_fee,
+                    rate=(
+                        self.order_group.seller_product_seller_location.delivery_fee
+                        if custom_delivery_fee is None
+                        else custom_delivery_fee
+                    ),
                     quantity=1,
                     description="Delivery Fee",
                     platform_fee_percent=self.order_group.take_rate,
@@ -697,7 +707,7 @@ class Order(BaseModel):
         )
 
     def _add_order_line_item_removal(
-        self, add_empty=False
+        self, add_empty=False, custom_removal_fee=None
     ) -> Optional[List[OrderLineItem]]:
         if add_empty:
             return [
@@ -716,7 +726,11 @@ class Order(BaseModel):
                 OrderLineItem(
                     order=self,
                     order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
-                    rate=self.order_group.seller_product_seller_location.removal_fee,
+                    rate=(
+                        self.order_group.seller_product_seller_location.removal_fee
+                        if custom_removal_fee is None
+                        else custom_removal_fee
+                    ),
                     quantity=1,
                     description="Removal Fee",
                     platform_fee_percent=self.order_group.take_rate,
@@ -1046,9 +1060,7 @@ class Order(BaseModel):
                 # Get all emails for this seller_location_id.
                 # Ensure all emails are non empty and unique.
                 to_emails = []
-                if (
-                    self.order_group.seller_product_seller_location.seller_location.order_email
-                ):
+                if self.order_group.seller_product_seller_location.seller_location.order_email:
                     to_emails.append(
                         self.order_group.seller_product_seller_location.seller_location.order_email
                     )

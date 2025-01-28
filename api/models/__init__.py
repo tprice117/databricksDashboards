@@ -19,6 +19,7 @@ from .main_product.main_product_tag import MainProductTag
 from .main_product.main_product_waste_type import MainProductWasteType
 from .main_product.product import Product
 from .main_product.product_add_on_choice import ProductAddOnChoice
+from .order.bundle import Bundle
 from .order.order import Order
 from .order.order_disposal_ticket import OrderDisposalTicket
 from .order.order_group import OrderGroup
