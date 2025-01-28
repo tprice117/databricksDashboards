@@ -130,10 +130,12 @@
                       cancelButtonText: 'Cancel'
                     }).then((result) => {
                       if (result.value) {
+                        disableAllButtons()
                         document.getElementById('newOrderForm{{ forloop.counter }}').submit()
                       }
                     })
                   } else {
+                    disableAllButtons()
                     document.getElementById('newOrderForm{{ forloop.counter }}').submit()
                   }
                 })

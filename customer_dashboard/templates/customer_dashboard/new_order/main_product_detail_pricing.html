@@ -10,6 +10,14 @@
 {% block javascript %}
   <script>
     const discountElement = document.getElementById('discount')
+    
+    // Prevent multiple requests being made during form submission
+    function disableAllButtons() {
+      document.querySelectorAll('button').forEach(function (button) {
+        button.disabled = true
+      })
+    }
+    
     // create a function for updating the supplier list
     function updateSupplierList(is_delivery) {
       document.querySelectorAll('input[name="is_delivery"]').forEach(function (el) {

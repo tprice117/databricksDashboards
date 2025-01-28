@@ -40,12 +40,18 @@ def get_dict_value(dictionary, key):
 
 @register.filter
 def downstream_naturaltime(value):
+    """
+    Return a humanized string representing time difference between now and the input value.
+
+    If the input value is a datetime object and the difference is greater than 1 day, return the date in the format "%b %d, %Y (CT)".
+    Otherwise, return the humanized string with the timezone "CT" (i.e. 3 seconds ago; 2 hours, 5 minutes ago; etc).
+    """
     if not value:
         return ""
     now = timezone.now()
     if isinstance(value, datetime):
         if now - value > timedelta(days=1):
-            return value.strftime("%b %d, %Y")
+            return value.strftime("%b %d, %Y") + " (CT)"
         else:
-            return naturaltime(value)
+            return naturaltime(value) + " (CT)"
     return value
