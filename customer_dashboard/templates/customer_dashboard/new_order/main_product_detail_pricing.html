@@ -109,22 +109,22 @@
       document.getElementById('sort-btn').disabled = true
       if (discountElement) {
         discountElement.disabled = true
-        // disable deliveryButton and pickupButton
-        document.querySelectorAll('[name=delivery-radio]').forEach(function (el) {
-          el.disabled = true
-        })
       }
+      // disable deliveryButton and pickupButton
+      document.querySelectorAll('[name=delivery-radio]').forEach(function (el) {
+        el.disabled = true
+      })
     })
     // Enable the form inputs again after the swap
     document.body.addEventListener('htmx:afterSwap', function (event) {
       document.getElementById('sort-btn').disabled = false
       if (discountElement) {
         discountElement.disabled = false
-        // enable deliveryButton and pickupButton
-        document.querySelectorAll('[name=delivery-radio]').forEach(function (el) {
-          el.disabled = false
-        })
       }
+      // enable deliveryButton and pickupButton
+      document.querySelectorAll('[name=delivery-radio]').forEach(function (el) {
+        el.disabled = false
+      })
     })
     
     // listen for the range slider discount change event
