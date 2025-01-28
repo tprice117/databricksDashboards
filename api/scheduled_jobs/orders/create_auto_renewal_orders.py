@@ -131,8 +131,8 @@ def create_auto_renewal_orders():
         # In the html_content, show a list of the OrderGroups that need to auto-renew.
         # The list should be a bulleted list of OrderGroup admin URLs.
         add_internal_email_to_queue(
-            subject="BETA (Not Creating Orders): OrderGroups That Need Auto-Renewal",
-            html_content="OrderGroups that need to auto-renew: <ul>{}</ul>".format(
+            subject="Auto Renewals: OrderGroups that have been auto-renewed",
+            html_content="OrderGroups that have been auto-renewed: <ul>{}</ul>".format(
                 "".join(
                     [
                         f"<li><a href='{settings.DASHBOARD_BASE_URL}/admin/api/ordergroup/{order_group.id}/change/'>{order_group.id}</a></li>"
