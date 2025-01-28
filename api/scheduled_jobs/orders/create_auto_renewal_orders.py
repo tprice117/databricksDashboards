@@ -35,6 +35,14 @@ def create_auto_renewal_orders():
         == "FENCE"
     ]
 
+    # Do not auto-renew Dumpster OrderGroups.
+    active_order_groups = [
+        order_group
+        for order_group in active_order_groups
+        if not order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.main_product_category_code
+        == "RO"
+    ]
+
     # Create list of OrderGroups that need to auto-renew.
     order_groups_that_needs_to_auto_renew = []
 
