@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -45,11 +46,17 @@ class SearchView(APIView):
 
         try:
             query = serializer.validated_data["q"]
-            main_products = MainProduct.objects.filter(
-                name__icontains=query
-            ).prefetch_related("images")
-            main_product_categories = MainProductCategory.objects.filter(
-                name__icontains=query
+            # Search for MainProducts and MainProductCategories
+            main_products = (
+                MainProduct.objects.filter(name__icontains=query)
+                .select_related("main_product_category")
+                .prefetch_related("images")
+                .order_by("sort")
+            )
+            main_product_categories = (
+                MainProductCategory.objects.filter(name__icontains=query)
+                .select_related("group")
+                .order_by("sort")
             )
             # Serialize the main products and categories
             data = SearchSerializer(
