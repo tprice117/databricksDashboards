@@ -1,16 +1,14 @@
 import datetime
 import uuid
 
-from django.utils import timezone
 from django.db import models
 from django.db.models.signals import pre_save
-
+from django.utils import timezone
 from multiselectfield import MultiSelectField
 
+from api.models.order.order import Order
 from api.utils.google_maps import geocode_address
 from common.models import BaseModel
-
-from api.models.order.order import Order
 
 
 class SellerLocation(BaseModel):
@@ -82,6 +80,10 @@ class SellerLocation(BaseModel):
     )
     w9 = models.FileField(upload_to=get_file_path, blank=True, null=True)
     # END: Insurance and tax fields.
+    payout_delay = models.IntegerField(
+        default=14,
+        help_text="Number of days to delay payout after an invoice is received.",
+    )
 
     def __str__(self):
         return f"{self.name} | {self.seller.name}"
