@@ -470,7 +470,7 @@ class OrderGroupForm(forms.Form):
     #     required=False,
     # )
     quantity = forms.IntegerField(
-        widget=forms.HiddenInput(),
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
         initial=1,
         required=True,
         help_text="Note: Currently, the prices on the next page are always for one.",

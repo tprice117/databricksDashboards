@@ -34,6 +34,9 @@ from api.filters import OrderFilterset, OrderGroupFilterset
 from api.models.order.order_group_material import OrderGroupMaterial
 from api.models.order.order_group_material_waste_type import OrderGroupMaterialWasteType
 from api.models.order.order_group_service import OrderGroupService
+from api.scheduled_jobs.orders.create_auto_renewal_orders import (
+    create_auto_renewal_orders,
+)
 from api.utils.denver_compliance_report import send_denver_compliance_report
 from api.utils.utils import decrypt_string
 from asset_management.models.asset import Asset
@@ -1446,20 +1449,7 @@ def asset_link(request):
 
 
 def test3(request):
-    order = Order.objects.get(id="8362a2e7-bc0c-4388-8a37-777451e65845")
-
-    invoice = BillingUtils.get_or_create_invoice_for_user_address(
-        order.order_group.user_address,
-        is_cart=False,
-        is_booking=False,
-    )
-
-    print("invoice: ", invoice)
-
-    BillingUtils.create_invoice_items_for_order(
-        invoice=invoice,
-        order=order,
-    )
+    create_auto_renewal_orders()
 
     return HttpResponse(status=200)
 

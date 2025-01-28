@@ -1,14 +1,14 @@
 import datetime
+import logging
 from decimal import Decimal
 from typing import List, Union
 
 import stripe
-from stripe import StripeError
 from django.conf import settings
 from django.db.models import DecimalField, F, Func, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Round
 from django.template.loader import render_to_string
-import logging
+from stripe import StripeError
 
 from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
@@ -17,7 +17,7 @@ from api.models.seller.seller_invoice_payable_line_item import (
     SellerInvoicePayableLineItem,
 )
 from api.models.seller.seller_location import SellerLocation
-from api.utils.lob import Lob, CheckErrorResponse
+from api.utils.lob import CheckErrorResponse, Lob
 from common.utils.stripe.stripe_utils import StripeUtils
 from notifications.utils.add_email_to_queue import add_internal_email_to_queue
 
@@ -72,13 +72,24 @@ class PayoutUtils:
             if PayoutUtils.can_send_stripe_payout(seller_location):
                 # Send Stripe Payouts.
                 for order in orders_for_seller_location:
-                    payout = PayoutUtils.send_stripe_payout(order)
+                    # Only payout if all of the SellerInvoicePayableLineItem.SellerInvoicePayable.invoice_date
+                    # are more than the SellerLocation.payout_delay days ago.
+                    if not PayoutUtils.blocked_by_payout_delay(order):
+                        payout = PayoutUtils.send_stripe_payout(order)
 
-                    # Add Payout to email report data.
-                    if payout:
-                        email_report_data["payouts"].append(payout)
+                        # Add Payout to email report data.
+                        if payout:
+                            email_report_data["payouts"].append(payout)
 
             elif PayoutUtils.can_send_check_payout(seller_location):
+                # Filter Orders to only include Orders that are not blocked by the
+                # SellerLocation's Payout Delay.
+                orders_for_seller_location = [
+                    order
+                    for order in orders_for_seller_location
+                    if not PayoutUtils.blocked_by_payout_delay(order)
+                ]
+
                 try:
                     # Send Check Payouts.
                     payout_response = PayoutUtils.send_check_payout(
@@ -88,7 +99,9 @@ class PayoutUtils:
                     if payout_response:
                         if isinstance(payout_response, CheckErrorResponse):
                             # If there was an error sending the check, add error message to email report data.
-                            email_report_data["error"] = f"""Checkbook error occurred:
+                            email_report_data[
+                                "error"
+                            ] = f"""Checkbook error occurred:
                              [{payout_response.status_code}]-{payout_response.message} on
                              seller_location id: {str(seller_location.id)}. Please check BetterStack logs."""
                         else:
@@ -180,6 +193,21 @@ class PayoutUtils:
                 )
             )
         )
+
+    @staticmethod
+    def blocked_by_payout_delay(order: Order):
+        """
+        A Payout for an Order is blocked by the SellerLocation's Payout Delay
+        if the SellerInvoicePayableLineItem.invoice_date is less than the
+        SellerLocation.payout_delay days ago.
+        """
+        return SellerInvoicePayableLineItem.objects.filter(
+            order=order,
+            seller_invoice_payable__invoice_date__gt=datetime.date.today()
+            - datetime.timedelta(
+                days=order.order_group.seller_product_seller_location.seller_location.payout_delay
+            ),
+        ).exists()
 
     @staticmethod
     def can_send_stripe_payout(seller_location: SellerLocation) -> bool:
