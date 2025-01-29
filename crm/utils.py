@@ -32,15 +32,23 @@ class LeadUtils:
 
     @staticmethod
     def convert_customer_leads(user_address):
-        return Lead.active_leads.filter(
+        """Method to convert all customer leads for a UserAddress"""
+        leads = Lead.active_leads.filter(
             type=Lead.Type.CUSTOMER, user_address=user_address
-        ).update(status=Lead.Status.CONVERTED)
+        )
+        for lead in leads:
+            lead.update_conversion_status()
+        return Lead.objects.bulk_update(leads, ["status"])
 
     @staticmethod
     def convert_seller_leads(seller):
-        return Lead.active_leads.filter(
+        """Method to convert all seller leads for a Seller"""
+        leads = Lead.active_leads.filter(
             type=Lead.Type.SELLER, user__user_group__seller=seller
-        ).update(status=Lead.Status.CONVERTED)
+        )
+        for lead in leads:
+            lead.update_conversion_status()
+        return Lead.objects.bulk_update(leads, ["status"])
 
     @staticmethod
     def create_new_sign_up(user):
