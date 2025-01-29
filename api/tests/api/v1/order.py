@@ -50,7 +50,6 @@ class OrderAPITests(APITestCase):
         except Exception as e:
             print("TESTS FAILED", e)
         finally:
-            order_group.orders.all().delete()
             order_group.delete()
 
     def test_reschedule_order(self):
@@ -87,7 +86,6 @@ class OrderAPITests(APITestCase):
         except Exception as e:
             print("TESTS FAILED", e)
         finally:
-            order_group.orders.all().delete()
             order_group.delete()
 
     @staticmethod
