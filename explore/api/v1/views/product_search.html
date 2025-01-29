@@ -230,10 +230,6 @@
 
             const searchForm = document.getElementById('searchForm');
             const searchQuery = document.getElementById('searchQuery');
-            // TODO: create input form inside div with class search-form
-            // Create spinner
-            // const spinner = document.createElement('div');
-            // spinner.id = 'spinner';
             const spinner = document.getElementById('spinner');
             const resultsContainer = document.getElementById('results-container');
             const resultsDiv = document.getElementById('results');
@@ -300,7 +296,7 @@
                                 link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${category.id}`;
                             }
                             image.src = category.icon;
-                            link.target = '_blank';
+                            // link.target = '_blank';
                             link.appendChild(image);
                             link.appendChild(text);
                             listItem.appendChild(link);
@@ -319,7 +315,7 @@
                                     image.src = category.icon;
                                 }
                                 text.textContent = `Product: ${product.name}`;
-                                link.target = '_blank';
+                                // link.target = '_blank';
                                 link.appendChild(image);
                                 link.appendChild(text);
                                 listItem.appendChild(link);
@@ -334,7 +330,7 @@
                             text.textContent = `Category Group: ${group.name}`;
                             link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${group.id}`;
                             image.src = group.icon;
-                            link.target = '_blank';
+                            // link.target = '_blank';
                             link.appendChild(image);
                             link.appendChild(text);
                             listItem.appendChild(link);
@@ -355,7 +351,6 @@
                         spinner.style.display = 'none';
                     });
             }
-            let timeout = null;
             let debounceTimeout
             searchQuery.addEventListener('input', function (event) {
                 // Only trigger the search if the value is not empty and has more than 1 character and the user has stopped typing.
