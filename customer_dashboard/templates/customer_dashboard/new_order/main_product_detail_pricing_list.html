@@ -121,7 +121,9 @@
             <input name="removal_date" type="hidden" value="{{ removal_date|date:'Y-m-d' }}" />
             <input name="quantity" type="hidden" value="{{ quantity }}" />
             <input name="project_id" type="hidden" value="{{ project_id }}" />
-            <input name="related_products" type="hidden" value="{{ item.related_ids }}" />
+            {% for related_id in item.related_ids %}
+              <input name="related_products" type="hidden" value="{{ related_id }}" />
+            {% endfor %}
             <input name="is_delivery" type="hidden" value="True" />
             {% if request.user.is_staff %}
               <input class="order-form-discount" type="hidden" name="discount" value="{{ discount }}" />

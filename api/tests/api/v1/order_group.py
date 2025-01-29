@@ -52,7 +52,6 @@ class OrderGroupAPITests(APITestCase):
         except Exception as e:
             print("TESTS FAILED", e)
         finally:
-            order_group.orders.all().delete()
             order_group.delete()
 
     def test_create_onetime(self):
@@ -87,7 +86,6 @@ class OrderGroupAPITests(APITestCase):
         except Exception as e:
             print("TESTS FAILED", e)
         finally:
-            order_group.orders.all().delete()
             order_group.delete()
 
     def test_create_pickup(self):
@@ -123,7 +121,6 @@ class OrderGroupAPITests(APITestCase):
         except Exception as e:
             print("TESTS FAILED", e)
         finally:
-            order_group.orders.all().delete()
             order_group.delete()
 
     def test_create_swap(self):
@@ -162,7 +159,6 @@ class OrderGroupAPITests(APITestCase):
         except Exception as e:
             print("TESTS FAILED", e)
         finally:
-            order_group.orders.all().delete()
             order_group.delete()
 
     def test_create_removal(self):
@@ -203,7 +199,6 @@ class OrderGroupAPITests(APITestCase):
         except Exception as e:
             print("TESTS FAILED", e)
         finally:
-            order_group.orders.all().delete()
             order_group.delete()
 
     def test_update_access_details(self):
@@ -236,7 +231,6 @@ class OrderGroupAPITests(APITestCase):
         except Exception as e:
             print("TESTS FAILED", e)
         finally:
-            order_group.orders.all().delete()
             order_group.delete()
 
     def test_update_placement_details(self):
@@ -275,7 +269,6 @@ class OrderGroupAPITests(APITestCase):
         except Exception as e:
             print("TESTS FAILED", e)
         finally:
-            order_group.orders.all().delete()
             order_group.delete()
 
     @staticmethod
