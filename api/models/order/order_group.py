@@ -162,6 +162,29 @@ class OrderGroup(BaseModel):
     def __str__(self):
         return f"{self.user.user_group.name if self.user.user_group else ''} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}"
 
+    def delete(self, using=None, keep_parents=False):
+        with transaction.atomic():
+            # Delete related Subscription.
+            from api.models.order.subscription import Subscription
+
+            sub_obj = Subscription.objects.filter(order_group_id=self.id).first()
+            if sub_obj:
+                sub_obj.delete()
+
+            # Delete any related protected objects, like orders and subscriptions.
+            for order in self.orders.all():
+                # Need to delete all related objects to the order.
+                # Because they are all Protected
+                order.ordermaterialfee_set.all().delete()
+                order.orderpermitfee_set.all().delete()
+                order.delete()
+
+            # Recurse through related bookings, deleting each one.
+            for related_booking in self.related_bookings.all():
+                related_booking.delete()
+
+            return super().delete(using, keep_parents)
+
     class Meta:
         verbose_name = "Booking"
         verbose_name_plural = "Bookings"

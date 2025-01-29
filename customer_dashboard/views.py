@@ -19,7 +19,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import (
     F,
     Max,
@@ -1131,6 +1131,10 @@ def new_order_4(request):
                 "related": [],
                 "related_ids": [],
                 "total": 0.0,
+                "delivery": 0.0,
+                "removal": 0.0,
+                "fuel_and_environmental": 0.0,
+                "freight": 0.0,
             }
         )
 
@@ -1173,7 +1177,7 @@ def new_order_4(request):
                     end_date=context["removal_date"],
                     waste_type=(
                         WasteType.objects.get(id=waste_type_id)
-                        if waste_type_id
+                        if waste_type_id and main_product.has_material
                         else None
                     ),
                     times_per_week=(
@@ -1183,7 +1187,9 @@ def new_order_4(request):
                         else None
                     ),
                     shift_count=(
-                        context["shift_count"] if context["shift_count"] else None
+                        context["shift_count"]
+                        if context["shift_count"] and main_product.has_rental_multi_step
+                        else None
                     ),
                     discount=discount,
                 )
@@ -1202,6 +1208,17 @@ def new_order_4(request):
                 else:
                     bucket["listing"] = seller_d
 
+                # Update running totals
+                if seller_d["price_breakdown"]["delivery"]:
+                    bucket["delivery"] += seller_d["price_breakdown"]["delivery"][
+                        "total"
+                    ]
+                if seller_d["price_breakdown"]["removal"]:
+                    bucket["removal"] += seller_d["price_breakdown"]["removal"]["total"]
+                bucket["fuel_and_environmental"] += seller_d["price_breakdown"][
+                    "one_time"
+                ]["fuel_and_environmental"]
+                bucket["freight"] += seller_d["price_breakdown"]["one_time"]["total"]
                 bucket["total"] += seller_d["price_breakdown"]["total"]
             except Exception as e:
                 logger.error(
@@ -1455,116 +1472,167 @@ def new_order_5(request):
         )
         project_id = request.POST.get("project_id")
         is_delivery = request.POST.get("is_delivery", "True").lower() == "true"
+        related_products = request.POST.getlist("related_products", [])
 
-        main_product = MainProduct.objects.select_related("main_product_category").get(
-            id=product_id
-        )
-        context["main_product"] = main_product
-
-        # Discount
-        discount: Decimal = 0.0
-
-        if not request.user.is_staff:
-            # User is not staff, meaning discount is set to market discount.
-            discount = main_product.max_discount * Decimal(0.8) * 100
-        else:
-            # User is staff.
-            discount = Decimal(request.POST.get("discount", "0"))
-            max_discount_100 = round(main_product.max_discount * 100, 1)
-
-            if discount > max_discount_100:
-                # Discount is larger than max discount.
-                messages.error(
-                    request,
-                    "The selected discount exceeds the maximum allowed limit. Max discount applied.",
-                )
-                discount = max_discount_100
-
-        seller_product_location = SellerProductSellerLocation.objects.get(
-            id=seller_product_seller_location_id
-        )
+        seller_product_locations = SellerProductSellerLocation.objects.filter(
+            Q(id=seller_product_seller_location_id) | Q(id__in=related_products)
+        ).select_related("seller_product__product__main_product__main_product_category")
         user_address = UserAddress.objects.get(id=user_address_id)
-        if main_product.has_material and hasattr(seller_product_location, "material"):
-            material_waste_type = (
-                SellerProductSellerLocationMaterialWasteType.objects.filter(
-                    seller_product_seller_location_material=seller_product_location.material
-                )
-                .filter(main_product_waste_type__waste_type_id=waste_type_id)
-                .first()
-            )
-            if not material_waste_type:
-                messages.error(
-                    request,
-                    "Material waste type not found. Please contact us if this continues.",
-                )
-                return HttpResponseRedirect(reverse("customer_new_order"))
 
-        # Get the default take rate and calculate the take rate based on the discount.
-        default_take_rate_percent: Decimal = main_product.default_take_rate / 100
-        default_price_multiplier = 1 + default_take_rate_percent
-        discount_percent = discount / 100
-        price_with_discount = default_price_multiplier * (1 - discount_percent)
-        take_rate = price_with_discount - 1
+        with transaction.atomic():
+            # It's not the most efficient to loop through the quantity and create the orders,
+            # but eventually 'quantity' will be moved to the cart instead of the product details.
+            # Cache the order_groups in local memory to clone them.
+            order_groups = {}
 
-        for i in range(quantity):
-            # Create order group and orders
-            order_group = OrderGroup(
-                user=context["user"],
-                user_address=user_address,
-                seller_product_seller_location_id=seller_product_seller_location_id,
-                start_date=delivery_date,
-                take_rate=take_rate * 100,
-                is_delivery=is_delivery,
-            )
-            if times_per_week:
-                order_group.times_per_week = times_per_week
-            if shift_count:
-                order_group.shift_count = shift_count
-            if waste_type_id:
-                order_group.waste_type_id = waste_type_id
-            # NOTE: Commenting removal_date out for now. We may, possibly, maybe add this back in later.
-            # This means that we never set the removal date on the OrderGroup when creating it.
-            # if removal_date:
-            #     order_group.end_date = removal_date
-            if seller_product_location.delivery_fee and is_delivery:
-                order_group.delivery_fee = seller_product_location.delivery_fee
-            if seller_product_location.removal_fee and is_delivery:
-                order_group.removal_fee = seller_product_location.removal_fee
-            if schedule_window:
-                time_slot_name = schedule_window.split(" ")[0]
-                time_slot = TimeSlot.objects.filter(name=time_slot_name).first()
-                if time_slot:
-                    order_group.time_slot = time_slot
-            if project_id:
-                order_group.project_id = project_id
-            # If Junk Removal, then set the Booking removal date to the same as the delivery date (no asset stays on site).
-            if (
-                seller_product_location.seller_product.product.main_product.has_rental
-                is False
-                and seller_product_location.seller_product.product.main_product.has_rental_one_step
-                is False
-                and seller_product_location.seller_product.product.main_product.has_rental_multi_step
-                is False
-            ):
-                order_group.end_date = delivery_date
-            order_group.save()
+            for i in range(quantity):
+                parent_booking = None
+                related_bookings = []
 
-            # Create the order (Let submitted on null, this indicates that the order is in the cart)
-            # The first order of an order group always gets the same start and end date.
-            if is_delivery:
-                order = order_group.create_delivery(
-                    delivery_date, schedule_window=schedule_window
-                )
-            else:
-                order = order_group.create_pickup(
-                    delivery_date, schedule_window=schedule_window
-                )
+                for seller_product_location in seller_product_locations:
+                    if not order_groups.get(seller_product_location.id):
+                        main_product = (
+                            seller_product_location.seller_product.product.main_product
+                        )
 
-        # context["cart"][order_group.id] = {
-        #     "order_group": order_group,
-        #     "price": order.customer_price()
-        # }
-        messages.success(request, "Successfully added to cart.")
+                        # Discount
+                        discount: Decimal = 0.0
+
+                        if not request.user.is_staff:
+                            # User is not staff, meaning discount is set to market discount.
+                            discount = main_product.max_discount * Decimal(0.8) * 100
+                        else:
+                            # User is staff.
+                            discount = Decimal(request.POST.get("discount", "0"))
+                            max_discount_100 = round(main_product.max_discount * 100, 1)
+
+                            if discount > max_discount_100:
+                                # Discount is larger than max discount.
+                                messages.error(
+                                    request,
+                                    "The selected discount exceeds the maximum allowed limit. Max discount applied.",
+                                )
+                                discount = max_discount_100
+
+                        # Waste type
+                        if main_product.has_material and hasattr(
+                            seller_product_location, "material"
+                        ):
+                            material_waste_type = (
+                                SellerProductSellerLocationMaterialWasteType.objects.filter(
+                                    seller_product_seller_location_material=seller_product_location.material
+                                )
+                                .filter(
+                                    main_product_waste_type__waste_type_id=waste_type_id
+                                )
+                                .first()
+                            )
+                            if not material_waste_type:
+                                messages.error(
+                                    request,
+                                    "Material waste type not found. Please contact us if this continues.",
+                                )
+                                return HttpResponseRedirect(
+                                    reverse("customer_new_order")
+                                )
+
+                        # Get the default take rate and calculate the take rate based on the discount.
+                        default_take_rate_percent: Decimal = (
+                            main_product.default_take_rate / 100
+                        )
+                        default_price_multiplier = 1 + default_take_rate_percent
+                        discount_percent = discount / 100
+                        price_with_discount = default_price_multiplier * (
+                            1 - discount_percent
+                        )
+                        take_rate = price_with_discount - 1
+
+                        # Create order group and orders
+                        order_group = OrderGroup(
+                            user=context["user"],
+                            user_address=user_address,
+                            seller_product_seller_location_id=seller_product_location.id,
+                            start_date=delivery_date,
+                            take_rate=take_rate * 100,
+                            is_delivery=is_delivery,
+                        )
+                        if times_per_week and main_product.has_service_times_per_week:
+                            order_group.times_per_week = times_per_week
+                        if shift_count and main_product.has_rental_multi_step:
+                            order_group.shift_count = shift_count
+                        if waste_type_id and main_product.has_material:
+                            order_group.waste_type_id = waste_type_id
+
+                        # NOTE: Commenting removal_date out for now. We may, possibly, maybe add this back in later.
+                        # This means that we never set the removal date on the OrderGroup when creating it.
+                        # if removal_date:
+                        #     order_group.end_date = removal_date
+                        if seller_product_location.delivery_fee and is_delivery:
+                            order_group.delivery_fee = (
+                                seller_product_location.delivery_fee
+                            )
+                        if seller_product_location.removal_fee and is_delivery:
+                            order_group.removal_fee = (
+                                seller_product_location.removal_fee
+                            )
+
+                        if schedule_window:
+                            time_slot_name = schedule_window.split(" ")[0]
+                            time_slot = TimeSlot.objects.filter(
+                                name=time_slot_name
+                            ).first()
+                            if time_slot:
+                                order_group.time_slot = time_slot
+                        if project_id:
+                            order_group.project_id = project_id
+
+                        # If Junk Removal, then set the Booking removal date to the same as the delivery date (no asset stays on site).
+                        if (
+                            not main_product.has_rental
+                            and not main_product.has_rental_one_step
+                            and not main_product.has_rental_multi_step
+                        ):
+                            order_group.end_date = delivery_date
+
+                        # Update cache
+                        order_groups[seller_product_location.id] = order_group
+                    else:
+                        # Setting the PK to null to create a new object.
+                        order_group = order_groups[seller_product_location.id]
+                        order_group.pk = None
+
+                    order_group.save()
+
+                    # Check if this is the parent booking or a related booking.
+                    if (
+                        str(seller_product_location.id)
+                        == seller_product_seller_location_id
+                    ):
+                        parent_booking = order_group
+                    else:
+                        related_bookings.append(order_group.id)
+
+                    # Create the order (Let submitted on null, this indicates that the order is in the cart)
+                    # The first order of an order group always gets the same start and end date.
+                    if is_delivery:
+                        order_group.create_delivery(
+                            delivery_date, schedule_window=schedule_window
+                        )
+                    else:
+                        order_group.create_pickup(
+                            delivery_date, schedule_window=schedule_window
+                        )
+
+                # Associate related bookings with the parent booking.
+                if not parent_booking:
+                    raise Exception("Parent booking not found.")
+
+                OrderGroup.objects.filter(
+                    id__in=related_bookings,
+                ).update(parent_booking=parent_booking)
+
+            messages.success(request, "Successfully added to cart.")
+
         # Redirect to a success page or the same page to prevent form resubmission
         return HttpResponseRedirect(reverse("customer_cart"))
     elif request.method == "DELETE":
@@ -1575,7 +1643,13 @@ def new_order_5(request):
         cart_count = request.GET.get("count")
         customer_price = request.GET.get("price")
         groupcount = request.GET.get("groupcount")
-        order_group = OrderGroup.objects.filter(id=order_group_id).first()
+        order_group = (
+            OrderGroup.objects.filter(id=order_group_id)
+            .prefetch_related("orders", "related_bookings__orders")
+            .first()
+        )
+        has_related = False
+
         if customer_price:
             customer_price = float(customer_price)
         else:
@@ -1583,25 +1657,13 @@ def new_order_5(request):
         # Only delete the single order/transaction, not the entire order group, except if it is the first order.
         order = Order.objects.filter(id=order_id).first()
         if order_group:
-            order_group_orders = order_group.orders.all()
+            has_related = order_group.related_bookings.exists()
             is_first_order = (
                 order.order_group.start_date == order.start_date
-                and order_group_orders.count() == 1
+                and order_group.orders.count() == 1
             )
             if is_first_order:
                 # A single transaction Order, which is a delivery or one-time service.
-                # Delete any related protected objects, like orders and subscriptions.
-                sub_obj = Subscription.objects.filter(
-                    order_group_id=order_group.id
-                ).first()
-                if sub_obj:
-                    sub_obj.delete()
-                for order in order_group.orders.all():
-                    # Need to delete all related objects to the order.
-                    # Because they are all Protected
-                    order.ordermaterialfee_set.all().delete()
-                    order.orderpermitfee_set.all().delete()
-                    order.delete()
                 order_group.delete()
             elif order:
                 order.delete()
@@ -1617,6 +1679,15 @@ def new_order_5(request):
         else:
             messages.error(request, f"Order not found [{order_group_id}].")
         if request.headers.get("HX-Request"):
+            if has_related:
+                # Do a full page reload because multiple items need to disappear from the cart
+                response = render(
+                    request,
+                    "customer_dashboard/new_order/cart_remove_item.html",
+                    context,
+                )
+                response["HX-Refresh"] = "true"
+                return response
             return render(
                 request,
                 "customer_dashboard/new_order/cart_remove_item.html",
