@@ -1,0 +1,122 @@
+{% extends 'dashboards/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+{{user.first_name}} {{user.last_name}} Sales Detail
+{% endblock %}
+{% block content %}
+<style>
+    table tbody tr:nth-child(odd) {
+        background-color: #505063;
+    }
+    table tbody tr:nth-child(even) {
+        background-color: #80808c;
+    }
+    ul #nav2  {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #333;
+      }
+    li #nav2 {
+        float: left;
+    }
+    li.active a {
+        background-color: #4CAF50;
+        color: white;
+    }
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: #333;
+        color: white;
+        z-index: 1;
+    }
+    .flex-container {
+        display: flex;
+        justify-content: space-between;
+    }
+    .chart-container {
+        width: 45%;
+        background-color: #333; /* Add darker background */
+        padding: 10px 20px 10px 10px; /* Add padding to the right */
+        border-radius: 5px;
+    }
+    .table-container {
+        width: 50%;
+        padding-left: 20px; /* Add padding to the left */
+    }
+</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Sales Detail</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    {% include 'dashboards/user_sales_nav.html' %}
+    <header>
+        <h1>{{user.first_name}} {{user.last_name}}</h1>
+
+    </header>
+    <main>
+        <section class="flex-container">
+            <div class="table-container">
+                <h3>Product Mix of Past Month</h3>
+                <table>
+                    <thead>
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <th style="padding-right: 200px;">Product_name</th>
+                            <th style="padding-right: 100px;">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in product_sales|dictsortreversed:"order_count" %}
+                        <tr>
+                            <td>{{product.main_product_category}}</td>
+                            <td>{{product.order_count}}</td>
+                        </tr>
+                        {%endfor%}                    
+                    </tbody>
+                </table>
+            </div>
+            <div class="chart-container">
+                <canvas id="productMixChart" width="100" height="100"></canvas>
+            </div>
+        </section>
+        <script>
+            var ctx = document.getElementById('productMixChart').getContext('2d');
+            var chartData = {{ chart_data|safe }};
+            var productMixChart = new Chart(ctx, {
+                type: 'pie',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: 1, // Adjust this value to control the size of the chart
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    return tooltipItem.label + ': ' + tooltipItem.raw + ' orders';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+    </main>
+    <div style="display: flex; justify-content: center; margin-top: 50px;">
+        <a href="{% url 'sales_leaderboard' %}" class="btn btn-primary">Back to Leaderboard</a>
+    </div>
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'dashboards/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Order Origination
+{% endblock %}
+{% block content %}
+    <!--  <style>
+    .progress-bar{
+        width: {{takeRate}}%;
+    }
+</style>  -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-6 col-xl-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-dark-subtle d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold m-0">Order Origination By Month</h6>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="myBarChart" width="400" height="200"></canvas>
+                        {% comment %} {{ chart_scheduled }} {% endcomment %}
+                        <script>
+                            const chart_labels = {{chart_labels|safe}};
+                            const chart_data = {{chart_data|safe}};
+                            const chart_scheduled = {{chart_scheduled|safe}}
+                            const data = {
+                                labels: chart_labels,
+                                datasets: [
+                                    {
+                                        label: 'Internally-created Order',
+                                        data: chart_data,
+                                        backgroundColor: 'rgb(5,255,0)',
+                                        borderColor: 'rgba(78, 115, 223, 1)',
+                                        borderWidth: 1,
+                                        stack: 'combined'
+                                    },
+                                    {
+                                        label: 'Customer-created Order',
+                                        data: chart_scheduled,
+                                        backgroundColor: 'rgb(0,0,255)',
+                                        borderColor: 'rgba(78, 115, 223, 1)',
+                                        borderWidth: 1,
+                                        stack: 'combined'
+                                    }
+                                ]
+                            };
+
+                            const config = {
+                                type: 'bar',
+                                data: data,
+                                options: {
+                                    scales: {
+                                        x:{
+                                            stacked: true
+                                        },
+                                        y: {
+                                            stacked: true,
+                                            beginAtZero: true
+                                        }
+                                    }
+                                }
+                            };
+
+                            const myBarChart = new Chart(
+                                document.getElementById('myBarChart'),
+                                config
+                            );
+                        </script>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 col-xl-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-dark-subtle d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold m-0">Order Origination Total</h6>
+                        <div class="dropdown no-arrow">
+                            <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-ellipsis-v text-gray-400"></i></button>
+                            <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
+                                <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
+                                <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="netRevChart" width="400" height="200"></canvas>
+                        <script>
+                        const pie_labels = {{ pie_chart_data.labels|safe }};
+                        const pie_data = {{ pie_chart_data.data|safe }};
+
+                            const data2 = {
+                                labels: pie_labels,
+                                datasets: [
+                                    {
+                                        label: 'Order Origination',
+                                        data: pie_data,
+                                        backgroundColor: [
+                                            'rgb(0, 255, 0)',
+                                            'rgb(54, 162, 235)',
+                                            'rgb(255, 205, 86)'
+                                        ],
+                                        hoverOffset: 4
+                                    }
+                                ]
+                            };
+
+                            const config2 = {
+                                type: 'pie',
+                                data: data2,
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top',
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(tooltipItem) {
+                                                    return tooltipItem.label + ': ' + tooltipItem.raw;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+
+                            const netRevChart = new Chart(
+                                document.getElementById('netRevChart'),
+                                config2
+                            );
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
