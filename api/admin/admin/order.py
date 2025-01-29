@@ -43,6 +43,10 @@ class OrderAdmin(admin.ModelAdmin):
         "customer_price",
         "seller_price",
         "take_rate",
+        "created_by",
+        "updated_by",
+        "created_on",
+        "updated_on",
     )
     search_fields = ("id", "code")
     list_display = (
@@ -65,7 +69,6 @@ class OrderAdmin(admin.ModelAdmin):
         "order_group",
         "checkout_order",
     )
-    readonly_fields = ("created_by", "updated_by", "created_on", "updated_on")
     ordering = ("-created_on",)
     list_filter = (
         "status",
