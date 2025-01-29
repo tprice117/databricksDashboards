@@ -732,15 +732,14 @@ class CartUtils:
 
         current_user_group = user_group or current_user.user_group
 
-        if not request.user.is_staff and current_user.type != UserType.ADMIN:
+        if (
+            not request.user.is_staff
+            and current_user_group
+            and current_user.type != UserType.ADMIN
+        ):
             # Company Non-Admin User.
-            user_user_location_ids = (
-                UserUserAddress.objects.filter(user_id=current_user.id)
-                .select_related("user_address")
-                .values_list("user_address_id", flat=True)
-            )
             orders = Order.objects.filter(
-                order_group__user_address__in=user_user_location_ids
+                order_group__user_address__useruseraddress__user=current_user
             )
         else:
             if request.user.is_staff and not is_impersonating:
