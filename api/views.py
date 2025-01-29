@@ -436,28 +436,8 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
     filterset_class = OrderGroupFilterset
 
     def get_queryset(self):
-        self.queryset = self.queryset.prefetch_related(
-            "orders__order_line_items",
-            "user__user_group__credit_applications",
-            "seller_product_seller_location__seller_product__product__product_add_on_choices",
-        )
-        self.queryset = self.queryset.select_related(
-            "user",
-            "user__user_group",
-            "user_address",
-            "waste_type",
-            "time_slot",
-            "service_recurring_frequency",
-            "seller_product_seller_location__seller_product__seller",
-            "seller_product_seller_location__seller_product__product__main_product__main_product_category",
-            "seller_product_seller_location__seller_location__seller",
-        )
-        if self.request.user == "ALL":
-            return self.queryset
-        elif self.request.user.type == UserType.ADMIN:
-            return self.queryset.filter(user__user_group=self.request.user.user_group)
-        else:
-            return self.queryset.filter(user__id=self.request.user.id)
+        # Using queryset defined in api/managers/order_group.py
+        return self.queryset.for_user(self.request.user)
 
 
 class OrderGroupAttachmentViewSet(viewsets.ModelViewSet):
