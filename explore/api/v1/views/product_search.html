@@ -16,65 +16,6 @@
             height: 600px;
         }
 
-        .search-container {
-            position: relative;
-            display: inline-block;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-            width: 100%;
-            min-width: 300px;
-        }
-
-        .search-input-container {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .search-input {
-            width: 100%;
-            height: 50px;
-            padding: 10px 20px;
-            /* padding-right: 80px; */
-            /* Add padding to the right to make space for the button */
-            border: 1px solid #ccc;
-            border-radius: 25px;
-            outline: none;
-            font-size: 16px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.3s ease;
-        }
-
-        .search-input:focus {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .search-button {
-            position: absolute;
-            right: 0px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: #6200ea;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            height: 30px;
-            padding: 0 20px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-
-        .search-button:hover {
-            background-color: #3700b3;
-        }
-
-        .search-button:focus {
-            outline: none;
-        }
-
         .footer-container {
             display: flex;
             justify-content: center;
@@ -83,23 +24,90 @@
             background-color: #f0f0f0;
             width: 100%;
         }
+
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+            width: 600px;
+        }
+
+        @media(max-width: 650px) {
+            .dropdown {
+                width: 100%;
+            }
+        }
+
+        .search-input {
+            display: block;
+            width: 100%;
+            min-width: 300px;
+            padding: .375rem .75rem;
+            margin: 0;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #858796;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #858796;
+            border-radius: 0.35rem;
+            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+            -webkit-appearance: textfield;
+            outline-offset: -2px;
+        }
+
+        .search-input:focus {
+            color: #858796;
+            background-color: #fff;
+            border-color: #a7b9ef;
+            outline: 0;
+            box-shadow: 0 0 0 .15rem rgba(78, 115, 223, .25);
+        }
+
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f1f1f1;
+            background-color: #fff;
+            margin-bottom: 3rem;
+            min-width: 160px;
+            width: 100%;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .dropdown-content div {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
     <div class="header-container">
-        <h1>Search</h1>
-        <div class="search-container">
-            <form id="searchForm" class="search-input-container">
-                <input type="text" id="searchQuery" class="search-input" placeholder="Enter search query">
-                <button type="submit" id="searchButton" class="search-button">Search</button>
-            </form>
+        <h1>Downstream Marketplace Search</h1>
+        <div class="search-form">
+            <!-- This will be the outlet for the js, it will create a search field -->
+            <div class="dropdown">
+                <input id="searchQuery" class="search-input" autocomplete="off" type="search" name="q"
+                    placeholder="Search Downstream Marketplace" required="true" />
+                <div class="spinner" id="spinner"></div>
+                <div class="dropdown-content" id="results-container" style="z-index: 5;">
+                    <div id="results"></div>
+                    <div id="pagination" class="pagination"></div>
+                </div>
+            </div>
         </div>
-        <div class="spinner" id="spinner"></div>
-        <div id="results-container" class="dropdown-content">
-            <div id="results"></div>
-            <div id="pagination" class="pagination"></div>
-        </div>
+
         <p>Example: "Dumpster", "Telehandler", "Waste", "Lift", etc.</p>
     </div>
     <div class="footer-container">
@@ -126,20 +134,6 @@
                 @keyframes spin {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
-                }
-
-                .dropdown-content {
-                    display: none;
-                    position: absolute;
-                    position: relative;
-                    width: 100%;
-                    max-width: 600px;
-                    background-color: #f9f9f9;
-                    background-color: #fff;
-                    min-width: 160px;
-                    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-                    z-index: 1000;
-                    border-bottom: 1px solid #ccc;
                 }
 
                 .results-list {
@@ -198,7 +192,10 @@
 
             const searchForm = document.getElementById('searchForm');
             const searchQuery = document.getElementById('searchQuery');
-            const searchButton = document.getElementById('searchButton');
+            // TODO: create input form inside div with class search-form
+            // Create spinner
+            // const spinner = document.createElement('div');
+            // spinner.id = 'spinner';
             const spinner = document.getElementById('spinner');
             const resultsContainer = document.getElementById('results-container');
             const resultsDiv = document.getElementById('results');
@@ -207,13 +204,12 @@
             let currentPage = 1;
             const resultsPerPage = 10;
 
-            searchForm.addEventListener('submit', function (event) {
-                event.preventDefault();
-                const query = searchQuery.value;
-
+            // Listen for input changes in the field and send the query to the API. Ensure at least 3 characters are entered and wait 500ms before sending the request.
+            function getResults(query) {
                 // Show spinner and disable search button
                 spinner.style.display = 'block';
-                searchButton.disabled = true;
+                // make searchQuery bottom border square
+                searchQuery.style.borderRadius = '0.35rem 0.35rem 0px 0px';
 
                 fetch(`https://api.trydownstream.com/explore/v1/search/?q=${encodeURIComponent(query)}`)
                     .then(response => response.json())
@@ -226,6 +222,22 @@
                         // Display search results
                         const resultsList = document.createElement('ul');
                         resultsList.classList.add('results-list');
+
+                        // Check response returns an error (query is empty)
+                        if (!data || data.errors) {
+                            resultsContainer.style.display = 'none';
+                            // make searchQuery bottom border rounded again
+                            searchQuery.style.borderRadius = '0.35rem';
+                            return;
+                        }
+                        // Check response is good, but has no results
+                        if (!data || !data.main_products || !data.main_product_categories || !data.main_product_category_groups) {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = 'No results found';
+                            resultsList.appendChild(listItem);
+                            resultsDiv.appendChild(resultsList);
+                            return;
+                        }
 
                         const allResults = [...data.main_products, ...data.main_product_categories, ...data.main_product_category_groups];
                         const totalPages = 1
@@ -296,8 +308,23 @@
                     .finally(() => {
                         // Hide spinner and enable search button
                         spinner.style.display = 'none';
-                        searchButton.disabled = false;
                     });
+            }
+            let timeout = null;
+            let debounceTimeout
+            searchQuery.addEventListener('input', function (event) {
+                // Only trigger the search if the value is not empty and has more than 1 character and the user has stopped typing.
+                // Clear the previous timeout
+                clearTimeout(debounceTimeout)
+                // Set a new timeout
+                debounceTimeout = setTimeout(function () {
+                    if (!searchQuery.value || searchQuery.value.length > 2) {
+                        const query = searchQuery.value;
+                        console.log('query', query);
+                        // event.preventDefault();
+                        getResults(query);
+                    }
+                }, 500)
             });
         });
     </script>
