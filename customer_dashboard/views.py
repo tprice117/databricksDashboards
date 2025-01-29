@@ -1763,16 +1763,16 @@ def new_order_5(request):
                 if item["order"].order_group.bundle:
                     bucket["show_edit_bundle_button"] = True
                     item["isBundled"] = True
-                # if hasattr(item["order"].order_group, "rental_multi_step"):
-                if item["order"].order_type == Order.Type.DELIVERY:
-                    if (
-                        item[
-                            "order"
-                        ].order_group.seller_product_seller_location.seller_location.id
-                        in seller_locations
-                    ):
-                        item["canBundle"] = True
-                        countRentalMultiStep += 1
+                if hasattr(item["order"].order_group, "rental_multi_step"):
+                    if item["order"].order_type == Order.Type.DELIVERY:
+                        if (
+                            item[
+                                "order"
+                            ].order_group.seller_product_seller_location.seller_location.id
+                            in seller_locations
+                        ):
+                            item["canBundle"] = True
+                            countRentalMultiStep += 1
             # whether to even to show the bundle button
             if countRentalMultiStep >= 2:
                 if "show_edit_bundle_button" not in bucket:
