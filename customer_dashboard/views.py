@@ -44,7 +44,7 @@ from common.forms import HiddenDeleteFormSet
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
     AddOn,
-    Bundle,
+    FreightBundle,
     MainProduct,
     MainProductCategory,
     MainProductCategoryGroup,
@@ -1721,13 +1721,13 @@ def new_order_5(request):
                             {"address": item["seller_address"]}
                         )
                         # if this address has a bundle give the price
-                    if item["order"].order_group.bundle:
+                    if item["order"].order_group.freight_bundle:
                         context["seller_addresses"][-1]["delivery_fee"] = item[
                             "order"
-                        ].order_group.bundle.delivery_fee
+                        ].order_group.freight_bundle.delivery_fee
                         context["seller_addresses"][-1]["removal_fee"] = item[
                             "order"
-                        ].order_group.bundle.removal_fee
+                        ].order_group.freight_bundle.removal_fee
                 if (
                     checkout_order
                     and supplier_total == checkout_order.seller_price
@@ -1760,7 +1760,7 @@ def new_order_5(request):
             countRentalMultiStep = 0
             for item in bucket["items"]:
                 # show the edit bundle button
-                if item["order"].order_group.bundle:
+                if item["order"].order_group.freight_bundle:
                     bucket["show_edit_bundle_button"] = True
                     item["isBundled"] = True
                 if hasattr(item["order"].order_group, "rental_multi_step"):
@@ -1808,8 +1808,8 @@ def new_bundle(request):
                 if "empty" in bundle:
                     for orderId in bundle["items"]:
                         order = Order.objects.get(id=orderId)
-                        if order.order_group.bundle:
-                            order.order_group.bundle.delete()
+                        if order.order_group.freight_bundle:
+                            order.order_group.freight_bundle.delete()
                             break
                 else:
                     if len(bundle["items"]) < 2:
@@ -1846,8 +1846,8 @@ def new_bundle(request):
 
                     for orderId in bundle["items"]:
                         order = Order.objects.get(id=orderId)
-                        if order.order_group.bundle:
-                            old_bundle = order.order_group.bundle
+                        if order.order_group.freight_bundle:
+                            old_bundle = order.order_group.freight_bundle
                             # delete will handle recalculating the order line items
                             old_bundle.delete()
                             break
@@ -1855,7 +1855,7 @@ def new_bundle(request):
                             # return HttpResponseRedirect(reverse("customer_cart"))
 
                     firstHasDelivery = False
-                    new_bundle = Bundle(
+                    new_bundle = FreightBundle(
                         name="bundle",
                         delivery_fee=bundle["deliveryCost"],
                         removal_fee=bundle["removalCost"],
@@ -1875,7 +1875,7 @@ def new_bundle(request):
                             order.add_line_items(
                                 True, custom_delivery_fee=0, custom_removal_fee=0
                             )
-                        order.order_group.bundle = new_bundle
+                        order.order_group.freight_bundle = new_bundle
                         order.order_group.save()
         messages.success(request, "Bundle saved.")
     else:
