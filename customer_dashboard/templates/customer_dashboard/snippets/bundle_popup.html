@@ -95,9 +95,6 @@
                 })
                 var deliveryCost = parseFloat(jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='delivery-rate-']").val())
                 var removalCost = parseFloat(jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='removal-rate-']").val())
-                console.log(orderItems)
-                console.log(deliveryCost)
-                console.log(removalCost)
                 bundles.push({items:orderItems,deliveryCost:deliveryCost,removalCost:removalCost})
             } else {
                 // this will delete the bundle if it has less than 2 items
@@ -155,15 +152,10 @@
                 // adjust the delivery cost
                 var deliveryCostText = jQuery(item).find("#delivery-cost")
                 var removalCostText = jQuery(item).find("#removal-cost")
-                console.log(deliveryCostText)
                 var deliveryCostInput = jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='delivery-rate-']")
                 var removalCostInput = jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='removal-rate-']")
-                console.log(jQuery(`[id^='cart-bundle-address-${bundleId}']`))
-                console.log(index)
-                console.log(deliveryCostInput)
                 var deliveryCost = parseFloat(deliveryCostInput.val())
                 var removalCost = parseFloat(removalCostInput.val())
-                console.log(deliveryCost)
                 var deliveryCostPerItem = parseFloat(deliveryCost / numberChecked).toFixed(2)
                 var removalCostPerItem = (removalCost / numberChecked).toFixed(2)
                 deliveryCostText.text("$"+deliveryCost+"/"+numberChecked+" items = $"+deliveryCostPerItem)
@@ -184,14 +176,20 @@
         var cartAddress = jQuery(`[id^='cart-address-${bundleId}']`)
         var cartBuckets = jQuery(cartAddress).find("[id^='seller-address-']")
         var cartBucketItemChecked = []
+        var cardHeight = 0
         cartBuckets.each(function(index, bucket) {
           var cartItems = jQuery(bucket).find("[id^='cart-item-']")
           // loop through each item in the bucket and mark down is it checked
+          // loop through and find the tallest card size
           // they are not in array form
           cartBucketItemChecked[index] = []
           cartItems.each(function(index2, item) {
             var checkbox = jQuery(item).find("input[type='checkbox']")
             cartBucketItemChecked[index][index2] = checkbox.is(":checked")
+            var card = jQuery(item).find(".card-body")
+            if (card[0].offsetHeight>cardHeight) {
+                cardHeight = card[0].offsetHeight
+            }
           })
         })
 
@@ -211,8 +209,7 @@
                 jQuery(item).toggle(cartBucketItemChecked[index][index2]);
                 if (cartBucketItemChecked[index][index2]) {
                     var itemDeliveryPrice = parseFloat(item.getAttribute("data-delivery-price"))
-                    var itemRemovalPrice = parseFloat(item.getAttribute("data-delivery-price"))
-                    console.log(itemDeliveryPrice)
+                    var itemRemovalPrice = parseFloat(item.getAttribute("data-removal-price"))
                     if (itemDeliveryPrice > highestDeliveryPrice) {
                         highestDeliveryPrice = itemDeliveryPrice
                     }
@@ -220,6 +217,8 @@
                         highestRemovalPrice = itemRemovalPrice
                     }
                 }
+                var card = jQuery(item).find(".card-body")
+                // card.height(card[0].clientHeight);
             })
             // set the default delivery cost
             var default_delivery_price_button = jQuery(bucket).find("#default-delivery-price")
@@ -381,7 +380,7 @@
                                                                         {% for item in cart_address.items %}
                                                                             {% if item.seller_address.id == seller_address.address.id %}
                                                                                 {% if item.canBundle %}
-                                                                                    <div class="col-md-6 cart-item" id="cart-item-{{forloop.counter}}" data-delivery-price="{{item.total}}">
+                                                                                    <div class="col-md-6 cart-item" id="cart-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}">
                                                                                         <div class="card" style="margin: 5px 5px;">
                                                                                             <div class="card-body" style="background: var(--bs-card-cap-bg); height: 170px;">
                                                                                                 <div class="row d-flex align-items-center">
@@ -513,9 +512,9 @@
                                                                         {% for item in cart_address.items %}
                                                                             {% if item.seller_address.id == seller_address.address.id %}
                                                                                 {% if item.canBundle %}
-                                                                                    <div class="col-md-6 cart-item" id="cart-bundled-item-{{forloop.counter}}" data-delivery-price="{{item.total}}">
+                                                                                    <div class="col-md-6 cart-item" id="cart-bundled-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}">
                                                                                         <div class="card" style="margin: 5px 5px;">
-                                                                                            <div class="card-body" style="background: var(--bs-card-cap-bg); height: 170px;">
+                                                                                            <div class="card-body" style="background: var(--bs-card-cap-bg);">
                                                                                                 <div class="row d-flex align-items-center">
                                                                                                     <div class="col-auto my-auto">
                                                                                                         <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" checked disabled>
@@ -659,7 +658,7 @@
                                                                         {% for item in cart_address.items %}
                                                                             {% if item.seller_address.id == seller_address.address.id %}
                                                                                 {% if item.canBundle %}
-                                                                                    <div class="col-md-6 cart-item" id="cart-bundled-confirm-item-{{forloop.counter}}" data-delivery-price="{{item.total}}" data-order-id="{{item.order.id}}">
+                                                                                    <div class="col-md-6 cart-item" id="cart-bundled-confirm-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}" data-order-id="{{item.order.id}}">
                                                                                         <div class="card" style="margin: 5px 5px;">
                                                                                             <div class="card-body" style="background: var(--bs-card-cap-bg); height: 220px;">
                                                                                                 <div class="row d-flex align-items-center">

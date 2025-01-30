@@ -1705,7 +1705,17 @@ def new_order_5(request):
                 # context["cart"][addr]["show_quote"] = True
                 checkout_order = None
                 for item in bucket["items"]:
-                    item["price"] = item["order"].customer_price()
+                    item["subtotal"] = item["order"].customer_price()
+                    for line_item in item["order"].order_line_items.filter(
+                        order_line_item_type__code="DELIVERY"
+                    ):
+                        item["delivery_fee"] = line_item.rate
+                        break
+                    for line_item in item["order"].order_line_items.filter(
+                        order_line_item_type__code="REMOVAL"
+                    ):
+                        item["removal_fee"] = line_item.rate
+                        break
                     order = item["order"]
                     if order.checkout_order:
                         checkout_order = order.checkout_order

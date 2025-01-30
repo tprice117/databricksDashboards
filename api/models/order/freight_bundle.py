@@ -2,7 +2,7 @@ from django.db import models
 from common.models import BaseModel
 
 
-class Bundle(BaseModel):
+class FreightBundle(BaseModel):
     # user_address = models.ForeignKey(
     #     UserAddress,
     #     models.PROTECT,
@@ -21,7 +21,7 @@ class Bundle(BaseModel):
     #     verbose_name_plural = "Bundles"
 
     def __str__(self):
-        return f"{self.name or 'bundle'}"
+        return f"{self.name or 'Freight Bundle'}"
 
     def delete(self):
         # recalculate all the order line items
