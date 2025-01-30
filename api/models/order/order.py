@@ -459,7 +459,7 @@ class Order(BaseModel):
                     OrderLineItem.PaymentStatus.INVOICED,
                     OrderLineItem.PaymentStatus.PAID,
                 ]
-                for order_item in self.order_items
+                for order_item in self.order_items if order_item.customer_rate != 0
             ]
         )
 

@@ -5,6 +5,10 @@ from api.models import MainProductInfo
 
 class MainProductInfoInline(admin.TabularInline):
     model = MainProductInfo
-    fields = ("name",)
+    fields = (
+        "name",
+        "description",
+        "sort",
+    )
     show_change_link = True
     extra = 0

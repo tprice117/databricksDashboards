@@ -64,6 +64,7 @@
     }
   </style>
 {% endblock %}
+{% with order=item.order %}
 <div class="row cart-item mb-2">
     <div class="col">
         <div class="card" style="background: var(--bs-card-cap-bg);">
@@ -238,10 +239,15 @@
                                     });
                                 </script>
                             </div>
-                            {% endwith %}
                         </div>
                     </div>
                 </div>
+                {% if order.order_group.parent_booking %}
+                <div class="position-absolute start-50 translate-middle bg-white border border-primary badge rounded-circle" style="top: -5px !important;">
+                    <span class="text-primary"><i class="far fa-link"></i></span>
+                </div>
+                {% endif %}
             </div>
+        </div>
     </div>
-</div>
+{% endwith %}
