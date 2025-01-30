@@ -288,13 +288,9 @@
                             const link = document.createElement('a');
                             const image = document.createElement('img');
                             const text = document.createElement('span');
-                            if (category.group) {
-                                text.textContent = `Category: ${category.name}`;
-                                link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${category.group}`;
-                            } else {
-                                text.textContent = `Category Group: ${category.name}`;
-                                link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${category.id}`;
-                            }
+                            // Telehandler = Category (https://portal.trydownstream.com/customer/order/new/product/5c911a3d-6df6-49f1-b0cb-5d246aa52de4/)
+                            text.textContent = `Category: ${category.name}`;
+                            link.href = `https://portal.trydownstream.com/customer/order/new/product/${category.id}`;
                             image.src = category.icon;
                             // link.target = '_blank';
                             link.appendChild(image);
@@ -308,13 +304,14 @@
                                 const link = document.createElement('a');
                                 const image = document.createElement('img');
                                 const text = document.createElement('span');
-                                link.href = `https://portal.trydownstream.com/customer/order/new/product/${product.main_product_category}`;
+                                // 5,000 lbs. 19 ft. Telehandler = Product (https://portal.trydownstream.com/customer/order/new/options/7e75424e-d3c4-4979-af66-a206213685ab/)
+                                link.href = `https://portal.trydownstream.com/customer/order/new/options/${product.id}`;
                                 if (product.images.length > 0) {
                                     image.src = product.images[0];
                                 } else {
                                     image.src = category.icon;
                                 }
-                                text.textContent = `Product: ${product.name}`;
+                                text.textContent = `${product.name}`;
                                 // link.target = '_blank';
                                 link.appendChild(image);
                                 link.appendChild(text);
@@ -327,7 +324,8 @@
                             const link = document.createElement('a');
                             const image = document.createElement('img');
                             const text = document.createElement('span');
-                            text.textContent = `Category Group: ${group.name}`;
+                            text.textContent = `All ${group.name}`;
+                            // Forklift = Group (https://portal.trydownstream.com/customer/order/new/?q=&group_id=c1b69d34-3134-4e3a-b3de-db005bfdbd65)
                             link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${group.id}`;
                             image.src = group.icon;
                             // link.target = '_blank';
