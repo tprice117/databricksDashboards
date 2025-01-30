@@ -37,6 +37,15 @@
             {% include 'customer_dashboard/new_order/cart_order_item.html' with loopcount=forloop.counter %}
           {% endfor %}
           <div class="row justify-content-end mb-2 mt-4">
+              {% if cart_address.show_edit_bundle_button %}
+                <div class="col-auto">
+                  <button class="btn btn-outline-danger" id="bundle-button-{{forloop.counter}}" type="button" data-edit="true" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal">Edit Bundle</button>
+                </div>
+              {% elif cart_address.show_bundle_button %}
+                <div class="col-auto">
+                  <button class="btn btn-outline-danger" id="bundle-button-{{forloop.counter}}" type="button" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal">Bundled Delivery</button>
+                </div>
+              {% endif %}
             {% if request.user.is_staff and cart_address.show_quote %}
               <div class="col-auto">
                 <a class="btn btn-outline-info" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
@@ -65,3 +74,4 @@
   {% endif %}
 </h3>
 <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
+{% include "customer_dashboard/snippets/bundle_popup.html" %}
