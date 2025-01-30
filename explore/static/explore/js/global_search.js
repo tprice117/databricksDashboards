@@ -2,9 +2,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add CSS styles
     const style = document.createElement('style');
     style.innerHTML = `
+        .search-form {
+            display: flex;
+            justify-content: center;
+        }
         .dropdown {
             position: relative;
             width: 600px;
+            margin-top: 20px;
         }
 
         @media(max-width: 650px) {
@@ -17,12 +22,12 @@ document.addEventListener('DOMContentLoaded', function () {
             display: block;
             width: 100%;
             min-width: 300px;
-            padding: .375rem .75rem;
+            padding: .575rem .85rem;
             margin: 0;
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 1.25rem;
             font-weight: 400;
-            line-height: 1.5;
+            line-height: 1.75;
             color: #858796;
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -30,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
             background-color: #fff;
             background-clip: padding-box;
             border: 1px solid #858796;
-            border-radius: 0.35rem;
+            border-radius: 0.85rem;
             transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
             -webkit-appearance: textfield;
             outline-offset: -2px;
@@ -54,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
             min-width: 160px;
             width: 100%;
             box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-            z-index: 1;
+            z-index: 5;
             border-bottom: 1px solid #ccc;
         }
 
@@ -66,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
             cursor: pointer;
         }
         .spinner {
-            display: none;
+            display: None;
             width: 20px;
             height: 20px;
             border: 3px solid #f3f3f3;
@@ -75,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
             animation: spin 1s linear infinite;
             position: absolute;
             right: 40px;
-            top: 5px;
+            top: 30%;
         }
 
         @keyframes spin {
@@ -139,6 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Create the selected section and insert it into the element with class search-result
     const searchFormContainer = document.querySelector('.search-form');
+
     if (searchFormContainer) {
         const dropdownDiv = document.createElement('div');
         dropdownDiv.classList.add('dropdown');
@@ -159,7 +165,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const dropdownContentDiv = document.createElement('div');
         dropdownContentDiv.classList.add('dropdown-content');
         dropdownContentDiv.id = 'results-container';
-        dropdownContentDiv.style.zIndex = '5';
 
         const resultsDiv = document.createElement('div');
         resultsDiv.id = 'results';
@@ -189,21 +194,42 @@ document.addEventListener('DOMContentLoaded', function () {
     const paginationDiv = document.getElementById('pagination');
 
     let currentPage = 1;
+    let totalResults = 0;
     const resultsPerPage = 10;
+    function hideResultsContainer() {
+        resultsContainer.style.display = 'none';
+        // make searchQuery bottom border rounded again
+        searchQuery.style.borderRadius = '0.85rem';
+    }
+    function showResultsContainer() {
+        resultsContainer.style.display = 'block';
+        // make searchQuery bottom border square
+        searchQuery.style.borderRadius = '0.85rem 0.85rem 0px 0px';
+    }
+    // Show the dropdown content when the input is focused
+    searchQuery.addEventListener('focus', function () {
+        if (totalResults > 0) {
+            showResultsContainer();
+        }
+    });
+    // Hide the dropdown content when clicking outside of it
+    document.addEventListener('click', function (event) {
+        if (!resultsContainer.contains(event.target) && !searchQuery.contains(event.target)) {
+            hideResultsContainer();
+        }
+    });
 
     // Listen for input changes in the field and send the query to the API. Ensure at least 3 characters are entered and wait 500ms before sending the request.
     function getResults(query) {
+        totalResults = 0;
         // Check if query is empty
         if (!query) {
-            resultsContainer.style.display = 'none';
-            // make searchQuery bottom border rounded again
-            searchQuery.style.borderRadius = '0.35rem';
+            hideResultsContainer();
             return;
         }
         // Show spinner and disable search button
         spinner.style.display = 'block';
-        // make searchQuery bottom border square
-        searchQuery.style.borderRadius = '0.35rem 0.35rem 0px 0px';
+
 
         fetch(`https://api.trydownstream.com/explore/v1/search/?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
@@ -211,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Clear previous results
                 resultsDiv.innerHTML = '';
                 paginationDiv.innerHTML = '';
-                resultsContainer.style.display = 'block';
+                showResultsContainer();
 
                 // Display search results
                 const resultsList = document.createElement('ul');
@@ -219,9 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Check response returns an error (query is empty)
                 if (!data || data.errors) {
-                    resultsContainer.style.display = 'none';
-                    // make searchQuery bottom border rounded again
-                    searchQuery.style.borderRadius = '0.35rem';
+                    hideResultsContainer();
                     return;
                 }
                 // Check response is good, but has no results
@@ -235,19 +259,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const allResults = [...data.main_products, ...data.main_product_categories, ...data.main_product_category_groups];
                 const totalPages = 1
-                const totalResults = data.main_products.length + data.main_product_categories.length + data.main_product_category_groups.length;
+                totalResults = data.main_products.length + data.main_product_categories.length + data.main_product_category_groups.length;
                 data.main_product_categories.forEach(category => {
                     const listItem = document.createElement('li');
                     const link = document.createElement('a');
                     const image = document.createElement('img');
                     const text = document.createElement('span');
-                    if (category.group) {
-                        text.textContent = `Category: ${category.name}`;
-                        link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${category.group}`;
-                    } else {
-                        text.textContent = `Category Group: ${category.name}`;
-                        link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${category.id}`;
-                    }
+                    // Telehandler = Category (https://portal.trydownstream.com/customer/order/new/product/5c911a3d-6df6-49f1-b0cb-5d246aa52de4/)
+                    text.textContent = `Category: ${category.name}`;
+                    link.href = `https://portal.trydownstream.com/customer/order/new/product/${category.id}`;
                     image.src = category.icon;
                     // link.target = '_blank';
                     link.appendChild(image);
@@ -261,13 +281,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         const link = document.createElement('a');
                         const image = document.createElement('img');
                         const text = document.createElement('span');
-                        link.href = `https://portal.trydownstream.com/customer/order/new/product/${product.main_product_category}`;
+                        // 5,000 lbs. 19 ft. Telehandler = Product (https://portal.trydownstream.com/customer/order/new/options/7e75424e-d3c4-4979-af66-a206213685ab/)
+                        link.href = `https://portal.trydownstream.com/customer/order/new/options/${product.id}`;
                         if (product.images.length > 0) {
                             image.src = product.images[0];
                         } else {
                             image.src = category.icon;
                         }
-                        text.textContent = `Product: ${product.name}`;
+                        text.textContent = `${product.name}`;
                         // link.target = '_blank';
                         link.appendChild(image);
                         link.appendChild(text);
@@ -280,7 +301,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     const link = document.createElement('a');
                     const image = document.createElement('img');
                     const text = document.createElement('span');
-                    text.textContent = `Category Group: ${group.name}`;
+                    text.textContent = `All ${group.name}`;
+                    // Forklift = Group (https://portal.trydownstream.com/customer/order/new/?q=&group_id=c1b69d34-3134-4e3a-b3de-db005bfdbd65)
                     link.href = `https://portal.trydownstream.com/customer/order/new/?q=&group_id=${group.id}`;
                     image.src = group.icon;
                     // link.target = '_blank';

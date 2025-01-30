@@ -163,6 +163,12 @@ urlpatterns = [
         views.new_order_5,
         name="customer_cart",
     ),
+    # POST
+    path(
+        "customer/new_bundle/",
+        views.new_bundle,
+        name="new_bundle",
+    ),
     # GET/POST
     path(
         "customer/cart/<uuid:order_id>/date/edit/",

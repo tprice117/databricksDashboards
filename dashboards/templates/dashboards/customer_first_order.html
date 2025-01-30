@@ -36,6 +36,7 @@ Customer First Order Dashboard
                 <th>Account Owner</th>
                 <th>First Order Date</th>
                 <th>User Name</th>
+                <th>First Order Rating</th>
             </tr>
         </thead>
         <tbody>
@@ -47,7 +48,7 @@ Customer First Order Dashboard
                 <td>{{ group.account_owner_first_name }} {{ group.account_owner_last_name }}</td>
                 <td>{{ group.first_order_date }}</td>
                 <td>{{ group.user_first_name }} {{ group.user_last_name }}</td>
-
+                <td>{{ group.first_order_rating }}</td>
             </tr>
             {% endfor %}
         </tbody>

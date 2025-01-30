@@ -564,7 +564,9 @@ class Order(BaseModel):
                     "This Order overlaps with another Order for this OrderGroup"
                 )
 
-    def add_line_items(self, created):
+    def add_line_items(
+        self, created, custom_delivery_fee=None, custom_removal_fee=None
+    ):
         order_line_items = OrderLineItem.objects.filter(order=self)
         # if self.submitted_on_has_changed and order_line_items.count() == 0:
         if created and order_line_items.count() == 0:
@@ -591,7 +593,9 @@ class Order(BaseModel):
                 delivery_fee = 0
                 if is_first_order and self.order_group.is_delivery:
                     new_order_line_items.extend(
-                        self._add_order_line_item_delivery(),
+                        self._add_order_line_item_delivery(
+                            custom_delivery_fee=custom_delivery_fee
+                        ),
                     )
                     if (
                         self.order_group.seller_product_seller_location.delivery_fee
@@ -608,10 +612,16 @@ class Order(BaseModel):
                 # only charge if oder_group is a delivery
                 if self.order_group.is_delivery:
                     if is_first_order:
-                        new_order_line_items.extend(self._add_order_line_item_removal())
+                        new_order_line_items.extend(
+                            self._add_order_line_item_removal(
+                                custom_removal_fee=custom_removal_fee
+                            )
+                        )
                     elif is_last_order:
                         new_order_line_items.extend(
-                            self._add_order_line_item_removal(add_empty=True)
+                            self._add_order_line_item_removal(
+                                add_empty=True, custom_removal_fee=custom_removal_fee
+                            )
                         )
 
                 # If the OrderGroup has Material, add those line items.
@@ -689,13 +699,19 @@ class Order(BaseModel):
             except Exception as e:
                 logger.error(f"Order.post_save: [{self.id}]-[{e}]", exc_info=e)
 
-    def _add_order_line_item_delivery(self) -> Optional[List[OrderLineItem]]:
+    def _add_order_line_item_delivery(
+        self, custom_delivery_fee=None
+    ) -> Optional[List[OrderLineItem]]:
         return (
             [
                 OrderLineItem(
                     order=self,
                     order_line_item_type=OrderLineItemType.objects.get(code="DELIVERY"),
-                    rate=self.order_group.seller_product_seller_location.delivery_fee,
+                    rate=(
+                        self.order_group.seller_product_seller_location.delivery_fee
+                        if custom_delivery_fee is None
+                        else custom_delivery_fee
+                    ),
                     quantity=1,
                     description="Delivery Fee",
                     platform_fee_percent=self.order_group.take_rate,
@@ -707,7 +723,7 @@ class Order(BaseModel):
         )
 
     def _add_order_line_item_removal(
-        self, add_empty=False
+        self, add_empty=False, custom_removal_fee=None
     ) -> Optional[List[OrderLineItem]]:
         if add_empty:
             return [
@@ -726,7 +742,11 @@ class Order(BaseModel):
                 OrderLineItem(
                     order=self,
                     order_line_item_type=OrderLineItemType.objects.get(code="REMOVAL"),
-                    rate=self.order_group.seller_product_seller_location.removal_fee,
+                    rate=(
+                        self.order_group.seller_product_seller_location.removal_fee
+                        if custom_removal_fee is None
+                        else custom_removal_fee
+                    ),
                     quantity=1,
                     description="Removal Fee",
                     platform_fee_percent=self.order_group.take_rate,
