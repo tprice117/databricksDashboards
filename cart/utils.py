@@ -891,4 +891,48 @@ class CartUtils:
                 }
             )
 
+        # show the bundle button
+        # only can bundle Type.DELIVERY and rental_multi_step
+        # make sure to only give bundle option for items with >2 per user_address, seller_location combo
+        for bucket in cart_data["cart"]:
+            # all the seller_locations in this bucket
+            # seller_locations a dict: keys default to 0
+            class MyIntDict(dict):
+                def __missing__(self, key):
+                    return 0  # default value
+
+            seller_locations = MyIntDict()
+            # find seller locations with items that can be bundled
+            for item in bucket["items"]:
+                # if hasattr(item["order"].order_group, "rental_multi_step"):
+                if item["order"].order_type == Order.Type.DELIVERY:
+                    seller_locations[
+                        item[
+                            "order"
+                        ].order_group.seller_product_seller_location.seller_location.id
+                    ] += 1
+            # remove seller_locations with less than 2 items to be bundled
+            seller_locations = {k: v for k, v in seller_locations.items() if v >= 2}
+            # items that can be bundled if they are from a location with 2 or more
+            countRentalMultiStep = 0
+            for item in bucket["items"]:
+                # show the edit bundle button
+                if item["order"].order_group.freight_bundle:
+                    bucket["show_edit_bundle_button"] = True
+                    item["isBundled"] = True
+                if hasattr(item["order"].order_group, "rental_multi_step"):
+                    if item["order"].order_type == Order.Type.DELIVERY:
+                        if (
+                            item[
+                                "order"
+                            ].order_group.seller_product_seller_location.seller_location.id
+                            in seller_locations
+                        ):
+                            item["canBundle"] = True
+                            countRentalMultiStep += 1
+            # whether to even to show the bundle button
+            if countRentalMultiStep >= 2:
+                if "show_edit_bundle_button" not in bucket:
+                    bucket["show_bundle_button"] = True
+
         return cart_data
