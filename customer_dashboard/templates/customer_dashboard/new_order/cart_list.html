@@ -1,30 +1,29 @@
 {% load static %}
 {% load tz %}
 {% load humanize %}
-<div class="accordion" role="tablist" id="cart-results">
+<div class="accordion p-3" role="tablist" id="cart-results">
   {% for cart_address in cart %}
-    <div class="accordion-item">
-      <h2 class="accordion-header" role="tab">
-        <button class="accordion-button{% if not forloop.first %} collapsed{% endif %} justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
-          <div>
+    <div class="accordion-item shadow-sm mb-3">
+      <h2 class="accordion-header rounded-3" role="tab">
+        <button class="accordion-button{% if not forloop.first %} collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
+          <div class="w-100">
             <span>
               {% if cart_address.address.name %}
-                {{ cart_address.address.name }} -
+                {{ cart_address.address.name }} |
               {% endif %}{{ cart_address.address.formatted_address }}
-            </span> -
+            </span> |
             <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
-            <span id="count-{{ cart_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
-          </div>
-          <div class="ms-auto align-items-end">
-            {% if user.is_staff %}
-              <span class="ms-2">
-                [{% if cart_address.address.user_group.name %}
+            <span id="count-{{ cart_address.address.id }}" class="badge text-bg-primary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
+            {% if request.user.is_staff %}
+              <span class="badge text-primary bg-white">
+                {% if cart_address.address.user_group.name %}
                   {{ cart_address.address.user_group.name }}
-                {% else %}
-                  USER: {{ cart_address.address.user.full_name }}
-                {% endif %}]
+                {% elif cart_address.address.user.user_group.name %}
+                  {{ cart_address.address.user.user_group.name }}
+                {% endif %}
               </span>
             {% endif %}
+            <span class="float-end badge text-primary bg-white me-3">{{ cart_address.address.user.full_name }}</span>
           </div>
         </button>
       </h2>
@@ -36,30 +35,26 @@
           {% for item in cart_address.items %}
             {% include 'customer_dashboard/new_order/cart_order_item.html' with loopcount=forloop.counter %}
           {% endfor %}
-          <div class="row justify-content-end mb-2 mt-4">
+          <div class="row justify-content-between align-items-center mb-2 mt-4">
+            <div class="col-auto">
               {% if cart_address.show_edit_bundle_button %}
-                <div class="col-auto">
-                  <button class="btn btn-outline-danger" id="bundle-button-{{forloop.counter}}" type="button" data-edit="true" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal">Edit Bundle</button>
-                </div>
+                  <button class="btn btn-info text-white me-2" id="bundle-button-{{forloop.counter}}" type="button" data-edit="true" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal"><i class="far fa-truck me-2"></i> Edit Bundle</button>
               {% elif cart_address.show_bundle_button %}
-                <div class="col-auto">
-                  <button class="btn btn-outline-danger" id="bundle-button-{{forloop.counter}}" type="button" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal">Bundled Delivery</button>
-                </div>
+                  <button class="btn btn-info text-white me-2" id="bundle-button-{{forloop.counter}}" type="button" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal"><i class="far fa-truck me-2"></i> Bundle Freight</button>
               {% endif %}
             {% if request.user.is_staff and cart_address.show_quote %}
-              <div class="col-auto">
-                <a class="btn btn-outline-info" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}">Show Quote</a>
-                <button class="btn btn-outline-success" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
-                  {% if cart_address.quote_sent_on %}
-                    Resend Quote (sent {{ cart_address.quote_sent_on|date:'F j, Y' }})
-                  {% else %}
-                    Send Quote
-                  {% endif %}
-                </button>
-              </div>
+              <button class="btn btn-warning text-white me-2" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
+                {% if cart_address.quote_sent_on %}
+                Resend Quote (sent {{ cart_address.quote_sent_on|date:'F j, Y' }})
+                {% else %}
+                <i class="far fa-paper-plane me-2"></i>  Send Quote
+                {% endif %}
+              </button>
+              <a class="btn btn-outline-dark" role="button" href="{% url 'customer_show_quote' %}?ids={{ cart_address.ids }}"><i class="far fa-eye me-2"></i> Preview Quote</a>
             {% endif %}
+            </div>
             <div class="col-auto">
-              <a class="btn btn-primary" role="button" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">Checkout</a>
+              <a class="btn btn-primary shadow px-4 py-1" role="button" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}"><small>Checkout</small></a>
             </div>
           </div>
         </div>
@@ -68,10 +63,10 @@
   {% endfor %}
 </div>
 
-<h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}" hx-swap-oob="true">
-  Shopping Cart ({{ cart_count }}){% if help_text %}
-    - {{ help_text }}
+<h3 id="cart-title" class="text-dark mb-2" data-cart-count="{{ cart_count }}" hx-swap-oob="true">
+  Cart ({{ cart_count }}){% if help_text %}
+    <small class="ms-3 text-muted">{{ help_text }}</small>
   {% endif %}
 </h3>
 <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
-{% include "customer_dashboard/snippets/bundle_popup.html" %}
+{% include 'customer_dashboard/snippets/bundle_popup.html' %}

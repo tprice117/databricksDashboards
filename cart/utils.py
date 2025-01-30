@@ -921,7 +921,7 @@ class CartUtils:
                 # show the edit bundle button
                 if item["order"].order_group.freight_bundle:
                     bucket["show_edit_bundle_button"] = True
-                    item["isBundled"] = True
+                    item["is_bundled"] = True
                 if hasattr(item["order"].order_group, "rental_multi_step"):
                     if item["order"].order_type == Order.Type.DELIVERY:
                         if (
@@ -930,7 +930,7 @@ class CartUtils:
                             ].order_group.seller_product_seller_location.seller_location.id
                             in seller_locations
                         ):
-                            item["canBundle"] = True
+                            item["can_bundle"] = True
                             countRentalMultiStep += 1
             # whether to even to show the bundle button
             if countRentalMultiStep >= 2:
