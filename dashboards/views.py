@@ -30,7 +30,7 @@ from django.db.models.functions import (
     TruncDay,
     Abs,
 )
-from django.db.models import Min
+from django.db.models import Min, Exists
 from django.db.models import DateField
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -974,23 +974,37 @@ def auto_renewal_list_dashboard(request):
 def customer_first_order(request):
     context = {}
     user_groups = UserGroup.objects.annotate(
-        first_order_year=Min("user_addresses__order_groups__orders__end_date__year"),
-        account_owner_first_name=F("account_owner__first_name"),
-        account_owner_last_name=F("account_owner__last_name"),
-        first_order_date=Min("user_addresses__order_groups__orders__end_date"),
-        first_order_id=Subquery(
-            Order.objects.filter(
-                order_group__user_address__user_group=OuterRef('pk')
-            ).order_by('end_date').values('id')[:1]
-        ),
+        user_id=F("user_addresses__order_groups__orders__order_group__user__id"),
+        user_group_name=F("name"),
         user_first_name=F("user_addresses__order_groups__orders__order_group__user__first_name"),
         user_last_name=F("user_addresses__order_groups__orders__order_group__user__last_name"),
-        first_order_rating=Subquery(
-            OrderReview.objects.filter(
-                order=OuterRef('user_addresses__order_groups__orders__id')
-            ).order_by('order__end_date').values('rating')[:1]
+        user_email=F("user_addresses__order_groups__orders__order_group__user__email"),
+        first_transaction_date=Subquery(
+            Order.objects.filter(
+                order_group__user=OuterRef("user_addresses__order_groups__orders__order_group__user")
+            )
+            .order_by()
+            .values("order_group__user")
+            .annotate(min_end_date=Min("end_date"))
+            .values("min_end_date")[:1],
+            output_field=DateField()
         ),
-    ).filter(first_order_year=2025).distinct()
+        has_order_review=Case(
+            When(
+                Exists(
+                    OrderReview.objects.filter(
+                        order_id=OuterRef("user_addresses__order_groups__orders__id")
+                    )
+                ),
+                then=Value("Yes"),
+            ),
+            default=Value("No"),
+            output_field=CharField(),
+        )
+    ).filter(
+        first_transaction_date__year=2025,
+    ).distinct()
+    
     context["user_groups"] = user_groups
     return render(request, "dashboards/customer_first_order.html", context)
 
