@@ -154,7 +154,7 @@ def calculate_discount_rate(order):
 
     return discount_rate
 
-# @login_required(login_url="/admin/login/")
+@login_required(login_url="/admin/login/")
 def sales_leaderboard(request):
     # Get all Users.
     users = User.objects.filter(
