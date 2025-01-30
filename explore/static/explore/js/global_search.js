@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', function () {
             padding: .575rem .85rem;
             margin: 0;
             font-family: inherit;
-            font-size: 1.25rem;
-            font-weight: 400;
-            line-height: 1.75;
-            color: #858796;
+            font-size: 1rem;
+            font-weight: 300;
+            line-height: 1.5;
+            color: #424244;
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
