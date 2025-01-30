@@ -732,15 +732,14 @@ class CartUtils:
 
         current_user_group = user_group or current_user.user_group
 
-        if not request.user.is_staff and current_user.type != UserType.ADMIN:
+        if (
+            not request.user.is_staff
+            and current_user_group
+            and current_user.type != UserType.ADMIN
+        ):
             # Company Non-Admin User.
-            user_user_location_ids = (
-                UserUserAddress.objects.filter(user_id=current_user.id)
-                .select_related("user_address")
-                .values_list("user_address_id", flat=True)
-            )
             orders = Order.objects.filter(
-                order_group__user_address__in=user_user_location_ids
+                order_group__user_address__useruseraddress__user=current_user
             )
         else:
             if request.user.is_staff and not is_impersonating:
@@ -761,6 +760,7 @@ class CartUtils:
     def get_cart_orders(orders) -> dict:
         """
         Process a list of orders and return a dictionary with the cart data.
+        The cart items are in a flat list, with related orders always appearing after the parent order.
         See CartSerializer for the expected format.
 
         Args:
@@ -794,39 +794,7 @@ class CartUtils:
         }
         """
 
-        # Prefetch related data to reduce the number of queries
-        orders = (
-            orders.filter(
-                submitted_on__isnull=True,
-            )
-            .select_related(
-                "order_group__seller_product_seller_location__seller_product__seller",
-                "order_group__user_address",
-                "order_group__user",
-                "order_group__seller_product_seller_location__seller_product__product__main_product",
-            )
-            .prefetch_related("order_line_items")
-        )
-
-        # Initialize the cart structure
-        cart_data = {
-            "cart": [],
-            "subtotal": Decimal("0.00"),
-            "cart_count": 0,
-        }
-
-        # Use defaultdict to simplify the creation of address buckets
-        address_buckets = defaultdict(
-            lambda: {
-                "address": None,
-                "items": [],
-                "total": Decimal("0.00"),
-                "count": 0,
-            }
-        )
-
-        # Process each order
-        for order in orders:
+        def append_to_cart(cart_data, address_buckets, order):
             customer_price = order.customer_price()
             customer_price_with_tax = order.customer_price_with_tax()
             uaid = order.order_group.user_address_id
@@ -860,6 +828,56 @@ class CartUtils:
 
             cart_data["subtotal"] += customer_price_with_tax
             cart_data["cart_count"] += 1
+
+        # Prefetch related data to reduce the number of queries
+        orders = (
+            orders.filter(
+                submitted_on__isnull=True,
+            )
+            .select_related(
+                "order_group__seller_product_seller_location__seller_product__seller",
+                "order_group__user_address",
+                "order_group__user",
+                "order_group__seller_product_seller_location__seller_product__product__main_product",
+            )
+            .prefetch_related("order_line_items", "order_group__related_bookings")
+        )
+        parent_orders = orders.filter(
+            order_group__parent_booking__isnull=True,
+        )
+        related_orders = orders.exclude(
+            order_group__parent_booking__isnull=True,
+        )
+
+        # Initialize the cart structure
+        cart_data = {
+            "cart": [],
+            "subtotal": Decimal("0.00"),
+            "cart_count": 0,
+        }
+
+        # Use defaultdict to simplify the creation of address buckets
+        address_buckets = defaultdict(
+            lambda: {
+                "address": None,
+                "items": [],
+                "total": Decimal("0.00"),
+                "count": 0,
+            }
+        )
+
+        # Process each order
+        for order in parent_orders:
+            if order.order_group.parent_booking:
+                # Skip orders with related bookings
+                continue
+
+            append_to_cart(cart_data, address_buckets, order)
+
+            for related_order in related_orders.filter(
+                order_group__parent_booking=order.order_group
+            ):
+                append_to_cart(cart_data, address_buckets, related_order)
 
         # Convert address_buckets to the required format for CartSerializer
         for uaid, bucket in address_buckets.items():

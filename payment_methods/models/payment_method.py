@@ -289,12 +289,15 @@ def save_payment_method(sender, instance: PaymentMethod, created, **kwargs):
 
 @receiver(pre_delete, sender=PaymentMethod)
 def delete_payment_method(sender, instance: PaymentMethod, using, **kwargs):
+    user_address = None
     if instance.user_group:
         payment_methods = PaymentMethod.objects.filter(
             user_group_id=instance.user_group.id
         )
+        user_address_qry = instance.user_group.user_addresses
     else:
         payment_methods = PaymentMethod.objects.filter(user_id=instance.user.id)
+        user_address_qry = instance.user.useraddress_set
     if payment_methods.count() == 1:
         raise ValueError(
             "Cannot delete the last Payment Method for the UserGroup/User."
@@ -303,11 +306,13 @@ def delete_payment_method(sender, instance: PaymentMethod, using, **kwargs):
     DSPaymentMethods.Tokens.delete(instance.token)
 
     # If this card is used as a default payment in Stripe, then update the default payment method.
-    stripe_payment_method = instance.get_stripe_payment_method()
-    if stripe_payment_method:
-        StripeUtils.PaymentMethod.detach(stripe_payment_method["id"])
-        # NOTE: If this payment method is the default payment method on Stripe,
-        # then it will be updated on the next invoice pay attempt or on the nightly payment sync.
+    user_address = user_address_qry.first()
+    if user_address:
+        stripe_payment_method = instance.get_stripe_payment_method(user_address)
+        if stripe_payment_method:
+            StripeUtils.PaymentMethod.detach(stripe_payment_method["id"])
+            # NOTE: If this payment method is the default payment method on Stripe,
+            # then it will be updated on the next invoice pay attempt or on the nightly payment sync.
 
     # Remove the Payment Method from all UserAddresses.
     UserAddress.objects.filter(default_payment_method=instance).update(

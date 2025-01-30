@@ -81,7 +81,7 @@
         {% include 'customer_dashboard/sidebar.html' %}
         {% endblock %}
         <div class="d-flex flex-column" id="content-wrapper">
-            <div id="content">
+            <div id="content" class="bg-white">
                 {% block navbar %}
                 {% include 'customer_dashboard/navbar.html' %}
                 {% endblock %}
@@ -89,7 +89,7 @@
                 {% include 'djangomessages.html' %}
                 <!-- MESSAGES -->
                 <span class="htmx-indicator" style="margin-left:10px;" id="htmx-indicator-page">Loading...</span>
-                <div id="page-content-wrappper">
+                <div id="page-content-wrappper" class="pt-4">
                     {% block content %}
                     {% endblock %}
                 </div>

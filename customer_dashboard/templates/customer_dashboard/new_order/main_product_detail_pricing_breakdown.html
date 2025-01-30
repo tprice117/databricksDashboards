@@ -1,0 +1,186 @@
+{% load static %}
+{% load humanize %}
+{% load sales_stream_tags %}
+{% with product=listing.seller_product_seller_location.seller_product.product %}
+  <!-- Header -->
+  <h6 class="text-dark text-truncate">
+    <strong>
+      {{ product.main_product.name }} |{% if listing.product_add_ons %}
+        {{ listing.product_add_ons|join:', ' }} |
+      {% endif %}
+      {% if waste_type_name %}
+        {{ waste_type_name }} |
+      {% endif %}
+    </strong>
+    {% if product.main_product.has_rental_multi_step %}
+      {{ delivery_date|date:'m/d/Y' }} - {{ removal_date|date:'m/d/Y' }}
+    {% else %}
+      {{ delivery_date|date:'m/d/Y' }}
+    {% endif %}
+  </h6>
+  <!-- Pricing Section -->
+  {% with price_breakdown=listing.price_breakdown %}
+    {% if price_breakdown.rental_breakdown is None %}
+      <div class="col"></div>
+    {% endif %}
+    <!-- Rental -->
+    <div class="text-dark text-nowrap">
+      {% if price_breakdown.rental_breakdown %}
+        {% comment %}Multi-step equipment rental.{% endcomment %}
+        <div class="row d-flex text-center mb-2">
+          {% for key, value in price_breakdown.rental_breakdown.items %}
+            <div class="col border p-2">
+              <p class="mb-0 text-primary">
+                <strong>Per{% cycle ' Day' ' Week' ' Month' %}</strong>
+              </p>
+              <p class="mb-0">
+                {% if value.base %}
+                  <span class="price-item" data-price="{{ value.base }}">{{ value.base|currency }}</span>
+                {% else %}
+                  Not Set
+                {% endif %}
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if product.main_product.has_rental %}
+        {% comment %}Two-Step Rental (Dumpsters){% endcomment %}
+        <!-- Included Days -->
+        <div class="row d-flex text-center mb-2">
+          <div class="col border p-2">
+            <p class="mb-0 text-primary">
+              <strong>Included Days</strong>
+            </p>
+            <p class="mb-0">{{ price_breakdown.rental.items.0.quantity|intcomma }}</p>
+          </div>
+          <div class="col border p-2">
+            <p class="mb-0 text-primary">
+              <strong>Price / Additional Day</strong>
+            </p>
+            <p class="mb-0">
+              <span class="price-item" data-price="{{ listing.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup }}">{{ listing.seller_product_seller_location.rental.price_per_day_additional|add_markup:default_markup|currency }}</span>
+            </p>
+          </div>
+        </div>
+        <!-- Material Tonnage -->
+        {% if product.main_product.has_material %}
+          <div class="row d-flex text-center mb-2">
+            <div class="col border p-2">
+              <p class="mb-0 text-primary">
+                <strong>Included Tons</strong>
+              </p>
+              <p class="mb-0">{{ price_breakdown.material.items.0.quantity|intcomma }}</p>
+            </div>
+            <div class="col border p-2">
+              <p class="mb-0 text-primary">
+                <strong>Price / Additional Ton</strong>
+              </p>
+              <p class="mb-0">
+                <span class="price-item" data-price="{{ price_breakdown.material.items.0.unit_price }}">{{ price_breakdown.material.items.0.unit_price|currency }}</span>
+              </p>
+            </div>
+          </div>
+        {% endif %}
+      {% else %}
+        {% comment %}Any other product.{% endcomment %}
+        <!-- Quote Breakdown -->
+        <div class="row">
+          <div class="col-9">
+            <p class="mb-0">
+              <strong>Quote Breakdown</strong>
+            </p>
+          </div>
+          <div class="col-3">
+            <p class="mb-0 text-end">
+              <strong>Total</strong>
+            </p>
+          </div>
+        </div>
+        {% if price_breakdown.rental %}
+          <!-- Rental -->
+          {% for order_line_item in price_breakdown.rental.items %}
+            <div class="row">
+              <div class="col-9">
+                <p class="mb-0">
+                  <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span>
+                  / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                    {{ order_line_item.units|lower }}
+                  {% endif %}
+                  {% if order_line_item.description %}
+                    ({{ order_line_item.description|lower }})
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-3">
+                <p class="mb-0 text-end">
+                  <span class="price-item" data-price="{{ order_line_item.total }}">{{ order_line_item.total|currency }}</span>
+                </p>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+        {% if price_breakdown.material %}
+          <!-- Material -->
+          {% for order_line_item in price_breakdown.material.items %}
+            <div class="row">
+              <div class="col-9">
+                <p class="mb-0">
+                  <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                    {{ order_line_item.units|lower }}
+                  {% endif %}
+                  {% if order_line_item.description %}
+                    ({{ order_line_item.description|lower }})
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-3">
+                <p class="mb-0 text-end">
+                  <span class="price-item" data-price="{{ order_line_item.total }}">{{ order_line_item.total|currency }}</span>
+                </p>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+        {% if price_breakdown.service %}
+          <!-- Service -->
+          {% for order_line_item in price_breakdown.service.items %}
+            <div class="row">
+              <div class="col-9">
+                <p class="mb-0">
+                  <span class="price-item" data-price="{{ order_line_item.unit_price }}">{{ order_line_item.unit_price|currency }}</span> / @ {{ order_line_item.quantity|floatformat|intcomma }}{% if order_line_item.units %}
+                    {{ order_line_item.units|lower }}
+                  {% endif %}
+                  {% if order_line_item.description %}
+                    ({{ order_line_item.description|lower }})
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-3">
+                <p class="mb-0 text-end">
+                  <span class="price-item" data-price="{{ order_line_item.total }}">{{ order_line_item.total|currency }}</span>
+                </p>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+        <!-- Fuel & Fees -->
+        <div class="row">
+          <div class="col">
+            <p class="mb-0">Fuel and Fees ({{ price_breakdown.fuel_and_environmental_rate|floatformat:2 }}%)</p>
+          </div>
+          <div class="col">
+            <p class="mb-0 text-end">
+              <span class="price-item" data-price="{{ price_breakdown.other.fuel_and_environmental }}">{{ price_breakdown.other.fuel_and_environmental|currency }}</span>
+            </p>
+          </div>
+        </div>
+      {% endif %}
+      <!-- Subtotal -->
+      <p class="pt-1 mb-0 text-end">
+        <strong>Product Subtotal: <span class="price-item" data-price="{{ price_breakdown.other.total }}">{{ price_breakdown.other.total|currency }}</span></strong>
+      </p>
+      <hr class="my-2" style="opacity: 0.5; border-top: 3px solid;" />
+    </div>
+  {% endwith %}
+{% endwith %}

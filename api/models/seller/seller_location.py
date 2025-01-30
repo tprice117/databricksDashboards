@@ -1,16 +1,14 @@
 import datetime
 import uuid
 
-from django.utils import timezone
 from django.db import models
 from django.db.models.signals import pre_save
-
+from django.utils import timezone
 from multiselectfield import MultiSelectField
 
+from api.models.order.order import Order
 from api.utils.google_maps import geocode_address
 from common.models import BaseModel
-
-from api.models.order.order import Order
 
 
 class SellerLocation(BaseModel):
@@ -82,6 +80,10 @@ class SellerLocation(BaseModel):
     )
     w9 = models.FileField(upload_to=get_file_path, blank=True, null=True)
     # END: Insurance and tax fields.
+    payout_delay = models.IntegerField(
+        default=14,
+        help_text="Number of days to delay payout after an invoice is received.",
+    )
 
     def __str__(self):
         return f"{self.name} | {self.seller.name}"
@@ -160,6 +162,38 @@ class SellerLocation(BaseModel):
         )
         instance.latitude = latitude or 0
         instance.longitude = longitude or 0
+
+    @property
+    def last_checkout(self):
+        """
+        Get the total number of supplier listings for this product.
+
+        Prefetch "products__seller_products__seller_product_seller_locations" for efficiency.
+        """
+        if not hasattr(self, "seller_product_seller_locations"):
+            return None
+        return self.seller_product_seller_locations.aggregate(
+            last_checkout=models.Max(
+                "order_groups__orders__submitted_on",
+            ),
+        )["last_checkout"]
+
+    @property
+    def likes_count(self):
+        """
+        Get the total number of likes for this product.
+
+        Prefetch "products__seller_products__seller_product_seller_locations__order_groups__orders" for efficiency.
+        """
+        if not hasattr(self, "seller_product_seller_locations"):
+            return None
+        return self.seller_product_seller_locations.aggregate(
+            likes_count=models.Count(
+                "order_groups__orders__review",
+                filter=models.Q(order_groups__orders__review__rating=True),
+                distinct=True,
+            ),
+        )["likes_count"]
 
 
 pre_save.connect(SellerLocation.pre_save, sender=SellerLocation)

@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.db import transaction
 
 from api.managers import OrderGroupManager
 from api.models import Order
@@ -160,6 +161,29 @@ class OrderGroup(BaseModel):
 
     def __str__(self):
         return f"{self.user.user_group.name if self.user.user_group else ''} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}"
+
+    def delete(self, using=None, keep_parents=False):
+        with transaction.atomic():
+            # Delete related Subscription.
+            from api.models.order.subscription import Subscription
+
+            sub_obj = Subscription.objects.filter(order_group_id=self.id).first()
+            if sub_obj:
+                sub_obj.delete()
+
+            # Delete any related protected objects, like orders and subscriptions.
+            for order in self.orders.all():
+                # Need to delete all related objects to the order.
+                # Because they are all Protected
+                order.ordermaterialfee_set.all().delete()
+                order.orderpermitfee_set.all().delete()
+                order.delete()
+
+            # Recurse through related bookings, deleting each one.
+            for related_booking in self.related_bookings.all():
+                related_booking.delete()
+
+            return super().delete(using, keep_parents)
 
     class Meta:
         verbose_name = "Booking"
@@ -384,6 +408,40 @@ class OrderGroup(BaseModel):
                 "Cannot create a pickup because OrderGroup already has an order, create swap or removal instead."
             )
         return pickup_order
+
+    def create_onetime(self, delivery_date, schedule_window: str = None) -> Order:
+        """Create a one time for the OrderGroup.
+
+        Args:
+            delivery_date (date/date str): The delivery date.
+            schedule_window (str): The preferred time window for the delivery.
+
+        Returns:
+            Order: Returns the one time order object.
+        """
+        orders = self.orders.order_by("-created_on")
+        if orders.count() == 0:
+            order_group_start_equal = delivery_date == self.start_date
+            if not order_group_start_equal:
+                raise Exception(
+                    f"Cannot create a one time because Order has a different start date than OrderGroup [{delivery_date}!={self.start_date}]."
+                )
+            with transaction.atomic():
+                self.end_date = delivery_date
+                self.save()
+                delivery_order = Order(
+                    order_group=self,
+                    start_date=delivery_date,
+                    end_date=delivery_date,
+                )
+                if schedule_window:
+                    delivery_order.schedule_window = schedule_window
+                delivery_order.save()
+        else:
+            raise Exception(
+                "Cannot create a one time because OrderGroup already has an order, create swap or removal instead."
+            )
+        return delivery_order
 
     @property
     def order_type(self):

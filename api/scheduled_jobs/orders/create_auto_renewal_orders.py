@@ -27,6 +27,22 @@ def create_auto_renewal_orders():
         order_group for order_group in active_order_groups if order_group.is_active
     ]
 
+    # Do not auto-renew Temporary Fencing OrderGroups.
+    active_order_groups = [
+        order_group
+        for order_group in active_order_groups
+        if not order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.main_product_category_code
+        == "FENCE"
+    ]
+
+    # Do not auto-renew Dumpster OrderGroups.
+    active_order_groups = [
+        order_group
+        for order_group in active_order_groups
+        if not order_group.seller_product_seller_location.seller_product.product.main_product.main_product_category.main_product_category_code
+        == "RO"
+    ]
+
     # Create list of OrderGroups that need to auto-renew.
     order_groups_that_needs_to_auto_renew = []
 
@@ -94,27 +110,20 @@ def create_auto_renewal_orders():
                     order_group,
                 )
 
-                # # Set the most recent Order EndDate, if not already set.
-                # if most_recent_submitted_order_end_date is None:
-                #     most_recent_submitted_order_end_date = (
-                #         most_recent_submitted_order_start_date
-                #         + timezone.timedelta(days=29)
-                #     )
+                # If there are unsubmitted Orders after the most recent
+                # submitted Order, delete them.
+                order_group.orders.filter(
+                    submitted_on__isnull=True,
+                ).delete()
 
-                # # If there are unsubmitted Orders after the most recent
-                # # submitted Order, delete them.
-                # order_group.orders.filter(
-                #     submitted_on__isnull=True,
-                # ).delete()
-
-                # Order.objects.create(
-                #     order_group=order_group,
-                #     start_date=most_recent_submitted_order_end_date
-                #     + timezone.timedelta(days=1),
-                #     end_date=most_recent_submitted_order_end_date
-                #     + timezone.timedelta(days=29),
-                #     status=Order.Status.PENDING,
-                # )
+                Order.objects.create(
+                    order_group=order_group,
+                    start_date=most_recent_submitted_order_end_date,
+                    end_date=most_recent_submitted_order_end_date
+                    + timezone.timedelta(days=28),
+                    status=Order.Status.COMPLETE,
+                    submitted_on=timezone.now(),
+                )
 
     # Only send emails in the PROD environment.
     if settings.ENVIRONMENT == "TEST":
@@ -122,8 +131,8 @@ def create_auto_renewal_orders():
         # In the html_content, show a list of the OrderGroups that need to auto-renew.
         # The list should be a bulleted list of OrderGroup admin URLs.
         add_internal_email_to_queue(
-            subject="BETA (Not Creating Orders): OrderGroups That Need Auto-Renewal",
-            html_content="OrderGroups that need to auto-renew: <ul>{}</ul>".format(
+            subject="Auto Renewals: OrderGroups that have been auto-renewed",
+            html_content="OrderGroups that have been auto-renewed: <ul>{}</ul>".format(
                 "".join(
                     [
                         f"<li><a href='{settings.DASHBOARD_BASE_URL}/admin/api/ordergroup/{order_group.id}/change/'>{order_group.id}</a></li>"

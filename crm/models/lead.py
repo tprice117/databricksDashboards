@@ -6,6 +6,10 @@ from api.models import User, UserAddress, OrderGroup, SellerProductSellerLocatio
 from common.models import BaseModel
 from django.utils import timezone
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def get_default_est_conversion_date():
     """Return the default estimated conversion date. (7 days from current date)"""
@@ -267,6 +271,17 @@ class Lead(BaseModel):
         ):
             # Convert lead
             self.status = Lead.Status.CONVERTED
+            logger.info(f"Lead converted!: {self}")
+
+            # Check if UserGroup Account Owner should be updated
+            if (
+                self.owner
+                and self.user.user_group
+                and not self.user.user_group.account_owner
+            ):
+                # Update UserGroup Account Owner to lead owner
+                self.user.user_group.account_owner = self.owner
+                self.user.user_group.save()
 
     def assign_owner(self):
         """

@@ -422,6 +422,7 @@ class OrderGroupForm(forms.Form):
                 "min": datetime.date.today() + datetime.timedelta(days=1),
             }
         ),
+        label="Est. Removal Date",
     )
     # Create a choice field for service times per week, where the choices are 1-5 times per week.
     times_per_week = forms.ChoiceField(
@@ -470,7 +471,7 @@ class OrderGroupForm(forms.Form):
     #     required=False,
     # )
     quantity = forms.IntegerField(
-        widget=forms.HiddenInput(),
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
         initial=1,
         required=True,
         help_text="Note: Currently, the prices on the next page are always for one.",
@@ -492,16 +493,7 @@ class OrderGroupForm(forms.Form):
             self.fields["product_waste_types"].widget = forms.HiddenInput()
             self.fields["product_waste_types"].required = False
 
-        # Always hide. If needed, we can show it again.
-        # NOTE: If we want to show it again (even dynamically), we can remove the below line.
-        self.fields["removal_date"].widget = forms.HiddenInput()
-        self.fields["removal_date"].required = False
-
-        if (
-            not self.main_product.has_rental
-            and not self.main_product.has_rental_one_step
-            and not self.main_product.has_rental_multi_step
-        ):
+        if not self.main_product.has_rental_multi_step:
             # Hide delivery and removal date fields
             # Change label of delivery date to service date
             self.fields["delivery_date"].label = "Service Date"
@@ -509,6 +501,7 @@ class OrderGroupForm(forms.Form):
             # self.fields["is_estimated_end_date"].widget = forms.HiddenInput()
             self.fields["removal_date"].required = False
             # self.fields["is_estimated_end_date"].required = False
+
         if not self.main_product.has_service_times_per_week:
             self.fields["times_per_week"].widget = forms.HiddenInput()
             self.fields["times_per_week"].initial = None

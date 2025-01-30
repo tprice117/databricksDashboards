@@ -447,7 +447,7 @@ class Order(BaseModel):
                     OrderLineItem.PaymentStatus.INVOICED,
                     OrderLineItem.PaymentStatus.PAID,
                 ]
-                for order_item in self.order_items
+                for order_item in self.order_items if order_item.customer_rate != 0
             ]
         )
 
@@ -509,7 +509,11 @@ class Order(BaseModel):
         super().clean()
 
         # Ensure submitted_on is not NULL if status is not PENDING.
-        if self.status != Order.Status.PENDING and not self.submitted_on:
+        if (
+            self.status != Order.Status.CANCELLED
+            and self.status != Order.Status.PENDING
+            and not self.submitted_on
+        ):
             raise ValidationError(
                 "Submitted On (which means Order has been checked out) must be set if status is not PENDING"
             )
@@ -1394,7 +1398,7 @@ class Order(BaseModel):
                 self.submitted_on = timezone.now()
                 self.save()
 
-    def cancel_order(self, o):
+    def cancel_order(self):
         """This method is used to cancel an Order (set status to CANCELLED)."""
         if self.status != Order.Status.CANCELLED:
             self.status = Order.Status.CANCELLED

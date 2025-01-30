@@ -86,53 +86,73 @@ def get_max_discount_rate():
     return 100  # Maximum possible discount rate
 
 
-def calculate_score(
-    user, max_new_buyers, max_gmv, max_external_orders, max_discount_rate
-):
-    first_of_month = get_first_of_month()
-    orders_this_month = get_orders_this_month(first_of_month)
-    max_new_buyers = get_max_new_buyers(first_of_month)
-    max_gmv = get_max_gmv(orders_this_month)
-    max_external_orders = get_max_external_orders(orders_this_month)
-    max_discount_rate = get_max_discount_rate()
+def calculate_standing_scores(users, attribute, inverse=False, non_zero_first=False):
+    if non_zero_first:
+        sorted_users = sorted(users, key=lambda user: (getattr(user, attribute) == 0, getattr(user, attribute)))
+    else:
+        sorted_users = sorted(users, key=lambda user: getattr(user, attribute), reverse=not inverse)
+    
+    total_users = len(users)
+    current_score = total_users
+    previous_value = None
+    for index, user in enumerate(sorted_users):
+        current_value = getattr(user, attribute)
+        if current_value != previous_value:
+            current_score = total_users - index
+        setattr(user, f"{attribute}_score", current_score)
+        previous_value = current_value
 
-    new_buyers_score = (
-        Decimal(user.new_buyers / max_new_buyers) * Decimal("0.4")
-        if max_new_buyers > 0
-        else Decimal("0.0")
-    )
-    gmv_score = (
-        Decimal(user.gmv / max_gmv) * Decimal("0.25") if max_gmv > 0 else Decimal("0.0")
-    )
-    platform_adoption_score = (
-        (Decimal(user.external_orders_count) / Decimal(max_external_orders))
-        * Decimal("0.25")
-        if max_external_orders > 0
-        else Decimal("0.0")
-    )
-    discount_rate_score = (
-        ((Decimal("100") - Decimal(user.avg_discount)) / Decimal(max_discount_rate))
-        * Decimal("0.1")
-        if max_discount_rate > 0
-        else Decimal("0.0")
-    )
 
-    if user.avg_discount == 0:
-        discount_rate_score = Decimal("0.00")
-
+def calculate_total_score(user):
     total_score = (
-        new_buyers_score + gmv_score + platform_adoption_score + discount_rate_score
+        user.new_buyers_score * 0.4 +
+        user.gmv_score * 0.25 +
+        user.platform_adoption_score * 0.25 +
+        user.discount_rate_score * 0.1
     )
+    return total_score
 
-    # Multiply each score by 100 for easier to read scores
-    return {
-        "total_score": total_score * 100,
-        "new_buyers_score": new_buyers_score * 100,
-        "gmv_score": gmv_score * 100,
-        "platform_adoption_score": platform_adoption_score * 100,
-        "discount_rate_score": discount_rate_score * 100,
-    }
 
+def calculate_discount_rate(order):
+    
+    # Find the related Order Group
+    order_group = order.order_group
+
+    # Order Group relationship to SPSL
+    spsl = order_group.seller_product_seller_location
+
+    # SPSL relationship to Seller Product
+    seller_product = spsl.seller_product
+
+    # Seller Product to Product
+    product = seller_product.product
+
+    # Finally get Min and Default Take Rate on Main Product
+    main_product = product.main_product
+    min_take_rate = main_product.minimum_take_rate
+    default_take_rate = main_product.default_take_rate
+
+    # Take Min and Default back to #1 (Seller Price) to find Default Customer Price
+    seller_price = order.seller_price()
+    default_customer_price = seller_price * (1 + (default_take_rate / 100))
+
+    # Calculate the minimum customer price using the min_take_rate
+    min_customer_price = seller_price * (1 + (min_take_rate / 100))
+
+    # Apply the Discount formula --> Default Price divided by actual Customer Price
+    actual_customer_price = order.customer_price()
+    
+    if default_customer_price == 0:
+        return 0
+
+    discount_rate = ((default_customer_price - actual_customer_price) / default_customer_price) * 100
+
+    # Ensure the discount rate does not exceed the maximum allowed discount
+    max_discount = ((default_customer_price - min_customer_price) / default_customer_price) * 100
+    if discount_rate > max_discount:
+        discount_rate = max_discount
+
+    return discount_rate
 
 @login_required(login_url="/admin/login/")
 def sales_leaderboard(request):
@@ -146,12 +166,6 @@ def sales_leaderboard(request):
     first_of_month = get_first_of_month()
     orders_this_month = get_orders_this_month(first_of_month)
 
-    # Calculate max values for scoring
-    max_new_buyers = get_max_new_buyers(first_of_month)
-    max_gmv = get_max_gmv(orders_this_month)
-    max_external_orders = get_max_external_orders(orders_this_month)
-    max_discount_rate = get_max_discount_rate()
-
     # For each User, add their aggregated Order data for this month.
     for user in users:
         orders_for_user = orders_this_month.filter(
@@ -163,18 +177,7 @@ def sales_leaderboard(request):
 
         # Average Discount.
         user.avg_discount = (
-            sum(
-                [
-                    (
-                        (order.customer_price() - order.seller_price())
-                        / order.customer_price()
-                        * 100
-                        if order.customer_price() > 0
-                        else 0
-                    )
-                    for order in orders_for_user
-                ]
-            )
+            sum([calculate_discount_rate(order) for order in orders_for_user])
             / len(orders_for_user)
             if len(orders_for_user) > 0
             else 0
@@ -210,17 +213,24 @@ def sales_leaderboard(request):
         user.internal_orders_count = internal_orders_count
         user.external_orders_count = external_orders_count
 
-        scores = calculate_score(
-            user, max_new_buyers, max_gmv, max_external_orders, max_discount_rate
-        )
-        user.score = scores["total_score"]
-        user.new_buyers_score = scores["new_buyers_score"]
-        user.gmv_score = scores["gmv_score"]
-        user.platform_adoption_score = scores["platform_adoption_score"]
-        user.discount_rate_score = scores["discount_rate_score"]
+    # Calculate scores based on standings
+    calculate_standing_scores(users, "new_buyers")
+    calculate_standing_scores(users, "gmv")
+    calculate_standing_scores(users, "external_orders_count")
+    calculate_standing_scores(users, "avg_discount", inverse=True, non_zero_first=True)
 
-    # Sort Users by GMV (descending).
-    users = sorted(users, key=lambda user: user.gmv, reverse=True)
+    # Calculate total score and weighted scores for each user
+    for user in users:
+        user.platform_adoption_score = user.external_orders_count_score
+        user.discount_rate_score = user.avg_discount_score
+        user.new_buyers_weighted_score = user.new_buyers_score * 0.4
+        user.gmv_weighted_score = user.gmv_score * 0.25
+        user.platform_adoption_weighted_score = user.platform_adoption_score * 0.25
+        user.discount_rate_weighted_score = user.discount_rate_score * 0.1
+        user.score = calculate_total_score(user)
+
+    # Sort Users by total score (descending).
+    users = sorted(users, key=lambda user: user.score, reverse=True)
     return render(
         request,
         "dashboards/sales_leaderboard.html",

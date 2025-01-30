@@ -37,7 +37,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import now
 
-from api.models import Order, Payout, UserGroup
+from api.models import Order, Payout, UserGroup, OrderReview
 from api_proxy import settings
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def sales_dashboard(request):
 def get_sales_dashboard_context(account_owner_id=None):
     context = {}
     date_range_end_date = timezone.now().replace(tzinfo=None)
-    date_range_start_date = date_range_end_date - timedelta(days=365)
+    date_range_start_date = (date_range_end_date.replace(day=1) - timedelta(days=1)).replace(month=1, day=1)
     delta_month = timezone.now() - timedelta(days=30)
 
     if account_owner_id:
@@ -984,7 +984,12 @@ def customer_first_order(request):
             ).order_by('end_date').values('id')[:1]
         ),
         user_first_name=F("user_addresses__order_groups__orders__order_group__user__first_name"),
-        user_last_name=F("user_addresses__order_groups__orders__order_group__user__last_name")
+        user_last_name=F("user_addresses__order_groups__orders__order_group__user__last_name"),
+        first_order_rating=Subquery(
+            OrderReview.objects.filter(
+                order=OuterRef('user_addresses__order_groups__orders__id')
+            ).order_by('order__end_date').values('rating')[:1]
+        ),
     ).filter(first_order_year=2025).distinct()
     context["user_groups"] = user_groups
     return render(request, "dashboards/customer_first_order.html", context)

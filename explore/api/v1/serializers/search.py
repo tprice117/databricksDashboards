@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
-from api.models import MainProduct, MainProductCategory
+from api.models import MainProduct, MainProductCategory, MainProductCategoryGroup
 
 
 class SearchRequestSerializer(serializers.Serializer):
@@ -24,6 +24,12 @@ class MainProductSearchSerializer(serializers.ModelSerializer):
         return [image.image.url for image in images]
 
 
+class MainProductCategoryGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MainProductCategoryGroup
+        fields = ["id", "name", "icon", "sort"]
+
+
 class MainProductCategorySearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = MainProductCategory
@@ -33,3 +39,4 @@ class MainProductCategorySearchSerializer(serializers.ModelSerializer):
 class SearchSerializer(serializers.Serializer):
     main_products = MainProductSearchSerializer(many=True)
     main_product_categories = MainProductCategorySearchSerializer(many=True)
+    main_product_category_groups = MainProductCategoryGroupSerializer(many=True)
