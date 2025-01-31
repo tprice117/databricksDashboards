@@ -1,0 +1,42 @@
+{% load static %}
+<div class="modal-dialog modal-dialog-centered" role="document">
+    <div id="htmx-indicator-loading-card" class="htmx-indicator htmx-indicator-card modal-content">
+        <div class="modal-body d-flex justify-content-center align-items-center p-3" style="min-height: 500px;">
+            <div class="spinner-border text-primary m-3" role="status"></div>
+        </div>
+    </div>
+    <div class="modal-content htmx-loading-hide">
+        <!-- prettier-ignore -->
+        <form id="form-card-edit" 
+          data-order-group-id="{{ order_group.id|default:'new' }}"
+          method="post" enctype="multipart/form-data"
+          hx-post="{% url 'customer_order_group_edit_attachments' order_group.id %}" 
+          hx-indicator="#htmx-indicator-save-btn" 
+          hx-disabled-elt="button, .form-control, .form-select"
+          hx-swap="innerHTML"
+          hx-target="#edit-attachments-modal">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title">Add Attachments</h5>
+        <button type="button" class="btn btn-success" id="add-attachments"><i class="fas fa-plus fa-sm text-white"></i></button>
+      </div>
+      <div class="modal-body">
+        <!-- Form -->
+        <div class="overflow-auto">{{ attachments_formset.as_table }}</div>
+        <hr>
+        <!--  End Form -->
+      </div>
+      <div class="modal-footer">
+        {% if success_text %}
+          <p class="text-muted">{{success_text}}</p>
+        {% endif %}
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-success" name="attachments_card">
+          Save
+          <span id="htmx-indicator-save-btn" class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        </button>
+      </div>
+    </form>
+    </div>
+</div>
+<span id="cart-attachments-{{ order_group.id }}" hx-swap-oob="true">&nbsp;Attached ({{ order_group.attachments.count }})</span>

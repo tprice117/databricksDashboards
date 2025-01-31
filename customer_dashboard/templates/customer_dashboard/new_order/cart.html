@@ -1,14 +1,93 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
 {% load humanize %}
+{% load sales_stream_tags %}
 {% block title %}
   Cart
 {% endblock %}
 {% block stylesheet %}
   <style>
+    .sw-wide-button {
+      width: 450px;
+    }
+    /* If document width less than 300, set width to 100% */
+    @media (max-width: 500px) {
+      .sw-wide-button {
+        width: 100%;
+      }
+    }
     .htmx-swapping {
       opacity: 0;
       transition: opacity 1s ease-out;
+    }
+    .subtitle {
+      font-family: 'Outfit';
+      font-style: normal;
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 24px;
+      color: #0f1b22;
+    }
+    .order-descriptor {
+      font-family: 'Outfit';
+      font-style: normal;
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 16px;
+      color: #0f1b22;
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    /* Firefox */
+    .downstream-number {
+      -moz-appearance: textfield;
+      border-style: solid;
+      border-width: 3px;
+      border-radius: 10px;
+      width: 100px;
+    }
+    .downstream-number:focus .downstream-number {
+      border-color: transparent;
+      border-width: 1;
+      outline-width: 3px;
+      outline-style: solid;
+      outline-color: rgb(67, 250, 151);
+    }
+    
+    .stack {
+      position: relative;
+      width: 400px;
+      height: 100px;
+    }
+    
+    .stack-bottom {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      /* Stacks on top */
+    }
+    
+    .stack-top {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      /* Stacks behind */
+    }
+    
+    .downstream-checkbox {
+      border-color: var(--bs-primary);
+      width: 30px;
+      height: 30px;
+    }
+    .downstream-checkbox :checked {
+      background-color: var(--bs-primary);
     }
   </style>
 {% endblock %}
@@ -59,7 +138,7 @@
             button.addEventListener("click", function () {
                 removeItemFromCart(this);
             });
-        }); {% endcomment %}
+        });  {% endcomment %}
         // Listen for page load and set the form field values to the query params
         document.addEventListener("DOMContentLoaded", function () {
             // Check if query params has filter
@@ -73,7 +152,7 @@
             const myCarts = urlParams.get("my_carts");
             if (myCarts) {
                 // update my_carts value
-                document.getElementById("myCartsCheck").checked = true;
+                document.getElementById("my-carts-check").checked = true;
             }
             // Check if query params has start_date
             const startDate = urlParams.get("start_date");
@@ -112,173 +191,259 @@
         let isSendingQuote = false;
 
         function showSendQuoteModal(customer_email, cart_order_ids) {
-            {% comment %} let modal = new bootstrap.Modal(document.getElementById("modal-send-quote"), {
-                keyboard: false,
-                backdrop: "static"
-            });
-            modal.show(); {% endcomment %}
-            console.log("showSendQuoteModal", customer_email, cart_order_ids);
-            {% if request.user.is_staff and not is_impersonating %}
-                let inputValue = `{{ request.user.email }}`;
-                if (customer_email && customer_email !== "{{ request.user.email }}") {
-                    inputValue += `, ${customer_email}`;
-                }
-            {% else %}
-                let inputValue = `{{ request.user.email }}`;
-                if ("{{ user.email }}" !== "{{ request.user.email }}") {
-                    inputValue += `, {{ user.email }}`;
-                }
-                if (customer_email && customer_email !== "{{ request.user.email }}" && customer_email !== "{{ user.email }}") {
-                    inputValue += `, ${customer_email}`;
-                }
-            {% endif %}
-            Swal.fire({
-                title: "Send Quote",
-                footer: 'The reply to email address will be set to the email address of the user who sent the quote [{{request.user.email}}].',
-                input: "textarea",
-                inputLabel: "Comma separated list of email addresses to send the quote to.",
-                inputValue,
-                inputPlaceholder: "Comma separated list of email addresses to send the quote to.",
-                inputAttributes: {
-                  "aria-label": "Comma separated list of email addresses to send the quote to.",
-                  "autocapitalize": "off",
-                  "autocorrect": "off"
+          {% comment %} let modal = new bootstrap.Modal(document.getElementById("modal-send-quote"), {
+              keyboard: false,
+              backdrop: "static"
+          });
+          modal.show(); {% endcomment %}
+          console.log("showSendQuoteModal", customer_email, cart_order_ids);
+          {% if request.user.is_staff and not is_impersonating %}
+              let inputValue = `{{ request.user.email }}`;
+              if (customer_email && customer_email !== "{{ request.user.email }}") {
+                  inputValue += `, ${customer_email}`;
+              }
+          {% else %}
+              let inputValue = `{{ request.user.email }}`;
+              if ("{{ user.email }}" !== "{{ request.user.email }}") {
+                  inputValue += `, {{ user.email }}`;
+              }
+              if (customer_email && customer_email !== "{{ request.user.email }}" && customer_email !== "{{ user.email }}") {
+                  inputValue += `, ${customer_email}`;
+              }
+          {% endif %}
+          Swal.fire({
+              title: "Send Quote",
+              footer: 'The reply to email address will be set to the email address of the user who sent the quote [{{request.user.email}}].',
+              input: "textarea",
+              inputLabel: "Comma separated list of email addresses to send the quote to.",
+              inputValue,
+              inputPlaceholder: "Comma separated list of email addresses to send the quote to.",
+              inputAttributes: {
+                "aria-label": "Comma separated list of email addresses to send the quote to.",
+                "autocapitalize": "off",
+                "autocorrect": "off"
+              },
+              showCancelButton: true,
+              showCloseButton: true,
+              confirmButtonText: "Send it",
+              cancelButtonText: "Cancel",
+              showLoaderOnConfirm: true,
+              inputValidator: (value) => {
+                  return new Promise((resolve) => {
+                    // Verify that value is a string of comma separated email addresses
+                    if (verifyCommaSeparatedEmails(value)) {
+                      resolve();
+                    } else {
+                      resolve("Please enter a valid comma separated list of email addresses.");
+                    }
+                  });
                 },
-                showCancelButton: true,
-                showCloseButton: true,
-                confirmButtonText: "Send it",
-                cancelButtonText: "Cancel",
-                showLoaderOnConfirm: true,
-                inputValidator: (value) => {
-                    return new Promise((resolve) => {
-                      // Verify that value is a string of comma separated email addresses
-                      if (verifyCommaSeparatedEmails(value)) {
-                        resolve();
-                      } else {
-                        resolve("Please enter a valid comma separated list of email addresses.");
+              preConfirm: async (login) => {
+                  isSendingQuote = true;
+                  try {
+                      // POST request to send quote, send email to all email addresses
+                      // Pass in list of email addresses and list cart_order_ids into post body
+                      const response = await fetch("{% url 'customer_cart_send_quote' %}", {
+                          method: "POST",
+                          headers: {
+                              "Content-Type": "application/json",
+                              "X-CSRFToken": "{{ csrf_token }}"
+                          },
+                          body: JSON.stringify({
+                              emails: login.split(",").map((email) => email.trim()),
+                              ids: cart_order_ids
+                          })
+                      });
+                      isSendingQuote = false;
+                      if (!response.ok) {
+                          return Swal.showValidationMessage(`
+                          ${JSON.stringify(await response.json())}
+                          `);
                       }
-                    });
-                  },
-                preConfirm: async (login) => {
-                    isSendingQuote = true;
-                    try {
-                        // POST request to send quote, send email to all email addresses
-                        // Pass in list of email addresses and list cart_order_ids into post body
-                        const response = await fetch("{% url 'customer_cart_send_quote' %}", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRFToken": "{{ csrf_token }}"
-                            },
-                            body: JSON.stringify({
-                                emails: login.split(",").map((email) => email.trim()),
-                                ids: cart_order_ids
-                            })
-                        });
-                        isSendingQuote = false;
-                        if (!response.ok) {
-                            return Swal.showValidationMessage(`
-                            ${JSON.stringify(await response.json())}
-                            `);
-                        }
-                        return response.json();
-                    } catch (error) {
-                        isSendingQuote = false;
-                        Swal.showValidationMessage(`
-                            Request failed: ${error}
-                        `);
-                    }
-                  },
-                  allowOutsideClick: () => {
-                    return !Swal.isLoading() && !isSendingQuote;
+                      return response.json();
+                  } catch (error) {
+                      isSendingQuote = false;
+                      Swal.showValidationMessage(`
+                          Request failed: ${error}
+                      `);
                   }
-              }).then((result) => {
-                console.log("result", result);
-                if (result.isConfirmed) {
-                    // Swal.fire(result.value);
-                    if (result.value) {
-                        if (result.value.error) {
-                            Swal.fire({
-                                title: "Error",
-                                text: result.value.error,
-                                icon: "error"
-                            });
-                        } else {
-                            Swal.fire({
-                                title: "Success",
-                                text: result.value.message,
-                                icon: "success"
-                            }).then(() => {
-                                // Reload the page
-                                location.reload();
-                            });
-                        }
-                    }
+                },
+                allowOutsideClick: () => {
+                  return !Swal.isLoading() && !isSendingQuote;
                 }
-              });
+            }).then((result) => {
+              console.log("result", result);
+              if (result.isConfirmed) {
+                  // Swal.fire(result.value);
+                  if (result.value) {
+                      if (result.value.error) {
+                          Swal.fire({
+                              title: "Error",
+                              text: result.value.error,
+                              icon: "error"
+                          });
+                      } else {
+                          Swal.fire({
+                              title: "Success",
+                              text: result.value.message,
+                              icon: "success"
+                          }).then(() => {
+                              // Reload the page
+                              location.reload();
+                          });
+                      }
+                  }
+              }
+            });
+      }
+      async function showPlacementDetailsModal(order_group_id, placement_details) {
+        let inputValue = placement_details;
+          console.log("showPlacementDetailsModal", order_group_id, placement_details);
+          const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+              confirmButton: "btn btn-primary sw-wide-button",
+            },
+            buttonsStyling: false
+          });
+          const { value: formValues } = await swalWithBootstrapButtons.fire({
+            title: "",
+            html: `
+              <div class="mb-3 text-start">
+                <label for="booking-placement-details" class="form-label">Placement Details</label>
+                <textarea id="booking-placement-details" class="form-control" rows="3"></textarea>
+              </div>
+              <div class="form-check form-switch text-start">
+                <input id="booking-is-pickup" class="form-check-input" type="checkbox" role="switch">
+                <label class="form-check-label fw-bold" for="booking-is-pickup">Deliver to the Street</label>
+              </div>
+            `,
+            focusConfirm: false,
+            confirmButtonText: "Save",
+            confirmButtonColor: "#018381",
+            preConfirm: () => {
+              return [
+                document.getElementById("booking-placement-details").value,
+                document.getElementById("booking-is-pickup").checked
+              ];
+            }
+          });
+          if (formValues) {
+            Swal.fire(JSON.stringify(formValues));
+          }
+      }
+      function loadAttachmentsFormset() {
+        let addAttachmentButton = document.getElementById("add-attachments");
+        let attachmentForms = document.querySelectorAll(".attachments-form");
+        attachmentForms.forEach(function (form) {
+            const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]');
+            if (deleteInput && deleteInput.value === "on") {
+                form.style.display = "none";
+            }
+        });
+    
+        addAttachmentButton.addEventListener("click", function () {
+            let formsetDiv = document.getElementById("attachments-formset");
+            let totalForms = document.getElementById("id_attachments-TOTAL_FORMS");
+            let emptyFormTemplate = document.getElementById("attachments-empty").innerHTML;
+            if (!formsetDiv) {
+                console.error("Formset div not found");
+                return;
+            } else if (!totalForms) {
+                console.error("Total forms input not found");
+                return;
+            } else if (!emptyFormTemplate) {
+                console.error("Empty form template not found");
+                return;
+            }
+            const currentFormCount = parseInt(totalForms.value);
+            const newFormCount = currentFormCount + 1;
+            const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount);
+    
+            // Insert the empty row at the end of the #attachments-formset > tbody
+            let formsetTbody = formsetDiv.querySelector("tbody");
+            if (formsetTbody) {
+                formsetTbody.insertAdjacentHTML("beforeend", newFormHtml);
+            } else {
+                console.warn("Formset tbody not found");
+                formsetDiv.insertAdjacentHTML("beforeend", newFormHtml);
+            }
+            totalForms.value = newFormCount;
+            const emptyText = document.querySelectorAll(".empty-text");
+            emptyText.forEach(function (text) {
+                text.style.display = "none";
+            });
+        });
+    }
+    document.body.addEventListener("htmx:afterRequest", function (evt) {
+        if (evt.detail.target.id.startsWith("edit-attachments-modal")) {
+            loadAttachmentsFormset();
         }
+    });
     </script>
 {% endblock %}
 {% block content %}
-  <div class="container-fluid mb-2" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
+  <div class="container-fluid mb-2" hx-disabled-elt=".status-card, button, .form-control, .form-select, .pagi-link">
+    <h3 id="cart-title" class="text-dark mb-2" data-cart-count="{{ cart_count }}">
+      <strong>Cart ({{ cart_count }})</strong>
+      {% if help_text %}
+        <small class="ms-3 text-muted">{{ help_text }}</small>
+      {% endif %}
+    </h3>
     {% if request.user.is_staff %}
-      <div class="row">
-        <div class="col">
-          <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
-            <form class="row g-3" action="{% url 'customer_locations' %}" method="get" hx-get="{% url 'customer_cart' %}" hx-target="#cart-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
-              <div class="col-10 mb-3">
-                <div class="input-group">
-                  <label class="input-group-text" for="filterGroupSelect">Options</label>
-                  <select class="form-select" id="filterGroupSelect" name="filter" aria-label="Filter Data By">
-                    <option value="new">Created Today</option>
-                    <option value="starting">Expiring in 5 days</option>
-                    <option value="inactive">Inactive for 5+ Days</option>
-                    <option value="expired">Expired</option>
-                    <option value="active" selected>All Open Orders</option>
-                  </select>
-                </div>
+      <form action="{% url 'customer_locations' %}" method="get" hx-get="{% url 'customer_cart' %}" hx-target="#cart-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+        <div class="row mb-3 align-items-end justify-content-between flex-nowrap overflow-x-auto">
+          <div class="col-auto flex-nowrap me-3">
+            <div class="border rounded-4 border-dark p-2">
+              <div class="form-check form-switch px-1 d-flex flex-row align-items-center">
+                <label class="form-check-label float-start text-dark" for="my-carts-check"><strong>My Accounts</strong></label>
+                <input class="form-control form-check-input float-end ms-3" style="width: 3rem; height: 1.5rem;" type="checkbox" id="my-carts-check" name="my_carts" />
               </div>
-              <div class="col-2">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="myCartsCheck" name="my_carts" />
-                  <label class="form-check-label" for="myCartsCheck">My Orders</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label for="cartStartDate">Start Date Range</label>
-                <input id="cartStartDate" class="form-control" type="date" name="start_date" />
-              </div>
-              <div class="col-md-6">
-                <label for="cartEndDate">End Date Range</label>
-                <input id="cartEndDate" class="form-control" type="date" name="end_date" />
-              </div>
+            </div>
+          </div>
+          <div class="col">
+            <label for="filterGroupSelect" class="mb-1"><small>Filters</small></label>
+            <select class="form-select text-dark border-dark-subtle" style="min-width: 135px;" id="filterGroupSelect" name="filter" aria-label="Filter Data By">
+              <option value="new">Created Today</option>
+              <option value="starting">Expiring in 5 days</option>
+              <option value="inactive">Inactive for 5+ Days</option>
+              <option value="expired">Expired</option>
+              <option value="active" selected>All Carts</option>
+            </select>
+          </div>
+          <div class="col">
+            <label for="cartStartDate" class="mb-1"><small>Start Date Range</small></label>
+            <input id="cartStartDate" class="form-control text-dark border-dark-subtle" type="date" name="start_date" />
+          </div>
+          <div class="col">
+            <label for="cartEndDate" class="mb-1"><small>End Date Range</small></label>
+            <input id="cartEndDate" class="form-control text-dark border-dark-subtle" type="date" name="end_date" />
+          </div>
 
-              <div class="col-12">
-                <button type="submit" class="btn btn-primary float-end">Filter <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
-              </div>
-            </form>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary shadow float-end">Go <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
           </div>
         </div>
-      </div>
+      </form>
     {% endif %}
-    <div class="card shadow">
-      <div class="card-header py-3">
-        <div class="row">
-          <h3 id="cart-title" class="text-dark mb-1" data-cart-count="{{ cart_count }}">
-            Shopping Cart ({{ cart_count }}){% if help_text %}
-              - {{ help_text }}
-            {% endif %}
-          </h3>
-          <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+    <div class="htmx-indicator" id="htmx-indicator-loading-status">
+      <div class="w-100 d-flex justify-content-center">
+        <div class="spinner-border text-primary m-3 text-center" role="status"></div>
+      </div>
+    </div>
+    <div class="accordion" role="tablist" id="cart-results" hx-get="{{ cart_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></div>
+    <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}"><strong>Subtotal: {{ subtotal|currency }}</strong></h4>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  <!-- Attachments Details -->
+  <div id="edit-attachments-modal" class="modal modal-blur fade" style="display: none" aria-hidden="false" tabindex="-1" hx-disabled-elt="button">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div id="htmx-indicator-loading-card" class="modal-content htmx-indicator-card" style="min-height: 500px;">
+        <div class="modal-body d-flex justify-content-center align-items-center p-3">
+          <div class="spinner-border text-primary m-3" role="status"></div>
         </div>
-      </div>
-      <div class="card-body">
-        <div class="accordion" role="tablist" id="cart-results" hx-get="{{ cart_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></div>
-      </div>
-      <div class="card-footer">
-        <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
       </div>
     </div>
   </div>
-  <div class="container-fluid mb-1"></div>
 {% endblock %}
