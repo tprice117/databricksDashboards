@@ -16,6 +16,47 @@ Buttons
     box-shadow:0 6px 16px -8px var(--bs-primary) !important;
 }
 
+ /* Custom Button Styles */
+.bg-blue {
+    background-color: #0583C7;
+}
+
+.btn-blue {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #0583C7;
+    --bs-btn-border-color: #0583C7;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #036da6;
+    --bs-btn-hover-border-color: #036da6;
+    --bs-btn-focus-shadow-rgb: 217,236,236;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #035f91;
+    --bs-btn-active-border-color: #035f91;
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #4a8cad;
+    --bs-btn-disabled-border-color: #4a8cad;
+}
+
+.bg-orange {
+    background-color: #F39913;
+}
+
+.btn-orange {
+    --bs-btn-color: #000;
+    --bs-btn-bg: #F39913;
+    --bs-btn-border-color: #F39913;
+    --bs-btn-hover-color: #000;
+    --bs-btn-hover-bg: #df8d11;
+    --bs-btn-hover-border-color: #df8d11;
+    --bs-btn-focus-shadow-rgb: 217,236,236;
+    --bs-btn-active-color: #000;
+    --bs-btn-active-bg: #d4850e;
+    --bs-btn-active-border-color: #d4850e;
+    --bs-btn-disabled-color: #000;
+    --bs-btn-disabled-bg: #d6a966;
+    --bs-btn-disabled-border-color: #d6a966;
+}
+
 /* Default styles for the radio buttons and labels within .btn-group */
 .btn-group {
     background-color: #F2F2F2;
@@ -63,6 +104,11 @@ html:not([dir=rtl]) .form-control:not([readonly]):focus::placeholder {
 [dir=rtl] .form-control:not([readonly]):focus::placeholder {
     transform:translateX(-5px)
 }
+
+.form-check-input:checked {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+  }
 
 /* Range */
 .form-range-primary {
@@ -449,4 +495,65 @@ gmp-map {
 }
 .intercom-interblocks-link-author-name {
     font-weight: 600;
+}
+
+/* Cart */
+.subtitle {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 24px;
+    color: #0F1B22;
+}
+.order-descriptor {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 16px;
+    color: #0F1B22;
+}
+.total-price-badge {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 16px;
+    gap: 22px;
+    background: rgba(1, 131, 129, 0.1);
+    border: 1px solid #020F16;
+    border-radius: 16px;
+    /* width: 232px; */
+    height: 33px;
+
+}
+.total-price {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+
+    color: #018381;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+}
+.cart-item-seller-name {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 16px;
+    color: #020F16;
+}
+.cart-item-seller-logo {
+    max-height: 30px;
+    width: auto;
+}
+.cart-item-placement-button {
+    background: rgba(2, 15, 22, 0.05);
 }

@@ -203,6 +203,11 @@ urlpatterns = [
         name="customer_checkout",
     ),
     path(
+        "customer/order_group/<uuid:order_group_id>/attachments/edit/",
+        views.edit_attachments,
+        name="customer_order_group_edit_attachments",
+    ),
+    path(
         "customer/cart/quote/",
         views.show_quote,
         name="customer_show_quote",

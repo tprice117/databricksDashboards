@@ -1,0 +1,64 @@
+{{ formset.management_form }}
+<table id="{{ formset.prefix }}-formset" class="form table table-striped">
+    <!-- Table header -->
+    <thead>
+        <tr>
+            {% for field in formset.empty_form.visible_fields %}
+                <th>
+                    {{ field.label|capfirst }}{{ field.label_suffix }}
+                    {% if field.field.required %}* {% endif %}
+                    {% if field.help_text %}
+                        <br />
+                        <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                    {% endif %}
+                </th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Empty form content (to be copied) -->
+        <tr id="{{ formset.prefix }}-empty" class="d-none">
+            {% for field in formset.empty_form.visible_fields %}
+                <td>
+                    {% if forloop.first %}
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                    {% endif %}
+                    {% if field.name == 'DELETE' %}
+                        <button type="button" class="btn btn-sm" onclick="this.closest('tr').remove();"><i class="fas fa-times-circle" style="color: #F32D13"></i></button>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {% if field.errors %}
+                        <small class="text-danger">{{ field.errors|join:', ' }}</small>
+                    {% endif %}
+                </td>
+            {% endfor %}
+            <small class="text-danger">{{ form.non_field_errors|join:', ' }}</small>
+        </tr>
+        {% for form in formset.forms %}
+            <tr class="{{ formset.prefix }}-form">
+                {% for field in form.visible_fields %}
+                    <td>
+                        {% if forloop.first %}
+                            {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                        {% endif %}
+                        {{ field }}
+                        {% if field.errors %}
+                            <small class="text-danger">{{ field.errors|join:', ' }}</small>
+                        {% endif %}
+                    </td>
+                {% endfor %}
+                <small class="text-danger">{{ form.non_field_errors|join:', ' }}</small>
+            </tr>
+        {% empty %}
+            <tr class="empty-text">
+                <td colspan="{{ formset.empty_form.visible_fields|length }}">{{ formset.empty_form_text|default_if_none:'No waste types added' }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<small class="text-danger">{{ formset.non_form_errors|join:', ' }}</small>
