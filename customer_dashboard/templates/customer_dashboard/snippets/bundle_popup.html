@@ -1,6 +1,7 @@
 {% load static %}
 {% load tz %}
 {% load humanize %}
+{% load sales_stream_tags %}
 {% block javascript %}
   <script>
     var bundleId = 1
@@ -300,7 +301,7 @@
                                                                             {{ seller_address.address.name }}
                                                                         {% endif %}
                                                                     </span> -
-                                                                    <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
+                                                                    <span><strong>{{ cart_address.total|currency }}</strong></span>
                                                                     <span id="count-{{ seller_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
                                                                 </div>
                                                                 <div class="ms-auto align-items-end">
@@ -432,7 +433,7 @@
                                                                             {{ seller_address.address.name }}
                                                                         {% endif %}
                                                                     </span> -
-                                                                    <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
+                                                                    <span><strong>{{ cart_address.total|currency }}</strong></span>
                                                                     <span id="count-{{ seller_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
                                                                 </div>
                                                                 <div class="ms-auto align-items-end">
@@ -578,7 +579,7 @@
                                                                             {{ seller_address.address.name }}
                                                                         {% endif %}
                                                                     </span> -
-                                                                    <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
+                                                                    <span><strong>{{ cart_address.total|currency }}</strong></span>
                                                                     <span id="count-{{ seller_address.address.id }}" class="badge text-bg-secondary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
                                                                 </div>
                                                                 <div class="ms-auto align-items-end">

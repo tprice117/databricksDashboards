@@ -1,49 +1,94 @@
 {% load static %}
 {% load tz %}
 {% load humanize %}
-<div class="accordion p-3" role="tablist" id="cart-results">
+{% load sales_stream_tags %}
+{% block stylesheet %}
+  <style>
+    /* Custom Button Styles */
+    .bg-blue {
+      background-color: #0583c7;
+    }
+    
+    .btn-blue {
+      --bs-btn-color: #fff;
+      --bs-btn-bg: #0583c7;
+      --bs-btn-border-color: #0583c7;
+      --bs-btn-hover-color: #fff;
+      --bs-btn-hover-bg: #036da6;
+      --bs-btn-hover-border-color: #036da6;
+      --bs-btn-focus-shadow-rgb: 217, 236, 236;
+      --bs-btn-active-color: #fff;
+      --bs-btn-active-bg: #035f91;
+      --bs-btn-active-border-color: #035f91;
+      --bs-btn-disabled-color: #fff;
+      --bs-btn-disabled-bg: #4a8cad;
+      --bs-btn-disabled-border-color: #4a8cad;
+    }
+    
+    .bg-orange {
+      background-color: #f39913;
+    }
+    
+    .btn-orange {
+      --bs-btn-color: #000;
+      --bs-btn-bg: #f39913;
+      --bs-btn-border-color: #f39913;
+      --bs-btn-hover-color: #000;
+      --bs-btn-hover-bg: #df8d11;
+      --bs-btn-hover-border-color: #df8d11;
+      --bs-btn-focus-shadow-rgb: 217, 236, 236;
+      --bs-btn-active-color: #000;
+      --bs-btn-active-bg: #d4850e;
+      --bs-btn-active-border-color: #d4850e;
+      --bs-btn-disabled-color: #000;
+      --bs-btn-disabled-bg: #d6a966;
+      --bs-btn-disabled-border-color: #d6a966;
+    }
+  </style>
+{% endblock %}
+<div class="p-3" role="tablist" id="cart-results">
   {% for cart_address in cart %}
-    <div class="accordion-item shadow-sm mb-3">
-      <h2 class="accordion-header rounded-3" role="tab">
-        <button class="accordion-button{% if not forloop.first %} collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
-          <div class="w-100">
-            <span>
-              {% if cart_address.address.name %}
-                {{ cart_address.address.name }} |
-              {% endif %}{{ cart_address.address.formatted_address }}
-            </span> |
-            <span><strong>${{ cart_address.total|floatformat:2|intcomma }}</strong></span>
-            <span id="count-{{ cart_address.address.id }}" class="badge text-bg-primary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
-            {% if request.user.is_staff %}
-              <span class="badge text-primary bg-white">
-                {% if cart_address.address.user_group.name %}
-                  {{ cart_address.address.user_group.name }}
-                {% elif cart_address.address.user.user_group.name %}
-                  {{ cart_address.address.user.user_group.name }}
-                {% endif %}
-              </span>
-            {% endif %}
-            <span class="float-end badge text-primary bg-white me-3">{{ cart_address.address.user.full_name }}</span>
-          </div>
-        </button>
-      </h2>
+    <div class="card shadow-sm mb-3">
+      <div class="card-header p-4 rounded-3 bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
+        <h6 class="mb-0 d-flex align-items-center text-nowrap" style="width: 95%;">
+          <span class="text-truncate">
+            {% if cart_address.address.name %}
+              {{ cart_address.address.name }} |
+            {% endif %}{{ cart_address.address.formatted_address }}
+          </span>&nbsp;|&nbsp;
+          <span><strong>{{ cart_address.total|currency }}</strong></span>
+          <span id="count-{{ cart_address.address.id }}" class="badge text-bg-primary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
+          {% if request.user.is_staff %}
+            <span class="badge text-primary bg-white">
+              {% if cart_address.address.user_group.name %}
+                {{ cart_address.address.user_group.name }}
+              {% elif cart_address.address.user.user_group.name %}
+                {{ cart_address.address.user.user_group.name }}
+              {% endif %}
+            </span>
+          {% endif %}
+          <span class="col"></span>
+          <span class="ms-2 badge text-primary bg-white">{{ cart_address.address.user.full_name }}</span>
+        </h6>
+      </div>
       <!-- prettier-ignore -->
-      <div class="accordion-collapse collapse item-{{ forloop.counter }} {% if forloop.first %}show {% else %}collapsed{% endif %}"
-        role="tabpanel"
-        data-bs-parent="#cart-results">
-        <div class="accordion-body">
+      <div class="collapse item-{{ forloop.counter }} {% if forloop.first %}show {% else %}collapsed{% endif %}"
+        role="tabpanel">
+        <div class="card-body">
           {% for item in cart_address.items %}
             {% include 'customer_dashboard/new_order/cart_order_item.html' with loopcount=forloop.counter %}
           {% endfor %}
           <div class="row justify-content-between align-items-center mb-2 mt-4">
             <div class="col-auto">
-              {% if cart_address.show_edit_bundle_button %}
-                  <button class="btn btn-info text-white me-2" id="bundle-button-{{forloop.counter}}" type="button" data-edit="true" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal"><i class="far fa-truck me-2"></i> Edit Bundle</button>
-              {% elif cart_address.show_bundle_button %}
-                  <button class="btn btn-info text-white me-2" id="bundle-button-{{forloop.counter}}" type="button" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal"><i class="far fa-truck me-2"></i> Bundle Freight</button>
+              {% if cart_address.show_bundle_button %}
+                {% if cart_address.bundled_count > 1 %}
+                    <button class="btn btn-blue me-2" id="bundle-button-{{forloop.counter}}" type="button" data-edit="true" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal"><i class="far fa-truck me-2"></i> Edit Bundle</button>
+                {% else %}
+                    <button class="btn btn-blue me-2" id="bundle-button-{{forloop.counter}}" type="button" data-bs-target="#bundle-orders-modal" data-bs-toggle="modal"><i class="far fa-truck me-2"></i> Bundle Freight</button>
+                {% endif %}
               {% endif %}
             {% if request.user.is_staff and cart_address.show_quote %}
-              <button class="btn btn-warning text-white me-2" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
+              <button class="btn btn-orange text-white me-2" type="button" onclick="showSendQuoteModal('{{ cart_address.address.user.email }}', {{ cart_address.ids }});">
                 {% if cart_address.quote_sent_on %}
                 Resend Quote (sent {{ cart_address.quote_sent_on|date:'F j, Y' }})
                 {% else %}
@@ -54,7 +99,9 @@
             {% endif %}
             </div>
             <div class="col-auto">
-              <a class="btn btn-primary shadow px-4 py-1" role="button" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}"><small>Checkout</small></a>
+              <a class="btn btn-primary shadow px-4 py-1" role="button" href="{% url 'customer_checkout' user_address_id=cart_address.address.id %}">
+                <p class="mb-1"><small>Checkout</small></p>
+              </a>
             </div>
           </div>
         </div>
@@ -64,9 +111,10 @@
 </div>
 
 <h3 id="cart-title" class="text-dark mb-2" data-cart-count="{{ cart_count }}" hx-swap-oob="true">
-  Cart ({{ cart_count }}){% if help_text %}
+  <strong>Cart ({{ cart_count }})</strong>
+  {% if help_text %}
     <small class="ms-3 text-muted">{{ help_text }}</small>
   {% endif %}
 </h3>
-<h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
+<h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: {{ subtotal|currency }}</strong></h4>
 {% include 'customer_dashboard/snippets/bundle_popup.html' %}

@@ -1822,6 +1822,7 @@ def new_order_5(request):
 
             # get the supplier addresses
             context["seller_addresses"] = []
+
             # Get the seller price for each order and add it to the context.
             for bucket in context["cart"]:
                 bucket["ids"] = [str(item["order"].id) for item in bucket["items"]]
@@ -1829,20 +1830,23 @@ def new_order_5(request):
                 # context["cart"][addr]["show_quote"] = True
                 checkout_order = None
                 for item in bucket["items"]:
-                    for line_item in item["order"].order_line_items.filter(
-                        order_line_item_type__code="DELIVERY"
-                    ):
-                        item["delivery_fee"] = line_item.rate
-                        break
-                    for line_item in item["order"].order_line_items.filter(
-                        order_line_item_type__code="REMOVAL"
-                    ):
-                        item["removal_fee"] = line_item.rate
-                        break
                     order = item["order"]
                     if order.checkout_order:
                         checkout_order = order.checkout_order
                     supplier_total += order.seller_price()
+
+                    # START Bundle fees.
+                    for line_item in order.order_line_items.filter(
+                        order_line_item_type__code="DELIVERY"
+                    ):
+                        item["delivery_fee"] = line_item.rate
+                        break
+                    for line_item in order.order_line_items.filter(
+                        order_line_item_type__code="REMOVAL"
+                    ):
+                        item["removal_fee"] = line_item.rate
+                        break
+
                     item["seller_address"] = (
                         order.order_group.seller_product_seller_location.seller_location
                     )
@@ -1853,14 +1857,16 @@ def new_order_5(request):
                         context["seller_addresses"].append(
                             {"address": item["seller_address"]}
                         )
-                        # if this address has a bundle give the price
-                    if item["order"].order_group.freight_bundle:
-                        context["seller_addresses"][-1]["delivery_fee"] = item[
-                            "order"
-                        ].order_group.freight_bundle.delivery_fee
-                        context["seller_addresses"][-1]["removal_fee"] = item[
-                            "order"
-                        ].order_group.freight_bundle.removal_fee
+                    # if this address has a bundle give the price
+                    if order.order_group.freight_bundle:
+                        context["seller_addresses"][-1]["delivery_fee"] = (
+                            order.order_group.freight_bundle.delivery_fee
+                        )
+                        context["seller_addresses"][-1]["removal_fee"] = (
+                            order.order_group.freight_bundle.removal_fee
+                        )
+                    # END Bundle fees.
+
                 if (
                     checkout_order
                     and supplier_total == checkout_order.seller_price

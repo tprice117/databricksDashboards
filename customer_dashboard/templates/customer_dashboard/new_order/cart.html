@@ -1,6 +1,7 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
 {% load humanize %}
+{% load sales_stream_tags %}
 {% block title %}
   Cart
 {% endblock %}
@@ -383,15 +384,16 @@
 {% block content %}
   <div class="container-fluid mb-2" hx-disabled-elt=".status-card, button, .form-control, .form-select, .pagi-link">
     <h3 id="cart-title" class="text-dark mb-2" data-cart-count="{{ cart_count }}">
-      Cart ({{ cart_count }}){% if help_text %}
+      <strong>Cart ({{ cart_count }})</strong>
+      {% if help_text %}
         <small class="ms-3 text-muted">{{ help_text }}</small>
       {% endif %}
     </h3>
     {% if request.user.is_staff %}
       <form action="{% url 'customer_locations' %}" method="get" hx-get="{% url 'customer_cart' %}" hx-target="#cart-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
         <div class="row mb-3 align-items-end justify-content-between flex-nowrap overflow-x-auto">
-          <div class="col-auto flex-nowrap">
-            <div class="border rounded-3 border-dark-subtle p-2">
+          <div class="col-auto flex-nowrap me-3">
+            <div class="border rounded-4 border-dark p-2">
               <div class="form-check form-switch px-1 d-flex flex-row align-items-center">
                 <label class="form-check-label float-start text-dark" for="my-carts-check"><strong>My Accounts</strong></label>
                 <input class="form-control form-check-input float-end ms-3" style="width: 3rem; height: 1.5rem;" type="checkbox" id="my-carts-check" name="my_carts" />
@@ -429,7 +431,7 @@
       </div>
     </div>
     <div class="accordion" role="tablist" id="cart-results" hx-get="{{ cart_link }}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></div>
-    <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}"><strong>Subtotal: ${{ subtotal|floatformat:2|intcomma }}</strong></h4>
+    <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}"><strong>Subtotal: {{ subtotal|currency }}</strong></h4>
   </div>
 {% endblock %}
 

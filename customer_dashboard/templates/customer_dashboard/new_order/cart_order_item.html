@@ -5,7 +5,7 @@
 {% with order=item.order %}
 <div class="row cart-item mb-2">
     <div class="col">
-        <div class="card {% if order.order_group.parent_booking or order.order_group.related_bookings.exists %}border-primary border-lg rounded{% endif %}" style="background: var(--bs-card-cap-bg);">
+        <div class="card {% if order.order_group.parent_booking or order.order_group.related_bookings.exists %}border-primary rounded{% endif %}" style="background: var(--bs-card-cap-bg);">
             <div class="card-body">
                 <div class="row">
                     <div class="col cart-body">
@@ -106,11 +106,11 @@
                             </div>
                             <div class="col-auto m-2">
                                 <div class="d-flex flex-md-column flex-row justify-content-center">
-                                        {% if request.user.is_staff %}
+                                        {% comment %} {% if request.user.is_staff %}
                                             <button class="btn btn-danger mb-md-2 me-md-0 me-3" data-order-group-id="{{ order.order_group.id }}" hx-indicator=".htmx-indicator-card" hx-trigger="click" hx-get="{% url 'customer_order_group_edit_attachments' order.order_group.id %}" hx-target="#edit-attachments-modal" hx-swap="innerHTML" data-bs-toggle="modal" data-bs-target="#edit-attachments-modal" title="Edit Attachments">
                                                 <i class="far fa-thumbs-down me-1"></i>&nbsp;Lost
                                             </button>
-                                        {% endif %}
+                                        {% endif %} {% endcomment %}
                                         <button class="btn btn-outline-danger button-remove-item" id="button-remove-item_{{ order.order_group.id }}" type="button"
                                         data-id="{{ order.order_group.id }}" data-orderid="{{ order.id }}" data-price="{{ item.total }}" data-countid="count-{{ cart_address.address.id }}"
                                         hx-target="closest .cart-item" hx-trigger="onRemoveClick" hx-swap="outerHTML swap:1s"
@@ -150,7 +150,9 @@
                                         {% static 'customer_dashboard/img/defualt_logo.png' %}
                                     {% endif %}" />
                                 <p class="cart-item-seller-name mb-0 text-truncate">{{ order.order_group.seller_product_seller_location.seller_location.name }}</p>
-
+                                {% if item.is_bundled %}
+                                <span class="bg-blue badge text-white ms-2 px-3"><small>Bundled Freight</small></span>
+                                {% endif %}
                                 <button class="btn btn-sm btn-light cart-item-placement-button ms-5 rounded-3"
                                 onclick="showPlacementDetailsModal('{{  order.order_group.id }}', '{{  order.order_group.placement_details|default_if_none:"" }}');"><i class="fas fa-map-marker-alt" style="color: #020F1699"></i></button>
                                 <button class="btn btn-sm btn-light cart-item-placement-button rounded-3 text-nowrap" style="color: #020F1699" data-order-group-id="{{ order.order_group.id }}" hx-indicator=".htmx-indicator-card" hx-trigger="click" hx-get="{% url 'customer_order_group_edit_attachments' order.order_group.id %}" hx-target="#edit-attachments-modal" hx-swap="innerHTML" data-bs-toggle="modal" data-bs-target="#edit-attachments-modal" title="Edit Attachments">

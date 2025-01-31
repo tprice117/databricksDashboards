@@ -4,6 +4,7 @@ from typing import Iterable, Union, TypedDict
 import logging
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.models import Count, F
 from django.http import HttpRequest
 from django.utils import timezone
 from api.models import Order, UserAddress, UserUserAddress, User, UserGroup
@@ -805,10 +806,14 @@ class CartUtils:
             if address_bucket["address"] is None:
                 address_bucket["address"] = order.order_group.user_address
 
+            order_type = order.order_type
+
             # Update the address bucket with the order details
             bucket_data = {
                 "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
                 "order": order,
+                "is_bundled": order.order_group.freight_bundle,
+                "can_bundle": False,
                 # Deprecated, use subtotal, remove after next app version
                 "customer_price": customer_price,
                 "subtotal": customer_price,
@@ -817,11 +822,27 @@ class CartUtils:
                 "total": customer_price_with_tax,
             }
 
+            if (
+                hasattr(order.order_group, "rental_multi_step")
+                and order_type == Order.Type.DELIVERY
+                and (
+                    uaid,
+                    order.order_group.seller_product_seller_location.seller_location_id,
+                )
+                in cart_data["seller_locations"]
+            ):
+                bucket_data["can_bundle"] = True
+                if not address_bucket.get("show_bundle_button", False):
+                    address_bucket["show_bundle_button"] = True
+
+            if bucket_data["is_bundled"]:
+                address_bucket["bundled_count"] += 1
+
             address_bucket["items"].append(bucket_data)
             address_bucket["total"] += customer_price_with_tax
             address_bucket["count"] += 1
 
-            if order.order_type in {
+            if order_type in {
                 Order.Type.DELIVERY,
                 Order.Type.PICKUP,
                 Order.Type.ONE_TIME,
@@ -838,6 +859,7 @@ class CartUtils:
             )
             .select_related(
                 "order_group__seller_product_seller_location__seller_product__seller",
+                "order_group__seller_product_seller_location__seller_location",
                 "order_group__user_address",
                 "order_group__user",
                 "order_group__seller_product_seller_location__seller_product__product__main_product",
@@ -851,11 +873,28 @@ class CartUtils:
             order_group__parent_booking__isnull=True,
         )
 
+        # Get the seller locations for the orders and user addresses
+        seller_locations = list(
+            orders.values(
+                uaid=F("order_group__user_address_id"),
+                seller_location_id=F(
+                    "order_group__seller_product_seller_location__seller_location_id"
+                ),
+            )
+            .annotate(count=Count("id"))
+            .filter(count__gt=1)
+            .values_list(
+                "uaid",
+                "seller_location_id",
+            )
+        )
+
         # Initialize the cart structure
         cart_data = {
             "cart": [],
             "subtotal": Decimal("0.00"),
             "cart_count": 0,
+            "seller_locations": seller_locations,
         }
 
         # Use defaultdict to simplify the creation of address buckets
@@ -865,6 +904,9 @@ class CartUtils:
                 "items": [],
                 "total": Decimal("0.00"),
                 "count": 0,
+                "show_quote": False,
+                "show_bundle_button": False,
+                "bundled_count": 0,
             }
         )
 
@@ -890,51 +932,9 @@ class CartUtils:
                     "total": bucket["total"],
                     "count": bucket["count"],
                     "show_quote": bucket.get("show_quote", False),
+                    "show_bundle_button": bucket.get("show_bundle_button", False),
+                    "bundled_count": bucket["bundled_count"],
                 }
             )
-
-        # show the bundle button
-        # only can bundle Type.DELIVERY and rental_multi_step
-        # make sure to only give bundle option for items with >2 per user_address, seller_location combo
-        for bucket in cart_data["cart"]:
-            # all the seller_locations in this bucket
-            # seller_locations a dict: keys default to 0
-            class MyIntDict(dict):
-                def __missing__(self, key):
-                    return 0  # default value
-
-            seller_locations = MyIntDict()
-            # find seller locations with items that can be bundled
-            for item in bucket["items"]:
-                # if hasattr(item["order"].order_group, "rental_multi_step"):
-                if item["order"].order_type == Order.Type.DELIVERY:
-                    seller_locations[
-                        item[
-                            "order"
-                        ].order_group.seller_product_seller_location.seller_location.id
-                    ] += 1
-            # remove seller_locations with less than 2 items to be bundled
-            seller_locations = {k: v for k, v in seller_locations.items() if v >= 2}
-            # items that can be bundled if they are from a location with 2 or more
-            countRentalMultiStep = 0
-            for item in bucket["items"]:
-                # show the edit bundle button
-                if item["order"].order_group.freight_bundle:
-                    bucket["show_edit_bundle_button"] = True
-                    item["is_bundled"] = True
-                if hasattr(item["order"].order_group, "rental_multi_step"):
-                    if item["order"].order_type == Order.Type.DELIVERY:
-                        if (
-                            item[
-                                "order"
-                            ].order_group.seller_product_seller_location.seller_location.id
-                            in seller_locations
-                        ):
-                            item["can_bundle"] = True
-                            countRentalMultiStep += 1
-            # whether to even to show the bundle button
-            if countRentalMultiStep >= 2:
-                if "show_edit_bundle_button" not in bucket:
-                    bucket["show_bundle_button"] = True
 
         return cart_data
