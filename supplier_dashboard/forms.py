@@ -343,7 +343,7 @@ class SellerLocationForm(forms.ModelForm):
         seller_location = super().save(commit=False)
         seller_location.state = self.cleaned_data["state"].upper()
         seller_location.country = "US"
-        seller_location.name = f"{seller_location.seller.name} - {seller_location.city}"
+        seller_location.name = f"{seller_location.seller.name} - {seller_location.city}, {seller_location.state}"
         if commit:
             seller_location.save()
             SellerLocationMailingAddress.objects.create(
