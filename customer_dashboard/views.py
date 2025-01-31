@@ -1498,7 +1498,7 @@ def new_order_5(request):
                             seller_product_location.seller_product.product.main_product
                         )
                         # make sure you cannot select pickup if main product does not allow pickup
-                        if not main_product.allow_pickup:
+                        if not main_product.allows_pick_up:
                             is_delivery = True
 
                         # Discount
