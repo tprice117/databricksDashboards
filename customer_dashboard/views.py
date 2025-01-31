@@ -1497,6 +1497,9 @@ def new_order_5(request):
                         main_product = (
                             seller_product_location.seller_product.product.main_product
                         )
+                        # make sure you cannot select pickup if main product does not allow pickup
+                        if not main_product.allow_pickup:
+                            is_delivery = True
 
                         # Discount
                         discount: Decimal = 0.0
@@ -3383,6 +3386,14 @@ def location_detail(request, location_id):
                         "allow_sunday_delivery"
                     )
                     save_model = user_address
+                if (
+                    form.cleaned_data.get("tax_exempt_status")
+                    != user_address.tax_exempt_status
+                ):
+                    user_address.tax_exempt_status = form.cleaned_data.get(
+                        "tax_exempt_status"
+                    )
+                    save_model = user_address
             else:
                 raise InvalidFormError(form, "Invalid UserAddressForm")
             if save_model:
@@ -3417,6 +3428,7 @@ def location_detail(request, location_id):
                 "allow_saturday_delivery": user_address.allow_saturday_delivery,
                 "allow_sunday_delivery": user_address.allow_sunday_delivery,
                 "access_details": user_address.access_details,
+                "tax_exempt_status": user_address.tax_exempt_status,
             },
             user=context["user"],
             auth_user=request.user,
