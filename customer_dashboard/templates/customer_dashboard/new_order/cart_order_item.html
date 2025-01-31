@@ -92,14 +92,14 @@
                             <div class="col-xl-auto col-md-9 col-12  mb-1 mb-md-0">
                                 <div class="mb-3">
                                     <p class="text-end mb-1 order-descriptor pe-3">Est. Subtotal: {{ item.subtotal|currency }}</p>
-                                    <p class="text-end mb-1 order-descriptor fw-light pe-3">Delivery: {{ order.order_group.delivery_fee|currency }}</p>
+                                    {% comment %} <p class="text-end mb-1 order-descriptor fw-light pe-3">Delivery: {{ order.order_group.delivery_fee|currency }}</p>
                                     <p class="text-end mb-1 order-descriptor fw-light pe-3">Removal: {{ order.order_group.removal_fee|currency }}</p>
-                                    <p class="text-end mb-1 order-descriptor fw-light pe-3">Rental Protection Plan: {{ item.tax|currency }}</p>
+                                    <p class="text-end mb-1 order-descriptor fw-light pe-3">Rental Protection Plan: {{ order.get_rpp|currency }}</p> {% endcomment %}
                                     <p class="text-end mb-1 order-descriptor fw-light pe-3">Est. Tax: {{ item.tax|currency }}</p>
                                 </div>
                                 <div class="card border-dark text-primary w-100" style="border-radius: 18px; background-color: rgba(var(--bs-primary-rgb), 0.1);">
                                     <div class="card-body py-1 d-flex flex-row justify-content-between">
-                                        <small><strong>Estimated Total</strong></small>
+                                        <small class="me-2"><strong>Estimated Total</strong></small>
                                         <small><strong>{{ item.total|currency }}</strong></small>
                                     </div>
                                 </div>
