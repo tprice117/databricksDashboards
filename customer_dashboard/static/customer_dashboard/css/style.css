@@ -557,3 +557,53 @@ gmp-map {
 .cart-item-placement-button {
     background: rgba(2, 15, 22, 0.05);
 }
+
+/* Bundle Popup */
+/* Firefox */
+input.downstream-number {
+    -moz-appearance: textfield !important;
+    border-style: solid !important;
+    border-width: 3px !important;
+    border-radius: 10px !important;
+    width: 100px !important;
+  }
+  input.downstream-number:focus input.downstream-number {
+    border-color: transparent !important;
+    border-width: 1 !important;
+    outline-width: 3px !important;
+    outline-style: solid !important;
+    outline-color: rgb(67, 250, 151) !important;
+  }
+  
+  .stack {
+    position: relative;
+    width: 400px;
+    height: 100px;
+  }
+  
+  .stack-bottom {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    /* Stacks on top */
+  }
+  
+  .stack-top {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    /* Stacks behind */
+  }
+  
+  .form-check-input.downstream-checkbox {
+    border-color: var(--bs-primary) !important;
+    width: 30px !important;
+    height: 30px !important;
+  }
+  .form-check-input.downstream-checkbox :checked {
+    background-color: var(--bs-primary) !important;
+  }

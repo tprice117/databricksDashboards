@@ -20,6 +20,13 @@
       opacity: 0;
       transition: opacity 1s ease-out;
     }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    /* Cart */
     .subtitle {
       font-family: 'Outfit';
       font-style: normal;
@@ -36,25 +43,62 @@
       line-height: 16px;
       color: #0f1b22;
     }
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
+    .total-price-badge {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 8px 16px;
+      gap: 22px;
+      background: rgba(1, 131, 129, 0.1);
+      border: 1px solid #020f16;
+      border-radius: 16px;
+      /* width: 232px; */
+      height: 33px;
+    }
+    .total-price {
+      font-family: 'Outfit';
+      font-style: normal;
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 24px;
+      display: flex;
+      align-items: center;
+    
+      color: #018381;
+      flex: none;
+      order: 1;
+      flex-grow: 0;
+    }
+    .cart-item-seller-name {
+      font-family: 'Outfit';
+      font-style: normal;
+      font-weight: 700;
+      font-size: 12px;
+      line-height: 16px;
+      color: #020f16;
+    }
+    .cart-item-seller-logo {
+      max-height: 30px;
+      width: auto;
+    }
+    .cart-item-placement-button {
+      background: rgba(2, 15, 22, 0.05);
     }
     /* Firefox */
-    .downstream-number {
-      -moz-appearance: textfield;
-      border-style: solid;
-      border-width: 3px;
-      border-radius: 10px;
-      width: 100px;
+    input.downstream-number {
+      -moz-appearance: textfield !important;
+      border-style: solid !important;
+      border-width: 3px !important;
+      border-radius: 10px !important;
+      width: 100px !important;
     }
-    .downstream-number:focus .downstream-number {
-      border-color: transparent;
-      border-width: 1;
-      outline-width: 3px;
-      outline-style: solid;
-      outline-color: rgb(67, 250, 151);
+    input.downstream-number:focus input.downstream-number {
+      border-color: transparent !important;
+      border-width: 1 !important;
+      outline-width: 3px !important;
+      outline-style: solid !important;
+      outline-color: rgb(67, 250, 151) !important;
     }
     
     .stack {
@@ -81,13 +125,13 @@
       /* Stacks behind */
     }
     
-    .downstream-checkbox {
-      border-color: var(--bs-primary);
-      width: 30px;
-      height: 30px;
+    .form-check-input.downstream-checkbox {
+      border-color: var(--bs-primary) !important;
+      width: 30px !important;
+      height: 30px !important;
     }
-    .downstream-checkbox :checked {
-      background-color: var(--bs-primary);
+    .form-check-input.downstream-checkbox :checked {
+      background-color: var(--bs-primary) !important;
     }
   </style>
 {% endblock %}
