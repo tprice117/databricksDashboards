@@ -12,6 +12,7 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.conf import settings
 
+from api.models.track_data import track_data
 from api.models.common.industry import Industry
 from api.models.order.order import Order
 from api.models.order.order_line_item import OrderLineItem
@@ -25,6 +26,7 @@ from notifications.utils.add_email_to_queue import add_email_to_queue
 logger = logging.getLogger(__name__)
 
 
+@track_data("compliance_status", "tax_exempt_status")
 class UserGroup(BaseModel):
     class ApolloStage(models.TextChoices):
         LEAD = "LEAD", "Active Opportunity"
@@ -151,11 +153,24 @@ class UserGroup(BaseModel):
                 "You cannot set 'Invoice Day of Month' if 'Invoice Frequency' is not Monthly.",
             )
 
+    def sync_tax_exempt_status(self):
+        """Sync Tax Exempt Status change to all UserAddresses."""
+        user_addresses = self.user_addresses.all()
+        for user_address in user_addresses:
+            user_address.tax_exempt_status = self.tax_exempt_status
+            user_address.save()
+
     def post_create(sender, instance, created, **kwargs):
+        """Post save signal"""
         # Update Intercom company asynchronously.
         # Note: This is done asynchronously because it is not critical.
         p = threading.Thread(target=instance.intercom_sync)
         p.start()
+
+        # Only sync tax exempt status if the UserGroup.tax_exempt_status changed.
+        if not created and instance.has_changed("tax_exempt_status"):
+            p2 = threading.Thread(target=instance.sync_tax_exempt_status)
+            p2.start()
 
     @property
     def intercom_custom_attributes(self) -> CustomAttributesType:

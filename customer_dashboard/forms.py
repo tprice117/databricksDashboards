@@ -285,6 +285,12 @@ class UserAddressForm(forms.Form):
         ),
         required=False,
     )
+    tax_exempt_status = forms.ChoiceField(
+        choices=UserGroup.TaxExemptStatus.choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        required=False,
+        help_text="Defaults to Account Exempt Status, but overrides if set.",
+    )
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)

@@ -459,7 +459,8 @@ class Order(BaseModel):
                     OrderLineItem.PaymentStatus.INVOICED,
                     OrderLineItem.PaymentStatus.PAID,
                 ]
-                for order_item in self.order_items if order_item.customer_rate != 0
+                for order_item in self.order_items
+                if order_item.customer_rate != 0
             ]
         )
 
@@ -1262,19 +1263,15 @@ class Order(BaseModel):
                     delivery_fee = float(order_line_item.customer_price())
 
             # Calculate the tax details
-            if (
-                self.order_group.user_address.user_group
-                and self.order_group.user_address.user_group.tax_exempt_status
-                == "exempt"
-            ):
-                tax_details = {"rate": float(0.00), "taxes": float(0.00)}
-            else:
+            if self.order_group.user_address.should_collect_taxes():
                 # Only get taxes if re_get_taxes is True.
                 if re_get_taxes:
                     # Get taxes and also update the line items with the tax amount.
                     tax_details = StripeUtils.PriceCalculation.calculate_price_details(
                         self, all_line_items, delivery_fee, update_line_items=True
                     )
+            else:
+                tax_details = {"rate": float(0.00), "taxes": float(0.00)}
 
             # Load all line items into a PricingEngine response
             for order_line_item in all_line_items:

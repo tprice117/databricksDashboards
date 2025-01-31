@@ -76,6 +76,12 @@ class UserAddress(BaseModel):
     is_archived = models.BooleanField(default=False)
     allow_saturday_delivery = models.BooleanField(default=False)
     allow_sunday_delivery = models.BooleanField(default=False)
+    tax_exempt_status = models.CharField(
+        max_length=20,
+        choices=UserGroup.TaxExemptStatus.choices,
+        blank=True,
+        null=True,
+    )
 
     # Managers
     objects = UserAddressManager()
@@ -93,6 +99,22 @@ class UserAddress(BaseModel):
         orders = orders.prefetch_related("order_line_items")
         orders = orders.order_by("-order_group__start_date")
         return orders
+
+    def should_collect_taxes(self):
+        """Determine if taxes should be collected for this address."""
+        return not self.get_tax_exempt_status() == UserGroup.TaxExemptStatus.EXEMPT
+
+    def get_tax_exempt_status(self):
+        """Get the tax exempt status for this address, default to UserGroup if not set."""
+        tax_exempt_status = (
+            self.user_group.tax_exempt_status
+            if self.user_group and hasattr(self.user_group, "billing")
+            else UserGroup.TaxExemptStatus.NONE
+        )
+        # Use tax exempt status from UserAddress if it is set.
+        if self.tax_exempt_status:
+            tax_exempt_status = self.tax_exempt_status
+        return tax_exempt_status
 
     def update_stripe(self, save_on_update=False):
         try:
@@ -118,6 +140,7 @@ class UserAddress(BaseModel):
 
             # Get "name" for UserGroup/B2C user.
             user_group_name = self.user_group.name if self.user_group else "[B2C]"
+            tax_exempt = self.get_tax_exempt_status()
 
             customer = StripeUtils.Customer.update(
                 customer.id,
@@ -171,11 +194,7 @@ class UserAddress(BaseModel):
                     "user_address_id": str(self.id),
                     "user_id": str(self.user.id) if self.user else None,
                 },
-                tax_exempt=(
-                    self.user_group.tax_exempt_status
-                    if self.user_group and hasattr(self.user_group, "billing")
-                    else UserGroup.TaxExemptStatus.NONE
-                ),
+                tax_exempt=tax_exempt,
             )
             return True
         except Exception as e:
