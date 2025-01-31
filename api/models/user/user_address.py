@@ -100,20 +100,23 @@ class UserAddress(BaseModel):
         orders = orders.order_by("-order_group__start_date")
         return orders
 
+    @property
     def should_collect_taxes(self):
         """Determine if taxes should be collected for this address."""
         return not self.get_tax_exempt_status() == UserGroup.TaxExemptStatus.EXEMPT
 
     def get_tax_exempt_status(self):
         """Get the tax exempt status for this address, default to UserGroup if not set."""
-        tax_exempt_status = (
-            self.user_group.tax_exempt_status
-            if self.user_group and hasattr(self.user_group, "billing")
-            else UserGroup.TaxExemptStatus.NONE
-        )
         # Use tax exempt status from UserAddress if it is set.
         if self.tax_exempt_status:
             tax_exempt_status = self.tax_exempt_status
+        else:
+            # Use tax exempt status from UserGroup, default to NONE.
+            tax_exempt_status = (
+                self.user_group.tax_exempt_status
+                if self.user_group and hasattr(self.user_group, "billing")
+                else UserGroup.TaxExemptStatus.NONE
+            )
         return tax_exempt_status
 
     def update_stripe(self, save_on_update=False):

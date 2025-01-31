@@ -354,7 +354,7 @@ class BillingUtils:
         draft_invoices = stripe.Invoice.search(query=query)
 
         # Should taxes be collected for this customer?
-        collect_tax = user_address.should_collect_taxes()
+        collect_tax = user_address.should_collect_taxes
         custom_fields = []
         if user_address.project_id:
             custom_fields = [

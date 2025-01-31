@@ -1263,7 +1263,7 @@ class Order(BaseModel):
                     delivery_fee = float(order_line_item.customer_price())
 
             # Calculate the tax details
-            if self.order_group.user_address.should_collect_taxes():
+            if self.order_group.user_address.should_collect_taxes:
                 # Only get taxes if re_get_taxes is True.
                 if re_get_taxes:
                     # Get taxes and also update the line items with the tax amount.
