@@ -2,151 +2,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add CSS styles
     const style = document.createElement('style');
     style.innerHTML = `
-        .search-form {
-            display: flex;
-            justify-content: center;
-        }
-        .dropdown {
-            position: relative;
-            width: 600px;
-            margin-top: 20px;
-        }
-
-        @media(max-width: 650px) {
-            .dropdown {
-                width: 100%;
-            }
-        }
-
-        .search-input {
-            display: block;
-            width: 100%;
-            min-width: 300px;
-            padding: .575rem .85rem;
-            margin: 0;
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: 300;
-            line-height: 1.5;
-            color: #424244;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-color: #fff;
-            background-clip: padding-box;
-            border: 1px solid #858796;
-            border-radius: 0.85rem;
-            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-            -webkit-appearance: textfield;
-            outline-offset: -2px;
-        }
-
-        .search-input:focus {
-            color: #858796;
-            background-color: #fff;
-            border-color: #a7b9ef;
-            outline: 0;
-            box-shadow: 0 0 0 .15rem rgba(78, 115, 223, .25);
-        }
-
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #f1f1f1;
-            background-color: #fff;
-            margin-bottom: 3rem;
-            min-width: 160px;
-            width: 100%;
-            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-            z-index: 5;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .dropdown-content div {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            cursor: pointer;
-        }
-        .spinner {
-            display: None;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            position: absolute;
-            right: 40px;
-            top: 30%;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .results-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #fff;
-            position: relative;
-            width: 100%;
-            
-        }
-        .results-list li {
-            padding: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .results-list li img {
-            width: 50px;
-            height: 50px;
-            margin-right: 10px;
-        }
-
-        .results-list li:hover {
-            background-color: #f0f0f0;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 10px;
-        }
-
-        .pagination button {
-            margin: 0 5px;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-
-        .pagination button:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .results-count {
-        }
+    .search-form{display:flex;justify-content:center}.dropdown{position:relative;width:600px;margin-top:20px}.dropdown-content,.search-input{width:100%;background-color:#fff}@media(max-width:650px){.dropdown{width:100%}}.search-input{display:block;min-width:300px;padding:.575rem .85rem;margin:0;font-family:inherit;font-size:1.25rem;font-weight:400;line-height:1.75;color:#858796;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-clip:padding-box;border:1px solid #858796;border-radius:.85rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;-webkit-appearance:textfield;outline-offset:-2px}.search-input:focus{color:#858796;background-color:#fff;border-color:#a7b9ef;outline:0;box-shadow:0 0 0 .15rem rgba(78,115,223,.25)}.dropdown-content{display:none;position:absolute;margin-bottom:3rem;min-width:160px;box-shadow:0 8px 16px 0 rgba(0,0,0,.2);z-index:1000;border-bottom:1px solid #ccc}.results-list-container{color:#000;padding:12px 16px;text-decoration:none;display:block;cursor:pointer}.spinner{display:None;width:20px;height:20px;border:3px solid #f3f3f3;border-top:3px solid #3498db;border-radius:50%;animation:1s linear infinite spin;position:absolute;right:40px;top:18px}@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}.results-list{list-style-type:none;padding:0;margin:0;max-height:65vh;overflow-y:auto;border:1px solid #ccc;border-radius:4px;background-color:#fff;position:relative;width:100%}.results-list li{padding:10px;cursor:pointer;display:flex;align-items:center;border-bottom:1px solid #ccc}.results-list li img{width:50px;height:50px;margin-right:10px}.close-popup:hover,.results-list li:hover{background-color:#f0f0f0}.pagination{display:flex;justify-content:center;align-items:center;margin:10px;justify-content:space-between}.close-popup{margin:5px;padding:5px;cursor:pointer;font-size:1.5rem;font-weight:700;width:40px;height:40px;color:red;border-radius:50%;background-color:#fff}.close-popup:disabled{cursor:not-allowed;opacity:.5}.results-count{margin:10px}@media (max-width:600px){.results-list,.results-list-container{max-height:calc(100vh - 132px)}.dropdown-content,.pagination{position:fixed;width:100%;background-color:#fff}.dropdown-content{left:50%;top:50%;transform:translate(-50%,-50%);height:100%;overflow-y:auto;border:1px solid #ccc;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.3);z-index:999}.results-list-container{padding:0}.pagination{bottom:0;left:0;margin:0;padding-bottom:80px;border-top:1px solid #ccc;z-index:1000}}
     `;
     document.head.appendChild(style);
 
     // Create the selected section and insert it into the element with class search-result
     const searchFormContainer = document.querySelector('.search-form');
-
+    let dropdownDiv;
+    let resultsContainer;
+    let paginationDiv;
+    let closePopupButton;
+    let resultsCount;
     if (searchFormContainer) {
-        const dropdownDiv = document.createElement('div');
+        dropdownDiv = document.createElement('div');
         dropdownDiv.classList.add('dropdown');
 
         const searchInput = document.createElement('input');
@@ -158,27 +26,86 @@ document.addEventListener('DOMContentLoaded', function () {
         searchInput.setAttribute('placeholder', 'Search Downstream Marketplace');
         searchInput.setAttribute('required', 'true');
 
+        // Create x to clear search input
+        const clearButton = document.createElement('button');
+        // clearButton.classList.add('close-popup');
+        clearButton.textContent = 'X';
+        clearButton.style.display = 'none';
+        clearButton.style.position = 'absolute';
+        clearButton.style.right = '15px';
+        clearButton.style.top = '18px';
+        clearButton.style.cursor = 'pointer';
+        clearButton.style.backgroundColor = 'white';
+        clearButton.style.border = 'none';
+        clearButton.style.borderRadius = '50%';
+        clearButton.style.width = '20px';
+        clearButton.style.height = '20px';
+        clearButton.style.fontSize = '1rem';
+        clearButton.style.fontWeight = '400';
+        clearButton.style.color = '#858796';
+        clearButton.addEventListener('click', function () {
+            searchInput.value = '';
+            clearButton.style.display = 'none';
+            hideResultsContainer();
+        });
+        searchInput.addEventListener('input', function () {
+            if (searchInput.value.length > 0) {
+                clearButton.style.display = 'block';
+            } else {
+                clearButton.style.display = 'none';
+            }
+        });
+
         const spinnerDiv = document.createElement('div');
         spinnerDiv.classList.add('spinner');
         spinnerDiv.id = 'spinner';
 
-        const dropdownContentDiv = document.createElement('div');
-        dropdownContentDiv.classList.add('dropdown-content');
-        dropdownContentDiv.id = 'results-container';
+        resultsContainer = document.createElement('div');
+        resultsContainer.classList.add('dropdown-content');
+        resultsContainer.id = 'results-container';
 
         const resultsDiv = document.createElement('div');
         resultsDiv.id = 'results';
+        resultsDiv.classList.add('results-list-container');
 
-        const paginationDiv = document.createElement('div');
+        paginationDiv = document.createElement('div');
         paginationDiv.id = 'pagination';
         paginationDiv.classList.add('pagination');
+        paginationDiv.style.display = 'none';
 
-        dropdownContentDiv.appendChild(resultsDiv);
-        dropdownContentDiv.appendChild(paginationDiv);
+        resultsCount = document.createElement('span');
+        resultsCount.classList.add('results-count');
+        // Add close button to popup
+        closePopupButton = document.createElement('button');
+        closePopupButton.id = 'closePopup';
+        closePopupButton.classList.add('close-popup');
+        closePopupButton.textContent = 'X';
+        closePopupButton.addEventListener('click', function () {
+            event.preventDefault();
+            hideResultsContainer();
+        });
+
+        if (window.innerWidth < 600) {
+            closePopupButton.style.display = 'block';
+        } else {
+            closePopupButton.style.display = 'none';
+        }
+        paginationDiv.appendChild(resultsCount);
+        paginationDiv.appendChild(closePopupButton);
+
+
+        resultsContainer.appendChild(resultsDiv);
+        if (window.innerWidth >= 600) {
+            resultsContainer.appendChild(paginationDiv);
+        }
 
         dropdownDiv.appendChild(searchInput);
         dropdownDiv.appendChild(spinnerDiv);
-        dropdownDiv.appendChild(dropdownContentDiv);
+        dropdownDiv.appendChild(clearButton);
+        dropdownDiv.appendChild(resultsContainer);
+        if (window.innerWidth < 600) {
+            dropdownDiv.appendChild(paginationDiv);
+        }
 
         searchFormContainer.appendChild(dropdownDiv);
     } else {
@@ -189,20 +116,43 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchForm = document.getElementById('searchForm');
     const searchQuery = document.getElementById('searchQuery');
     const spinner = document.getElementById('spinner');
-    const resultsContainer = document.getElementById('results-container');
     const resultsDiv = document.getElementById('results');
-    const paginationDiv = document.getElementById('pagination');
+    const body = document.getElementsByTagName('body')[0];
+
+    // Add window width listener
+    window.addEventListener('resize', function () {
+        if (window.innerWidth < 600) {
+            dropdownDiv.appendChild(paginationDiv);
+            closePopupButton.style.display = 'block';
+        } else {
+            closePopupButton.style.display = 'none';
+            resultsContainer.appendChild(paginationDiv);
+        }
+    });
 
     let currentPage = 1;
     let totalResults = 0;
+    let savedScrollY = window.scrollY;
+    let pagePosition = body.style.position;
     const resultsPerPage = 10;
     function hideResultsContainer() {
+        body.style.position = pagePosition;
+        window.scrollBy(0, savedScrollY);
+        document.getElementById("results-container").scrollTo(0, 0);
         resultsContainer.style.display = 'none';
+        paginationDiv.style.display = 'none';
         // make searchQuery bottom border rounded again
         searchQuery.style.borderRadius = '0.85rem';
     }
     function showResultsContainer() {
+        // Check if page is mobile
+        if (window.innerWidth < 600) {
+            // https://forum.bubble.io/t/tutorial-scroll-within-a-popup-without-scrolling-the-page/144153
+            let savedScrollY = window.scrollY;
+            body.style.position = "fixed";
+        }
         resultsContainer.style.display = 'block';
+        paginationDiv.style.display = 'flex';
         // make searchQuery bottom border square
         searchQuery.style.borderRadius = '0.85rem 0.85rem 0px 0px';
     }
@@ -236,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 // Clear previous results
                 resultsDiv.innerHTML = '';
-                paginationDiv.innerHTML = '';
+                resultsCount.textContent = '';
                 showResultsContainer();
 
                 // Display search results
@@ -313,12 +263,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 resultsDiv.appendChild(resultsList);
 
-                // Clear previous pagination
-                paginationDiv.innerHTML = '';
-                const resultsCount = document.createElement('span');
-                resultsCount.classList.add('results-count');
+                // Update results count
                 resultsCount.textContent = `Showing ${totalResults} results`;
-                paginationDiv.appendChild(resultsCount);
             })
             .catch(error => console.error('Error:', error))
             .finally(() => {
@@ -335,7 +281,6 @@ document.addEventListener('DOMContentLoaded', function () {
         debounceTimeout = setTimeout(function () {
             if (!searchQuery.value || searchQuery.value.length > 2) {
                 const query = searchQuery.value;
-                console.log('query', query);
                 // event.preventDefault();
                 getResults(query);
             }
