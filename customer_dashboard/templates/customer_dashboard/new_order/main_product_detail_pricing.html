@@ -103,9 +103,7 @@
     function handleDeliveryChange(radio) {
       // if main product does not allow pickups then show popup info instead
       const allowsPickupData = document.getElementById('data-allows-pickup')
-      var allowsPickup = allowsPickupData.getAttribute("data-allows-pickup");
-      console.log(allowsPickupData)
-      console.log(allowsPickup)
+      var allowsPickup = allowsPickupData.value;
       if (radio.value === 'False' && allowsPickup != "True"){
         // change button back
         const deliveryButton = document.getElementById('for-delivery-check')
@@ -262,7 +260,7 @@
           <div class="row d-flex align-items-end mb-4">
             <!-- Is Delivery Toggle -->
             <div id="delivery-controls" class="col me-4">
-              <div id="data-allows-pickup" data-allows-pickup="{{product.main_product.allows_pick_up}}"/>
+              <input type="hidden" id="data-allows-pickup" name="data-allows-pickup" value="{{ product.main_product.allows_pick_up }}" />
               <div class="btn-group w-100" style="max-width: 400px;">
                 <input type="radio" class="btn-check" name="delivery-radio" id="for-delivery-check" autocomplete="off" value="True" onclick="handleDeliveryChange(this);" checked />
                 <label class="btn btn-outline-primary px-3" for="for-delivery-check">Delivery</label>
