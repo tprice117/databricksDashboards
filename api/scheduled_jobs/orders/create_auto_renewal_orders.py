@@ -100,10 +100,18 @@ def create_auto_renewal_orders():
                 0,
             )
 
+            # If the OrderGroup's MainProduct.has_rental_multi_step = TRUE (is a multi-step rental),
+            # then check if the "accumulated" rental cost for the current period has reached the
+            # monthly price. If it has, create a new Order for the OrderGroup.
+            has_surpassed_monthly = (
+                _multi_step_rental_has_surpassed_monthly(order_group)
+                if order_group.seller_product_seller_location.seller_product.product.main_product.has_rental_multi_step
+                else False
+            )
+
             # If the most recent Order.StartDate is more than 28 days in the past,
             # create a new Order for the OrderGroup.
-
-            if reference_date < twenty_eight_days_ago:
+            if reference_date < twenty_eight_days_ago or has_surpassed_monthly:
                 # Add the OrderGroup to the list of OrderGroups that need to
                 # auto-renew.
                 order_groups_that_needs_to_auto_renew.append(
@@ -141,3 +149,44 @@ def create_auto_renewal_orders():
                 )
             ),
         )
+
+
+def _multi_step_rental_has_surpassed_monthly(order_group: OrderGroup) -> bool:
+    """
+    Check if the accumulated rental cost for the current period has reached the
+    monthly price. If no monthly price is set, return FALSE.
+    """
+    if hasattr(order_group, "rental_multi_step"):
+        # Get most recent Order for the OrderGroup.
+        most_recent_order: Order = (
+            order_group.orders.filter(
+                submitted_on__isnull=False,
+            )
+            .order_by("-end_date")
+            .first()
+        )
+
+        # Only process if the most recent Order is in the past.
+        if most_recent_order.end_date < timezone.now().date():
+            # Get the accumulated rental cost for the current period.
+            line_items = order_group.rental_multi_step.get_price(
+                duration=timezone.now().date() - most_recent_order.end_date,
+                shift_count=order_group.shift_count,
+            )
+
+            accumulated_rental_cost = sum(
+                [line_item.total for line_item in line_items],
+                0,
+            )
+
+            # Check if the accumulated rental cost for the current period has
+            # reached the monthly price. If no monthly price is set, return FALSE.
+            return (
+                accumulated_rental_cost >= order_group.rental_multi_step.month
+                if order_group.rental_multi_step.month
+                else False
+            )
+        else:
+            return False
+    else:
+        return False
