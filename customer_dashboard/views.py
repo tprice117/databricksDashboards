@@ -1853,7 +1853,10 @@ def new_order_5(request):
                         context["seller_addresses"].append(
                             {"address": item["seller_address"]}
                         )
-                        # if this address has a bundle give the price
+                    context["seller_addresses"][-1]["seller"] = (
+                        order.order_group.seller_product_seller_location.seller_location.seller
+                    )
+                    # if this address has a bundle give the price
                     if item["order"].order_group.freight_bundle:
                         context["seller_addresses"][-1]["delivery_fee"] = item[
                             "order"
