@@ -85,7 +85,9 @@
         var emptyBundles = true
         cartBundleBuckets.each(function(index, bucket) {
             var numberChecked = cartBucketItemChecked[index].filter(Boolean).length;
-            jQuery(bucket).toggle(numberChecked >= 2);
+            jQuery(bucket).toggle(numberChecked >= 2).attr('style', function() {
+                return numberChecked >= 2 ? 'border: none; margin-bottom: 25px' : 'border: none; margin-bottom: 25px; display: none !important';
+            });
             if (numberChecked >= 2) {
                 emptyBundles = false
             }
@@ -139,7 +141,10 @@
         var emptyBundles = true
         cartBundleBuckets.each(function(index, bucket) {
             var numberChecked = cartBucketItemChecked[index].filter(Boolean).length;
-            jQuery(bucket).toggle(numberChecked >= 2);
+            console.log(numberChecked)
+            jQuery(bucket).toggle(numberChecked >= 2).attr('style', function() {
+                return numberChecked >= 2 ? 'border: none; margin-bottom: 25px' : 'border: none; margin-bottom: 25px; display: none !important';
+            });
             if (numberChecked >= 2) {
                 emptyBundles = false
             }
@@ -201,6 +206,18 @@
           cartAddresses.filter("#cart-address-" + bundleId).show();
           cartBundleAddresses.filter("#cart-bundle-address-" + bundleId).show();
           cartBundleConfirmAddresses.filter("#cart-bundle-confirm-address-" + bundleId).show();
+          var address = jQuery(`[id^='cart-address-${bundleId}']`)
+          var cartBundleBuckets = jQuery(address).find("[id^='seller-address-']")
+          console.log(cartBundleBuckets)
+          cartBundleBuckets.each(function(index, bucket) {
+            console.log("hello")
+            var cartItems = jQuery(bucket).find("[id^='cart-item-']")
+            var numberItems = cartItems.length
+            console.log(cartItems.length)
+            jQuery(bucket).toggle(numberItems >= 2).attr('style', function() {
+                return numberItems >= 2 ? 'border: none; margin-bottom: 25px' : 'border: none; margin-bottom: 25px; display: none !important;';
+            });
+          })
         })
       })
 		
@@ -305,7 +322,7 @@
                                                             {% if item.seller_address.id == seller_address.address.id %}
                                                                 {% if item.can_bundle %}
                                                                     <div class="col-6 d-flex align-items-stretch cart-item" id="cart-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}">
-                                                                        <div class="card-body" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
+                                                                        <div class="card p-3" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                                                                             <div class="row">
                                                                                 <div class="col-auto my-auto">
                                                                                     <input class="form-check-input downstream-checkbox" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" {% if item.isBundled %}checked{% endif %}>
@@ -412,7 +429,7 @@
                                                             {% if item.seller_address.id == seller_address.address.id %}
                                                                 {% if item.can_bundle %}
                                                                     <div class="col-6 d-flex align-items-stretch cart-item" id="cart-bundled-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}">
-                                                                        <div class="card-body" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
+                                                                        <div class="card p-3" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                                                                             <div class="row">
                                                                                 <div class="col-auto my-auto">
                                                                                     <input class="form-check-input downstream-checkbox" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" checked disabled>
@@ -533,7 +550,7 @@
                                                             {% if item.seller_address.id == seller_address.address.id %}
                                                                 {% if item.can_bundle %}
                                                                     <div class="col-6 d-flex align-items-stretch cart-item" id="cart-bundled-confirm-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}" data-order-id="{{item.order.id}}">
-                                                                        <div class="card-body" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
+                                                                        <div class="card p-3" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                                                                             <div class="row">
                                                                                 <div class="col-auto my-auto">
                                                                                     <input class="form-check-input downstream-checkbox" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" checked disabled>
