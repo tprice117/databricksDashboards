@@ -20,10 +20,25 @@
 </head>
 <body>
   <h1>Customer First Orders</h1>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+  </style>
+
   <table id="customer-first-order-table">
     <thead>
       <tr>
-        <th>User ID</th>
+        <th>Order ID</th>
         <th>User Group Name</th>
         <th>User First Name</th>
         <th>User Last Name</th>
@@ -35,7 +50,7 @@
     <tbody>
       {% for group in user_groups %}
       <tr class="order-row" data-status="{{ group.status }}">
-        <td>{{ group.user_id }}</td>
+        <td>{{ group.order_id }}</td>
         <td>{{ group.user_group_name }}</td>
         <td>{{ group.user_first_name }}</td>
         <td>{{ group.user_last_name }}</td>
@@ -50,7 +65,10 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var table = new DataTable("#customer-first-order-table", {
-            pageLength: 50
+            pageLength: 50,
+            columnDefs: [
+                { type: 'date', targets: 5 } // Assuming the date column is the 6th column (index 5)
+            ]
         });
         document.querySelectorAll(".status-filter").forEach(function (checkbox) {
             checkbox.addEventListener("change", function () {
