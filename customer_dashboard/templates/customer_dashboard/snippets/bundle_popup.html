@@ -46,10 +46,8 @@
                 if (cartItems[0]!= null) {
                     var orderItems = []
                     cartItems.each(function(index2, item) {
-                        if (cartBucketItemChecked[index][index2]) {
-                            var orderId = jQuery(item).attr("data-order-id")
-                            orderItems.push(orderId)
-                        }
+                        var orderId = jQuery(item).attr("data-order-id")
+                        orderItems.push(orderId)
                     })
                     bundles.push({empty:true,items:orderItems})
                 }
@@ -325,7 +323,7 @@
                                                                         <div class="card p-3" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                                                                             <div class="row">
                                                                                 <div class="col-auto my-auto">
-                                                                                    <input class="form-check-input downstream-checkbox" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" {% if item.isBundled %}checked{% endif %}>
+                                                                                    <input class="form-check-input downstream-checkbox" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" {% if item.is_bundled %}checked{% endif %}>
                                                                                 </div>
                                                                                 <div class="col-auto my-auto" style="padding: 0;">
                                                                                     <img class="img-thumbnail img-fluid"
