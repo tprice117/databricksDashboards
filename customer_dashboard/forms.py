@@ -15,6 +15,7 @@ from api.models import (
     OrderGroupAttachment,
     OrderReview,
 )
+from common.utils.state_sales_tax import STATE_CHOICES
 from common.forms import HiddenDeleteFormSet
 from common.models.choices.user_type import UserType
 from crm.models import Lead, LeadNote, UserSelectableLeadStatus
@@ -234,10 +235,13 @@ class UserAddressForm(forms.Form):
             }
         ),
     )
-    state = forms.CharField(
-        max_length=80,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "autocomplete": "address-level1"}
+    state = forms.ChoiceField(
+        choices=STATE_CHOICES,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+                "autocomplete": "address-level1",
+            }
         ),
     )
     postal_code = forms.CharField(
