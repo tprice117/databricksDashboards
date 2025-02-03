@@ -79,6 +79,7 @@ class SellerLocation(BaseModel):
         max_digits=18, decimal_places=2, blank=True, null=True
     )
     w9 = models.FileField(upload_to=get_file_path, blank=True, null=True)
+    ein = models.CharField(max_length=9, blank=True, null=True)
     # END: Insurance and tax fields.
     payout_delay = models.IntegerField(
         default=14,

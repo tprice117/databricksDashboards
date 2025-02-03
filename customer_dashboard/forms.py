@@ -191,6 +191,9 @@ class OrderGroupAttachmentsForm(forms.ModelForm):
     class Meta:
         model = OrderGroupAttachment
         fields = ["file"]
+        widgets = {
+            "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
+        }
 
 
 class UserAddressForm(forms.Form):
@@ -281,6 +284,12 @@ class UserAddressForm(forms.Form):
             }
         ),
         required=False,
+    )
+    tax_exempt_status = forms.ChoiceField(
+        choices=UserGroup.TaxExemptStatus.choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        required=False,
+        help_text="Defaults to Account Exempt Status, but overrides if set.",
     )
 
     def __init__(self, *args, **kwargs):

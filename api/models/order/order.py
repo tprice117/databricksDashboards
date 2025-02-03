@@ -338,6 +338,18 @@ class Order(BaseModel):
             ]
         )
 
+    @lru_cache(maxsize=10)  # Do not recalculate this for the same object.
+    def get_rpp_fee(self):
+        # Get sum (without tax) of all line items with code RPP (Rental Protection Plan).
+        return sum(
+            [
+                order_line_item.customer_price()
+                for order_line_item in self.order_line_items.filter(
+                    order_line_item_type__code="RPP"
+                )
+            ]
+        )
+
     def full_price(self):
         default_take_rate = self.order_group.seller_product_seller_location.seller_product.product.main_product.default_take_rate
         return self.seller_price() * (1 + (default_take_rate / 100))
@@ -447,7 +459,8 @@ class Order(BaseModel):
                     OrderLineItem.PaymentStatus.INVOICED,
                     OrderLineItem.PaymentStatus.PAID,
                 ]
-                for order_item in self.order_items if order_item.customer_rate != 0
+                for order_item in self.order_items
+                if order_item.customer_rate != 0
             ]
         )
 
@@ -815,13 +828,16 @@ class Order(BaseModel):
 
     @staticmethod
     def post_delete(sender, instance: "Order", **kwargs):
-        # If this order was a removal, then reset order_group.end_date to null
-        # Check for one time because on removal, the order type will come back as that.
-        if (
+        if instance.order_group.orders.count() == 0:
+            # Deletion resulted in no Orders in the OrderGroup, so delete the OrderGroup.
+            instance.order_group.delete()
+        elif (
             instance.order_type == Order.Type.REMOVAL
             or instance.order_type == Order.Type.RETURN
             or instance.order_type == Order.Type.ONE_TIME
         ):
+            # If this order was a removal, then reset order_group.end_date to null
+            # Check for one time because on removal, the order type will come back as that.
             instance.order_group.end_date = None
             instance.order_group.save()
 
@@ -1250,19 +1266,15 @@ class Order(BaseModel):
                     delivery_fee = float(order_line_item.customer_price())
 
             # Calculate the tax details
-            if (
-                self.order_group.user_address.user_group
-                and self.order_group.user_address.user_group.tax_exempt_status
-                == "exempt"
-            ):
-                tax_details = {"rate": float(0.00), "taxes": float(0.00)}
-            else:
+            if self.order_group.user_address.should_collect_taxes:
                 # Only get taxes if re_get_taxes is True.
                 if re_get_taxes:
                     # Get taxes and also update the line items with the tax amount.
                     tax_details = StripeUtils.PriceCalculation.calculate_price_details(
                         self, all_line_items, delivery_fee, update_line_items=True
                     )
+            else:
+                tax_details = {"rate": float(0.00), "taxes": float(0.00)}
 
             # Load all line items into a PricingEngine response
             for order_line_item in all_line_items:

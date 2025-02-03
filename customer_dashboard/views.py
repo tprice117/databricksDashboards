@@ -40,7 +40,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET, require_http_methods
 from django.forms import inlineformset_factory
-from common.forms import HiddenDeleteFormSet
+from common.forms import HiddenDeleteFormSet, MultiTabularFormSet
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -1280,6 +1280,7 @@ def customer_cart_date_edit(request, order_id):
             "order": order,
             "main_product": order.order_group.seller_product_seller_location.seller_product.product.main_product,
             "subtotal": customer_price,
+            "rpp": order.get_rpp_fee(),
             "tax": customer_price_with_tax - customer_price,
             "total": customer_price_with_tax,
         }
@@ -1496,6 +1497,9 @@ def new_order_5(request):
                         main_product = (
                             seller_product_location.seller_product.product.main_product
                         )
+                        # make sure you cannot select pickup if main product does not allow pickup
+                        if not main_product.allows_pick_up:
+                            is_delivery = True
 
                         # Discount
                         discount: Decimal = 0.0
@@ -1660,16 +1664,10 @@ def new_order_5(request):
         order = Order.objects.filter(id=order_id).first()
         if order_group:
             has_related = order_group.related_bookings.exists()
-            is_first_order = (
-                order.order_group.start_date == order.start_date
-                and order_group.orders.count() == 1
-            )
-            if is_first_order:
-                # A single transaction Order, which is a delivery or one-time service.
-                order_group.delete()
-            elif order:
-                order.delete()
-            context["user_address"] = order_group.user_address_id
+        if order:
+            # Order delete will also delete the order group if it is the only order in the group.
+            order.delete()
+        context["user_address"] = order_group.user_address_id
         if subtotal:
             context["subtotal"] = float(subtotal) - float(customer_price)
         if cart_count:
@@ -1821,6 +1819,7 @@ def new_order_5(request):
 
             # get the supplier addresses
             context["seller_addresses"] = []
+
             # Get the seller price for each order and add it to the context.
             for bucket in context["cart"]:
                 bucket["ids"] = [str(item["order"].id) for item in bucket["items"]]
@@ -1828,21 +1827,23 @@ def new_order_5(request):
                 # context["cart"][addr]["show_quote"] = True
                 checkout_order = None
                 for item in bucket["items"]:
-                    item["subtotal"] = item["order"].customer_price()
-                    for line_item in item["order"].order_line_items.filter(
-                        order_line_item_type__code="DELIVERY"
-                    ):
-                        item["delivery_fee"] = line_item.rate
-                        break
-                    for line_item in item["order"].order_line_items.filter(
-                        order_line_item_type__code="REMOVAL"
-                    ):
-                        item["removal_fee"] = line_item.rate
-                        break
                     order = item["order"]
                     if order.checkout_order:
                         checkout_order = order.checkout_order
                     supplier_total += order.seller_price()
+
+                    # START Bundle fees.
+                    for line_item in order.order_line_items.filter(
+                        order_line_item_type__code="DELIVERY"
+                    ):
+                        item["delivery_fee"] = line_item.rate
+                        break
+                    for line_item in order.order_line_items.filter(
+                        order_line_item_type__code="REMOVAL"
+                    ):
+                        item["removal_fee"] = line_item.rate
+                        break
+
                     item["seller_address"] = (
                         order.order_group.seller_product_seller_location.seller_location
                     )
@@ -1853,6 +1854,7 @@ def new_order_5(request):
                         context["seller_addresses"].append(
                             {"address": item["seller_address"]}
                         )
+
                     context["seller_addresses"][-1]["seller"] = (
                         order.order_group.seller_product_seller_location.seller_location.seller
                     )
@@ -1865,55 +1867,14 @@ def new_order_5(request):
                             order.order_group.freight_bundle.removal_fee
                         )
                     # END Bundle fees.
+
                 if (
                     checkout_order
                     and supplier_total == checkout_order.seller_price
                     and checkout_order.quote_expiration
                 ):
                     bucket["quote_sent_on"] = checkout_order.updated_on
-        # show the bundle button
-        # only can bundle Type.DELIVERY and rental_multi_step
-        # make sure to only give bundle option for items with >2 per user_address, seller_location combo
-        for bucket in context["cart"]:
-            # all the seller_locations in this bucket
-            # seller_locations a dict: keys default to 0
-            class MyIntDict(dict):
-                def __missing__(self, key):
-                    return 0  # default value
 
-            seller_locations = MyIntDict()
-            # find seller locations with items that can be bundled
-            for item in bucket["items"]:
-                # if hasattr(item["order"].order_group, "rental_multi_step"):
-                if item["order"].order_type == Order.Type.DELIVERY:
-                    seller_locations[
-                        item[
-                            "order"
-                        ].order_group.seller_product_seller_location.seller_location.id
-                    ] += 1
-            # remove seller_locations with less than 2 items to be bundled
-            seller_locations = {k: v for k, v in seller_locations.items() if v >= 2}
-            # items that can be bundled if they are from a location with 2 or more
-            countRentalMultiStep = 0
-            for item in bucket["items"]:
-                # show the edit bundle button
-                if item["order"].order_group.freight_bundle:
-                    bucket["show_edit_bundle_button"] = True
-                    item["isBundled"] = True
-                if hasattr(item["order"].order_group, "rental_multi_step"):
-                    if item["order"].order_type == Order.Type.DELIVERY:
-                        if (
-                            item[
-                                "order"
-                            ].order_group.seller_product_seller_location.seller_location.id
-                            in seller_locations
-                        ):
-                            item["canBundle"] = True
-                            countRentalMultiStep += 1
-            # whether to even to show the bundle button
-            if countRentalMultiStep >= 2:
-                if "show_edit_bundle_button" not in bucket:
-                    bucket["show_bundle_button"] = True
         return render(request, "customer_dashboard/new_order/cart_list.html", context)
 
     context["cart_link"] = f"{reverse('customer_cart')}?{query_params.urlencode()}"
@@ -2031,6 +1992,62 @@ def new_order_6(request, order_group_id):
     else:
         messages.error(request, f"Order not found [{order_group_id}].")
     return HttpResponseRedirect(reverse("customer_new_order"))
+
+
+@login_required(login_url="/admin/login/")
+def edit_attachments(request, order_group_id):
+    context = {}
+
+    if not OrderGroup.objects.filter(id=order_group_id).exists():
+        return HttpResponse("Not found", status=404)
+
+    order_group = OrderGroup.objects.get(id=order_group_id)
+    OrderGroupAttachmentsFormSet = inlineformset_factory(
+        OrderGroup,
+        OrderGroupAttachment,
+        form=OrderGroupAttachmentsForm,
+        formset=MultiTabularFormSet,
+        can_delete=True,
+        extra=0,
+    )
+
+    if request.method == "POST":
+        # Edit Attachments
+        if "attachments_card" in request.POST:
+            attachments_formset = OrderGroupAttachmentsFormSet(
+                request.POST, request.FILES, instance=order_group
+            )
+            if attachments_formset.is_valid():
+                if attachments_formset.has_changed():
+                    attachments_formset.instance = order_group
+                    attachments_formset.save()
+                    context["success_text"] = "Attachments saved successfully."
+                    # Reinitialize Formset
+                    attachments_formset = OrderGroupAttachmentsFormSet(
+                        instance=order_group
+                    )
+                else:
+                    context["success_text"] = "No changes detected."
+            else:
+                messages.error(
+                    request,
+                    f"Error saving lead {attachments_formset.non_field_errors().as_text()}",
+                )
+                # lead.refresh_from_db()
+
+            # Reinitialize Form
+            # lead_form = LeadDetailForm(instance=lead)
+    else:
+        attachments_formset = OrderGroupAttachmentsFormSet(instance=order_group)
+
+    context["order_group"] = order_group
+    context["attachments_formset"] = attachments_formset
+
+    return render(
+        request,
+        "customer_dashboard/new_order/cart_order_edit_attachments.html",
+        context,
+    )
 
 
 @login_required(login_url="/admin/login/")
@@ -3367,6 +3384,14 @@ def location_detail(request, location_id):
                         "allow_sunday_delivery"
                     )
                     save_model = user_address
+                if (
+                    form.cleaned_data.get("tax_exempt_status")
+                    != user_address.tax_exempt_status
+                ):
+                    user_address.tax_exempt_status = form.cleaned_data.get(
+                        "tax_exempt_status"
+                    )
+                    save_model = user_address
             else:
                 raise InvalidFormError(form, "Invalid UserAddressForm")
             if save_model:
@@ -3401,6 +3426,7 @@ def location_detail(request, location_id):
                 "allow_saturday_delivery": user_address.allow_saturday_delivery,
                 "allow_sunday_delivery": user_address.allow_sunday_delivery,
                 "access_details": user_address.access_details,
+                "tax_exempt_status": user_address.tax_exempt_status,
             },
             user=context["user"],
             auth_user=request.user,
