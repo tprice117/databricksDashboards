@@ -518,13 +518,6 @@ class Order(BaseModel):
         self.full_clean()
         return super().save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        """Delete the Order and the OrderGroup if this is the only Order in the OrderGroup."""
-        if self.order_group.orders.count() == 1:
-            return self.order_group.delete()
-        else:
-            return super().delete(*args, **kwargs)
-
     def clean(self):
         super().clean()
 
@@ -835,13 +828,16 @@ class Order(BaseModel):
 
     @staticmethod
     def post_delete(sender, instance: "Order", **kwargs):
-        # If this order was a removal, then reset order_group.end_date to null
-        # Check for one time because on removal, the order type will come back as that.
-        if (
+        if instance.order_group.orders.count() == 0:
+            # Deletion resulted in no Orders in the OrderGroup, so delete the OrderGroup.
+            instance.order_group.delete()
+        elif (
             instance.order_type == Order.Type.REMOVAL
             or instance.order_type == Order.Type.RETURN
             or instance.order_type == Order.Type.ONE_TIME
         ):
+            # If this order was a removal, then reset order_group.end_date to null
+            # Check for one time because on removal, the order type will come back as that.
             instance.order_group.end_date = None
             instance.order_group.save()
 

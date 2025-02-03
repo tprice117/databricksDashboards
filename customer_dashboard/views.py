@@ -1664,16 +1664,10 @@ def new_order_5(request):
         order = Order.objects.filter(id=order_id).first()
         if order_group:
             has_related = order_group.related_bookings.exists()
-            is_first_order = (
-                order.order_group.start_date == order.start_date
-                and order_group.orders.count() == 1
-            )
-            if is_first_order:
-                # A single transaction Order, which is a delivery or one-time service.
-                order_group.delete()
-            elif order:
-                order.delete()
-            context["user_address"] = order_group.user_address_id
+        if order:
+            # Order delete will also delete the order group if it is the only order in the group.
+            order.delete()
+        context["user_address"] = order_group.user_address_id
         if subtotal:
             context["subtotal"] = float(subtotal) - float(customer_price)
         if cart_count:
