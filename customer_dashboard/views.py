@@ -1857,13 +1857,14 @@ def new_order_5(request):
                         order.order_group.seller_product_seller_location.seller_location.seller
                     )
                     # if this address has a bundle give the price
-                    if item["order"].order_group.freight_bundle:
-                        context["seller_addresses"][-1]["delivery_fee"] = item[
-                            "order"
-                        ].order_group.freight_bundle.delivery_fee
-                        context["seller_addresses"][-1]["removal_fee"] = item[
-                            "order"
-                        ].order_group.freight_bundle.removal_fee
+                    if order.order_group.freight_bundle:
+                        context["seller_addresses"][-1]["delivery_fee"] = (
+                            order.order_group.freight_bundle.delivery_fee
+                        )
+                        context["seller_addresses"][-1]["removal_fee"] = (
+                            order.order_group.freight_bundle.removal_fee
+                        )
+                    # END Bundle fees.
                 if (
                     checkout_order
                     and supplier_total == checkout_order.seller_price

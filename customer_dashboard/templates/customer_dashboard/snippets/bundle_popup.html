@@ -1,6 +1,7 @@
 {% load static %}
 {% load tz %}
 {% load humanize %}
+{% load sales_stream_tags %}
 {% block javascript %}
   <script>
     var bundleId = 1
@@ -302,12 +303,12 @@
                                                     <div class="row row-cols-2 g-4">
                                                         {% for item in cart_address.items %}
                                                             {% if item.seller_address.id == seller_address.address.id %}
-                                                                {% if item.canBundle %}
+                                                                {% if item.can_bundle %}
                                                                     <div class="col-6 d-flex align-items-stretch cart-item" id="cart-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}">
                                                                         <div class="card-body" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                                                                             <div class="row">
                                                                                 <div class="col-auto my-auto">
-                                                                                    <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" {% if item.isBundled %}checked{% endif %}>
+                                                                                    <input class="form-check-input downstream-checkbox" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" {% if item.isBundled %}checked{% endif %}>
                                                                                 </div>
                                                                                 <div class="col-auto my-auto" style="padding: 0;">
                                                                                     <img class="img-thumbnail img-fluid"
@@ -409,12 +410,12 @@
                                                     <div class="row row-cols-2 g-4">
                                                         {% for item in cart_address.items %}
                                                             {% if item.seller_address.id == seller_address.address.id %}
-                                                                {% if item.canBundle %}
+                                                                {% if item.can_bundle %}
                                                                     <div class="col-6 d-flex align-items-stretch cart-item" id="cart-bundled-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}">
                                                                         <div class="card-body" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                                                                             <div class="row">
                                                                                 <div class="col-auto my-auto">
-                                                                                    <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" checked disabled>
+                                                                                    <input class="form-check-input downstream-checkbox" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" checked disabled>
                                                                                 </div>
                                                                                 <div class="col-auto my-auto" style="padding: 0;">
                                                                                     <img class="img-thumbnail img-fluid"
@@ -447,14 +448,14 @@
                                                     <div class="row" style="width: 150px">
                                                         <label for="currency">Delivery Rate:</label>
                                                         <span style="padding: 0; position: relative; left: 15px; font-size: 18px; display: flex; align-items: center; color: black;" class="col-auto">$</span>
-                                                        <input type="number" id="delivery-rate-{{forloop.counter}}" style="padding-left: 20px;" name="delivery-rate" step="0.01" min="0" placeholder="0.00" value={% if seller_address.delivery_fee %}"{{seller_address.delivery_fee}}"{% endif %} required>
+                                                        <input class="downstream-number" type="number" id="delivery-rate-{{forloop.counter}}" style="padding-left: 20px;" name="delivery-rate" step="0.01" min="0" placeholder="0.00" value={% if seller_address.delivery_fee %}"{{seller_address.delivery_fee}}"{% endif %} required>
                                                         <button type="button" class="btn btn-primary" id="default-delivery-price">Use Default</button>
                                                         <p>default is: $</p>
                                                     </div>
                                                     <div class="row" style="width: 150px">
                                                         <label for="currency">Removal Rate:</label> 
                                                         <span style="padding: 0; position: relative; left: 15px; font-size: 18px; display: flex; align-items: center; color: black;" class="col-auto">$</span>
-                                                        <input type="number" id="removal-rate-{{forloop.counter}}" style="padding-left: 20px;" name="removal-rate" step="0.01" min="0" placeholder="0.00" value={% if seller_address.removal_fee %}"{{seller_address.removal_fee}}"{% endif %} required>
+                                                        <input class="downstream-number" type="number" id="removal-rate-{{forloop.counter}}" style="padding-left: 20px;" name="removal-rate" step="0.01" min="0" placeholder="0.00" value={% if seller_address.removal_fee %}"{{seller_address.removal_fee}}"{% endif %} required>
                                                         <button type="button" class="btn btn-primary" id="default-removal-price">Use Default</button>
                                                         <p>default is: $</p>
                                                     </div>
@@ -530,12 +531,12 @@
                                                     <div class="row row-cols-2 g-4">
                                                         {% for item in cart_address.items %}
                                                             {% if item.seller_address.id == seller_address.address.id %}
-                                                                {% if item.canBundle %}
+                                                                {% if item.can_bundle %}
                                                                     <div class="col-6 d-flex align-items-stretch cart-item" id="cart-bundled-confirm-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}" data-order-id="{{item.order.id}}">
                                                                         <div class="card-body" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                                                                             <div class="row">
                                                                                 <div class="col-auto my-auto">
-                                                                                    <input class="form-check-input" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" checked disabled>
+                                                                                    <input class="form-check-input downstream-checkbox" type="checkbox" id="checkbox-in-bundle" value="" aria-label="add to bundle" checked disabled>
                                                                                 </div>
                                                                                 <div class="col-auto my-auto" style="padding: 0;">
                                                                                     <img class="img-thumbnail img-fluid"
