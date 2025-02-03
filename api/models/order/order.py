@@ -518,6 +518,13 @@ class Order(BaseModel):
         self.full_clean()
         return super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        """Delete the Order and the OrderGroup if this is the only Order in the OrderGroup."""
+        if self.order_group.orders.count() == 1:
+            return self.order_group.delete()
+        else:
+            return super().delete(*args, **kwargs)
+
     def clean(self):
         super().clean()
 
