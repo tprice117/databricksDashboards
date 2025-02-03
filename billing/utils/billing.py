@@ -257,19 +257,19 @@ class BillingUtils:
     @staticmethod
     def create_stripe_invoices_for_user_group(
         user_group: UserGroup,
-        end_date_lte: datetime = datetime.date.today(),
+        end_date_lte: datetime = None,
     ):
         """
-        Create Stripe Invoices for all Orders that have been completed and have an end date on
-        or before either (a) yesterday (default) or (b) the date specified by the end_date_lte.
+        Create Stripe Invoices for all Orders that have been completed and iff end_date_lte is
+        specified, have an end date on or before that date.
         """
-        # Get all Orders that have been completed and have an end date on
-        # or before the last day of the previous month.
+        # Get all Orders that have been completed.
         orders = Order.objects.filter(
             status="COMPLETE",
-            end_date__lte=end_date_lte,
             order_group__user_address__user_group=user_group,
         )
+        if end_date_lte:
+            orders = orders.filter(end_date__lte=end_date_lte)
 
         # Filter Orders. Only include Orders that have not been fully invoiced.
         orders = [
@@ -503,11 +503,9 @@ class BillingUtils:
                 if Utils.is_user_address_project_complete_and_needs_invoice(
                     user_address
                 ):
-                    # Get all Orders that have been completed and have an end date on
-                    # or before the last day of the previous month.
+                    # Get all Orders that have been completed.
                     orders = Order.objects.filter(
                         status="COMPLETE",
-                        end_date__lte=datetime.date.today(),
                         order_group__user_address=user_address,
                     )
 
