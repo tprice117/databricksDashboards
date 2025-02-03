@@ -159,15 +159,19 @@ def _multi_step_rental_has_surpassed_monthly(order_group: OrderGroup) -> bool:
     if hasattr(order_group, "rental_multi_step"):
         # Get most recent Order for the OrderGroup.
         most_recent_order: Order = (
-            order_group.orders.filter(
-                submitted_on__isnull=False,
+            (
+                order_group.orders.filter(
+                    submitted_on__isnull=False,
+                )
+                .order_by("-end_date")
+                .first()
             )
-            .order_by("-end_date")
-            .first()
+            if order_group.orders.exists()
+            else None
         )
 
         # Only process if the most recent Order is in the past.
-        if most_recent_order.end_date < timezone.now().date():
+        if most_recent_order and most_recent_order.end_date < timezone.now().date():
             # Get the accumulated rental cost for the current period.
             line_items = order_group.rental_multi_step.get_price(
                 duration=timezone.now().date() - most_recent_order.end_date,
