@@ -1101,6 +1101,7 @@ def new_order_4(request):
         # Waste type
         waste_type = None
         waste_type_id = None
+        product = context["product"]
         # TODO: We are only using the first waste type for now.
         if context["product_waste_types"]:
             main_product_waste_type = MainProductWasteType.objects.filter(
@@ -1118,7 +1119,7 @@ def new_order_4(request):
         ).first()
         seller_product_seller_locations = (
             MatchingEngine.get_possible_seller_product_seller_locations(
-                context["product"],
+                product,
                 user_address_obj,
                 waste_type,
                 related_products=context["related_products"],
@@ -1204,7 +1205,12 @@ def new_order_4(request):
                     main_product,
                     user_group=context["user_group"],
                 )
-                if main_product.is_related:
+
+                # Check if the product should be treated as the main listing or a related listing.
+                if (
+                    main_product.id != product.main_product.id
+                    and main_product.is_related
+                ):
                     bucket["related"].append(seller_d)
                     bucket["related_ids"].append(seller_product_seller_location.id)
                 else:
