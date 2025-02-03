@@ -17,7 +17,7 @@ class PushNotificationQuerySet(models.QuerySet):
             )
         else:
             # Individual User: If User is not in a UserGroup.
-            queryset = self.filter(user=user)
+            queryset = self.filter(push_notification_tos__user=user)
         # Annotate is_read for this user.
         queryset = queryset.annotate(
             is_read=models.Case(
