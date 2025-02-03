@@ -18,6 +18,7 @@ class PushNotificationViewSet(
     mixins.ListModelMixin,
     viewsets.GenericViewSet,
 ):
+    permission_classes = [IsAuthenticated]
     queryset = PushNotification.objects.all()
     serializer_class = PushNotificationSerializer
 
@@ -48,22 +49,23 @@ class PushNotificationReadAllView(APIView):
 class PushNotificationReadView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # @extend_schema(
-    #     responses={
-    #         200: PushNotificationSerializer(),
-    #     },
-    # )
+    @extend_schema(
+        responses={
+            200: PushNotificationSerializer(),
+        },
+    )
     def post(self, request, *args, **kwargs):
         """
         Mark a Push Notification as read.
         Returns:
-          200 Ok.
+          The Push Notification.
         """
         push_notification_id = self.kwargs.get("push_notification_id")
 
         push_notification = PushNotification.objects.get(id=push_notification_id)
         try:
             push_notification.read(self.request.user)
-            return Response("OK", status=status.HTTP_200_OK)
+            push_notification.is_read = True
+            return Response(PushNotificationSerializer(push_notification).data)
         except Exception as e:
             raise APIException(str(e))
