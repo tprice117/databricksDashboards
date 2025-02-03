@@ -9,6 +9,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.db.models import Avg, Count  # F, OuterRef, Q, Subquery, Sum,
 from django.db.models.functions import Round
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -389,6 +391,13 @@ class MainProductCategoryViewSet(viewsets.ReadOnlyModelViewSet):
             "mainproductcategoryinfo_set",
             "industry",
         )
+
+    # Add list view and cache for 1 hour
+    @method_decorator(cache_page(60 * 60 * 2))  # Cache the view for 2 hours
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
 
 
 @authentication_classes([])
