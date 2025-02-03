@@ -943,7 +943,9 @@ def new_company(request):
             for field in form.errors:
                 form[field].field.widget.attrs["class"] += " is-invalid"
             for location_form in location_formset.forms:
-                if not location_form.cleaned_data.get("DELETE", False):
+                # If form is not valid, location_formset.is_valid will not be checked, and its cleaned data will not be generated.
+                # Don't show errors on form that is marked for deletion.
+                if not location_form.data.get("DELETE", False):
                     for field in location_form.errors:
                         if field != "__all__":
                             location_form[field].field.widget.attrs["class"] += (
@@ -2247,7 +2249,7 @@ def booking_detail(request, order_id):
         query_params["lat2"] = user_address.latitude
         query_params["lon2"] = user_address.longitude
         context["distance_link"] = (
-            f"{ reverse('supplier_booking_detail', kwargs={'order_id': order.id}) }?{query_params.urlencode()}"
+            f"{reverse('supplier_booking_detail', kwargs={'order_id': order.id})}?{query_params.urlencode()}"
         )
         line_types = {}
         for order_line_item in order.order_line_items.all():
@@ -2365,11 +2367,11 @@ def chat(request, order_id=None, conversation_id=None, is_customer=False):
     query_params["last"] = context["last_message_time"]
     if order:
         context["get_chat_url"] = (
-            f"{ reverse(chat_url, kwargs={'order_id': order.id}) }?{query_params.urlencode()}"
+            f"{reverse(chat_url, kwargs={'order_id': order.id})}?{query_params.urlencode()}"
         )
     else:
         context["get_chat_url"] = context["get_chat_url"] = (
-            f"{ reverse(chat_url, kwargs={'conversation_id': conversation_id}) }?{query_params.urlencode()}"
+            f"{reverse(chat_url, kwargs={'conversation_id': conversation_id})}?{query_params.urlencode()}"
         )
     if request.headers.get("HX-Request"):
         last_message_ts = request.GET.get("last")
@@ -2894,23 +2896,23 @@ def download_locations(request):
                     and seller_location.gl_coi_expiration_date
                     < seller_location.workers_comp_coi_expiration_date
                 ):
-                    insurance_status = f'Expiring Soon | {seller_location.gl_coi_expiration_date.strftime("%Y-%m-%d")} (GL)'
+                    insurance_status = f"Expiring Soon | {seller_location.gl_coi_expiration_date.strftime('%Y-%m-%d')} (GL)"
                 elif (
                     seller_location.auto_coi_expiration_date
                     < seller_location.gl_coi_expiration_date
                     and seller_location.auto_coi_expiration_date
                     < seller_location.workers_comp_coi_expiration_date
                 ):
-                    insurance_status = f'Expiring Soon | {seller_location.auto_coi_expiration_date.strftime("%Y-%m-%d")} (Auto)'
+                    insurance_status = f"Expiring Soon | {seller_location.auto_coi_expiration_date.strftime('%Y-%m-%d')} (Auto)"
                 elif (
                     seller_location.workers_comp_coi_expiration_date
                     < seller_location.gl_coi_expiration_date
                     and seller_location.workers_comp_coi_expiration_date
                     < seller_location.auto_coi_expiration_date
                 ):
-                    insurance_status = f'Expiring Soon | {seller_location.workers_comp_coi_expiration_date.strftime("%Y-%m-%d")} (Workers Comp)'
+                    insurance_status = f"Expiring Soon | {seller_location.workers_comp_coi_expiration_date.strftime('%Y-%m-%d')} (Workers Comp)"
                 else:
-                    insurance_status = f'Expiring Soon | {seller_location.workers_comp_coi_expiration_date.strftime("%Y-%m-%d")} (All)'
+                    insurance_status = f"Expiring Soon | {seller_location.workers_comp_coi_expiration_date.strftime('%Y-%m-%d')} (All)"
             else:
                 insurance_status = "Compliant"
         tax_status = "Missing Tax Info"
