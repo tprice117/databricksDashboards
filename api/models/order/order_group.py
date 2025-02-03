@@ -175,10 +175,11 @@ class OrderGroup(BaseModel):
             for order in self.orders.all():
                 # Need to delete all related objects to the order.
                 # Because they are all Protected
-                order.ordermaterialfee_set.all().delete()
-                order.orderpermitfee_set.all().delete()
-                order.delete()
+                for order_item in order.order_items:
+                    order_item.delete()
 
+            # Delete all related orders (bypass order.delete overide to avoid recursive loop).
+            self.orders.all().delete()
             # Recurse through related bookings, deleting each one.
             for related_booking in self.related_bookings.all():
                 related_booking.delete()
