@@ -178,7 +178,7 @@ class OrderGroup(BaseModel):
                 for order_item in order.order_items:
                     order_item.delete()
 
-            # Delete all related orders.
+            # Delete all related orders (bypass order.delete overide to avoid recursive loop).
             self.orders.all().delete()
             # Recurse through related bookings, deleting each one.
             for related_booking in self.related_bookings.all():
