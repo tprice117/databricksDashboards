@@ -1504,7 +1504,7 @@ def new_order_5(request):
                             seller_product_location.seller_product.product.main_product
                         )
                         # make sure you cannot select pickup if main product does not allow pickup
-                        if not main_product.allows_pick_up:
+                        if not main_product.allow_pickup:
                             is_delivery = True
 
                         # Discount
@@ -2865,11 +2865,8 @@ def my_order_groups(request):
 
     query_params = request.GET.copy()
     is_active = request.GET.get("active")
-    if is_active == "on":
-        is_active = True
-    else:
-        is_active = False
-    context["is_active"] = is_active
+    context["is_active"] = is_active == "on"
+
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         my_accounts = request.GET.get("my_accounts")
@@ -2925,12 +2922,20 @@ def my_order_groups(request):
             )
 
         # Select related fields to reduce db queries.
-        order_groups = order_groups.select_related(
-            "seller_product_seller_location__seller_product__seller",
-            "seller_product_seller_location__seller_product__product__main_product",
-            # "user_address",
+        order_groups = (
+            order_groups.select_related(
+                "seller_product_seller_location__seller_location",
+                "seller_product_seller_location__seller_product__seller",
+                "seller_product_seller_location__seller_product__product__main_product__main_product_category",
+                "user_address",
+                "user__user_group",
+            )
+            .prefetch_related(
+                "orders__order_line_items",
+                "seller_product_seller_location__seller_product__product__main_product__images",
+            )
+            .with_nearest_orders()
         )
-        # order_groups = order_groups.prefetch_related("orders")
         order_groups = order_groups.order_by("-end_date")
 
         paginator = Paginator(order_groups, pagination_limit)
