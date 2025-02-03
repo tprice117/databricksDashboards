@@ -323,11 +323,11 @@
                                                                                 </div>
                                                                                 <div class="col">
                                                                                     <p class="mb-2" style="font-size: 16px; font-weight: bold;">{{ item.order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
-                                                                                    <p class="mb-1" style="font-size: 10px;">Service date: {{ item.order.end_date }}</p>
-                                                                                    <p class="mb-1" style="font-size: 10px;">Order Type: {{ item.order.order_type }}</p>
-                                                                                    <p class="mb-1" style="font-size: 10px;">PO ID: {{ item.order.order_group.project_id }}</p>
+                                                                                    <p class="mb-1" style="font-size: 10px;"><strong>Service date:</strong> {{ item.order.end_date }}</p>
+                                                                                    <p class="mb-1" style="font-size: 10px;"><strong>Order Type:</strong> {{ item.order.order_type }}</p>
+                                                                                    <p class="mb-1" style="font-size: 10px;"><strong>PO ID:</strong> {{ item.order.order_group.project_id }}</p>
                                                                                     {% if user.is_staff %}
-                                                                                        <p class="mb-1" style="font-size: 10px;">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
+                                                                                        <p class="mb-1" style="font-size: 10px;"><strong>Created by:</strong> {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
                                                                                     {% endif %}
                                                                                 </div>
                                                                             </div>
@@ -430,11 +430,11 @@
                                                                                 </div>
                                                                                 <div class="col">
                                                                                     <p class="mb-2" style="font-size: 16px; font-weight: bold;">{{ item.order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
-                                                                                    <p class="mb-1" style="font-size: 10px;">Service date: {{ item.order.end_date }}</p>
-                                                                                    <p class="mb-1" style="font-size: 10px;">Order Type: {{ item.order.order_type }}</p>
-                                                                                    <p class="mb-1" style="font-size: 10px;">PO ID: {{ item.order.order_group.project_id }}</p>
+                                                                                    <p class="mb-1" style="font-size: 10px;"><strong>Service date:</strong> {{ item.order.end_date }}</p>
+                                                                                    <p class="mb-1" style="font-size: 10px;"><strong>Order Type:</strong> {{ item.order.order_type }}</p>
+                                                                                    <p class="mb-1" style="font-size: 10px;"><strong>PO ID:</strong> {{ item.order.order_group.project_id }}</p>
                                                                                     {% if user.is_staff %}
-                                                                                        <p class="mb-1" style="font-size: 10px;">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
+                                                                                        <p class="mb-1" style="font-size: 10px;"><strong>Created by:</strong> {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
                                                                                     {% endif %}
                                                                                 </div>
                                                                             </div>
@@ -551,11 +551,11 @@
                                                                                 </div>
                                                                                 <div class="col">
                                                                                     <p class="mb-2" style="font-size: 16px; font-weight: bold;">{{ item.order.order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
-                                                                                    <p class="mb-1" style="font-size: 10px;">Service date: {{ item.order.end_date }}</p>
-                                                                                    <p class="mb-1" style="font-size: 10px;">Order Type: {{ item.order.order_type }}</p>
-                                                                                    <p class="mb-1" style="font-size: 10px;">PO ID: {{ item.order.order_group.project_id }}</p>
+                                                                                    <p class="mb-1" style="font-size: 10px;"><strong>Service date:</strong> {{ item.order.end_date }}</p>
+                                                                                    <p class="mb-1" style="font-size: 10px;"><strong>Order Type:</strong> {{ item.order.order_type }}</p>
+                                                                                    <p class="mb-1" style="font-size: 10px;"><strong>PO ID:</strong> {{ item.order.order_group.project_id }}</p>
                                                                                     {% if user.is_staff %}
-                                                                                        <p class="mb-1" style="font-size: 10px;">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
+                                                                                        <p class="mb-1" style="font-size: 10px;"><strong>Created by:</strong> {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
                                                                                     {% endif %}
                                                                                 </div>
                                                                             </div>
