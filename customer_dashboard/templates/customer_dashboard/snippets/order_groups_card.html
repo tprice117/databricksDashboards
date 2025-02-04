@@ -5,7 +5,11 @@
 {% with order_group=item %}
   <div class="col-xl-4 col-md-6 col-12 mb-2">
     <!-- prettier-ignore -->
-    <div class="card {% if order_group.parent_booking or order_group.related_bookings.exists %}border-primary rounded{% else %}border-0{% endif %}" style="background: var(--bs-card-cap-bg);">
+    <div class="card lead-card {% if order_group.parent_booking or order_group.related_bookings.exists %}border-primary rounded{% else %}border-0{% endif %}" style="background-color: var(--bs-card-cap-bg);" onmouseover="this.style.backgroundColor='#f0f0f0';" onmouseout="this.style.backgroundColor='var(--bs-card-cap-bg)';">
+    <!-- Card Overlay -->
+    <a href="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top"></a>
+    <!-- Card Content -->
+    <div class="inner">
       <div class="card-body">
         <div class="col">
             {% with main_product=order_group.seller_product_seller_location.seller_product.product.main_product nearest_order=order_group.nearest_order %}
@@ -65,6 +69,7 @@
             {% endwith %}
         </div>
       </div>
+    </div>
     </div>
   </div>
 {% endwith %}

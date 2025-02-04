@@ -3008,7 +3008,7 @@ def my_order_groups(request):
     else:
         if query_params.get("active") is None:
             query_params["active"] = "on"
-        if request.user.is_staff:
+        if request.user.is_staff and not is_impersonating(request):
             if query_params.get("my_accounts") is None:
                 query_params["my_accounts"] = "on"
         context["active_orders_link"] = (

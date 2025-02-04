@@ -70,7 +70,7 @@
     }
     // listen for page load event.
     // NOTE: Do this first so that the date filter value is set before the change listener is added.
-    document.addEventListener('DOMContentLoaded', function () {
+    function updateFilters() {
       // Check if query params has active filter
       const urlParams = new URLSearchParams(window.location.search)
       const is_active = urlParams.get('active')
@@ -89,7 +89,14 @@
         // update date filter value
         searchFilter.value = searchq
       }
-      updateColumnsVisibility()
+    }
+    
+    document.addEventListener('DOMContentLoaded', function () {
+      updateFilters()
+    })
+    
+    htmx.on('htmx:afterSwap', function (event) {
+      updateFilters()
     })
     
     function selectActiveFilter(el) {
