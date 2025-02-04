@@ -1506,7 +1506,7 @@ def new_order_5(request):
                             seller_product_location.seller_product.product.main_product
                         )
                         # make sure you cannot select pickup if main product does not allow pickup
-                        if not main_product.allow_pickup:
+                        if not main_product.allows_pick_up:
                             is_delivery = True
 
                         # Discount
@@ -2946,9 +2946,17 @@ def my_order_groups(request):
 
         # Get the order groups and group them by user_address.
         addresses = (
-            order_groups.order_by()
+            order_groups.order_by("user_address")
             .values("user_address")
             .annotate(count=Count("user_address"))
+        )
+        # Paginate responses by UserAddress before making db queries.
+        paginator = Paginator(addresses, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+        context["page_obj"] = page_obj
+
+        order_groups = order_groups.filter(
+            user_address__in=[item["user_address"] for item in page_obj]
         )
         booking_groups = [
             {
@@ -2964,12 +2972,9 @@ def my_order_groups(request):
                 # We can assume each address has at least one order group.
                 "address": items[0].user_address,
             }
-            for item in addresses
+            for item in page_obj
         ]
-
-        paginator = Paginator(booking_groups, pagination_limit)
-        page_obj = paginator.get_page(page_number)
-        context["page_obj"] = page_obj
+        context["bookings"] = booking_groups
 
         if page_number is None:
             page_number = 1

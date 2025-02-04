@@ -1,6 +1,6 @@
 {% load static %}
 <div id="order-groups-results">
-  {% for booking_group in page_obj %}
+  {% for booking_group in bookings %}
     <div class="card shadow-sm mb-3">
       <div class="card-header p-4 rounded-3 bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="item-{{ forloop.counter }}">
         <h6 class="mb-0 d-flex align-items-center text-nowrap" style="width: 95%;">
