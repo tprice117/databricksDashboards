@@ -22,7 +22,7 @@ from django.db.models import (
     Max,
     BooleanField,
 )
-from django.db.models import Func
+from django.db.models import Func, IntegerField
 
 from django.db.models.functions import (
     Coalesce,
@@ -37,7 +37,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import now
 
-from api.models import Order, Payout, UserGroup, OrderReview
+from api.models import Order, Payout, UserGroup, OrderReview, User
 from api_proxy import settings
 
 logger = logging.getLogger(__name__)
@@ -969,55 +969,75 @@ def auto_renewal_list_dashboard(request):
     return render(request, "dashboards/auto_renewal_list_dashboard.html", context)
 
 def customer_first_order(request):
-    context = {}
-    user_groups = UserGroup.objects.annotate(
-        user_id=F("user_addresses__order_groups__orders__order_group__user__id"),
-        order_id=F("user_addresses__order_groups__orders__id"),
-        user_group_name=F("name"),
-        user_first_name=F("user_addresses__order_groups__orders__order_group__user__first_name"),
-        user_last_name=F("user_addresses__order_groups__orders__order_group__user__last_name"),
-        user_email=F("user_addresses__order_groups__orders__order_group__user__email"),
+    current_year = timezone.now().year
+    start_date = dt(current_year, 1, 1)
+    end_date = dt(current_year, 12, 31)
+    
+    first_order_users = Order.objects.filter(
+        end_date__range=(start_date, end_date),
+        submitted_on__isnull=False,
+        status="COMPLETE"
+    ).annotate(
+        user_id=F("order_group__user__id"),
+        user_group_name=F("order_group__user__user_group__name"),
+        user_first_name=F("order_group__user__first_name"),
+        user_last_name=F("order_group__user__last_name"),
+        user_email=F("order_group__user__email"),
         first_transaction_date=Subquery(
             Order.objects.filter(
-                order_group__user=OuterRef("user_addresses__order_groups__orders__order_group__user"),
-                submitted_on__isnull=False,
-                status="COMPLETE"
-            )
-            .order_by()
-            .values("order_group__user")
-            .annotate(min_end_date=Min(Func(F("end_date"), function="DATE")))
-            .values("min_end_date")[:1],
+                order_group__user=OuterRef("order_group__user")
+            ).order_by().values("order_group__user").annotate(
+                min_end_date=Min("end_date")
+            ).values("min_end_date")[:1],
             output_field=DateField()
         ),
-        submitted_on=Subquery(
+        first_order_id=Subquery(
             Order.objects.filter(
-                order_group__user=OuterRef("user_addresses__order_groups__orders__order_group__user"),
-                submitted_on__isnull=False,
-                status="COMPLETE"
-            )
-            .order_by()
-            .values("order_group__user")
-            .annotate(submitted_on=Min(Func(F("submitted_on"), function="DATE")))
-            .values("submitted_on")[:1],
+                order_group__user=OuterRef("order_group__user")
+            ).order_by().values("order_group__user").annotate(
+                min_end_date=Min("end_date")
+            ).order_by("min_end_date").values("id")[:1]
+        ),
+        first_order_submitted_on=Subquery(
+            Order.objects.filter(
+                order_group__user=OuterRef("order_group__user")
+            ).order_by().values("order_group__user").annotate(
+                min_end_date=Min("end_date")
+            ).order_by("min_end_date").values("submitted_on")[:1],
             output_field=DateField()
         ),
-        has_order_review=Case(
+        order_review_check=Case(
             When(
                 Exists(
                     OrderReview.objects.filter(
-                        order_id=OuterRef("user_addresses__order_groups__orders__id")
+                        order_id=OuterRef("id")
                     )
                 ),
-                then=Value("Yes"),
+                then=Value("Yes")
             ),
             default=Value("No"),
-            output_field=CharField(),
+            output_field=CharField()
         )
     ).filter(
-        first_transaction_date__year=2025,
+        first_transaction_date__range=(start_date, end_date)
+    ).values(
+        "user_id",
+        "user_group_name",
+        "user_first_name",
+        "user_last_name",
+        "user_email",
+        "first_transaction_date",
+        "first_order_id",
+        "first_order_submitted_on",
+        "order_review_check",
     ).distinct()
-    
-    context["user_groups"] = user_groups
+
+    # Formatting Dates
+    for user in first_order_users:
+        user["first_transaction_date"] = user["first_transaction_date"].strftime("%b. %d, %Y")
+        user["first_order_submitted_on"] = user["first_order_submitted_on"].strftime("%b. %d, %Y")
+
+    context = {"first_order_users": first_order_users}
     return render(request, "dashboards/customer_first_order.html", context)
 
 
