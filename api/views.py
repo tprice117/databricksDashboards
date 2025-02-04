@@ -527,7 +527,15 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Using queryset defined in api/managers/order_group.py
-        return self.queryset.for_user(self.request.user)
+        return (
+            self.queryset.for_user(self.request.user)
+            .prefetch_related(
+                "orders",
+                "user__user_group__users",
+                "seller_product_seller_location__seller_product__product__main_product__main_product_category__industry",
+            )
+            .with_nearest_orders()
+        )
 
 
 class OrderGroupAttachmentViewSet(viewsets.ModelViewSet):

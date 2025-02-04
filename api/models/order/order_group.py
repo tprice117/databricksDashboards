@@ -4,12 +4,12 @@ import uuid
 
 from django.core.files.base import ContentFile
 from django.db import models
+from django.db.models import OuterRef, Prefetch, Subquery
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.db import transaction
 
-from api.managers import OrderGroupManager
 from api.models import Order
 from api.models.day_of_week import DayOfWeek
 from api.models.main_product.main_product import MainProduct
@@ -36,12 +36,84 @@ from api.models.waste_type import WasteType
 from api.utils.agreements.generate_agreement import generate_agreement_pdf
 from chat.models.conversation import Conversation
 from common.models import BaseModel
+from common.models.choices.user_type import UserType
 from common.utils import DistanceUtils
 from common.utils.file_field.get_uuid_file_path import get_uuid_file_path
 from common.utils.generate_code import save_unique_code
 from matching_engine.matching_engine import MatchingEngine
 
 logger = logging.getLogger(__name__)
+
+
+class OrderGroupQuerySet(models.QuerySet):
+    def for_user(self, user):
+        self = self.prefetch_related(
+            "orders__order_line_items",
+            "user__user_group__credit_applications",
+            "seller_product_seller_location__seller_product__product__product_add_on_choices",
+        )
+        self = self.select_related(
+            "user",
+            "user__user_group",
+            "user_address",
+            "waste_type",
+            "time_slot",
+            "service_recurring_frequency",
+            "seller_product_seller_location__seller_product__seller",
+            "seller_product_seller_location__seller_product__product__main_product__main_product_category",
+            "seller_product_seller_location__seller_location__seller",
+        )
+        if user == "ALL" or user.is_staff:
+            # Staff User: If User is Staff or "ALL".
+            return self.all()
+        elif user.user_group and user.type == UserType.ADMIN:
+            # Company Admin: If User is in a UserGroup and is Admin.
+            return self.filter(user__user_group=user.user_group)
+        elif user.user_group and user.type != UserType.ADMIN:
+            # Company Non-Admin: If User is in a UserGroup and is not Admin.
+            return self.filter(user_address__useruseraddress__user=user)
+        else:
+            # Individual User: If User is not in a UserGroup.
+            return self.filter(user=user)
+
+    def with_nearest_orders(self):
+        """
+        Prefetches the nearest orders for each order group.
+        This adds two attributes to each order group:
+        - nearest_future: the nearest future order (after today)
+        - nearest_past: the nearest past order (including today)
+
+        These attributes are lists of length 1, or empty if no such order exists.
+        """
+        today = timezone.now().date()
+        return self.prefetch_related(
+            Prefetch(
+                "orders",
+                queryset=Order.objects.filter(
+                    id__in=Subquery(
+                        Order.objects.filter(
+                            order_group=OuterRef("order_group__pk"), end_date__gt=today
+                        )
+                        .order_by("end_date")
+                        .values("id")[:1]
+                    )
+                ),
+                to_attr="nearest_future",
+            ),
+            Prefetch(
+                "orders",
+                queryset=Order.objects.filter(
+                    id__in=Subquery(
+                        Order.objects.filter(
+                            order_group=OuterRef("order_group__pk"), end_date__lte=today
+                        )
+                        .order_by("-end_date")
+                        .values("id")[:1]
+                    )
+                ),
+                to_attr="nearest_past",
+            ),
+        )
 
 
 @track_data(
@@ -157,7 +229,7 @@ class OrderGroup(BaseModel):
     )
 
     # Managers
-    objects = OrderGroupManager()
+    objects = OrderGroupQuerySet.as_manager()
 
     def __str__(self):
         return f"{self.user.user_group.name if self.user.user_group else ''} - {self.user.email} - {self.seller_product_seller_location.seller_location.seller.name}"
@@ -172,14 +244,15 @@ class OrderGroup(BaseModel):
                 sub_obj.delete()
 
             # Delete any related protected objects, like orders and subscriptions.
-            for order in self.orders.all():
+            orders = self.orders.all()
+            for order in orders:
                 # Need to delete all related objects to the order.
                 # Because they are all Protected
                 for order_item in order.order_items:
                     order_item.delete()
 
             # Delete all related orders (bypass order.delete overide to avoid recursive loop).
-            self.orders.all().delete()
+            orders.delete()
             # Recurse through related bookings, deleting each one.
             for related_booking in self.related_bookings.all():
                 related_booking.delete()
@@ -201,35 +274,33 @@ class OrderGroup(BaseModel):
         # 1) The EndDate is NOT None.
         # 2) The EndDate is in the past.
         end_date_past = self.end_date and self.end_date < timezone.now().date()
+        if not end_date_past:
+            return False
 
         # Check if this OrderGroup is "stale".
         # An OrderGroup is stale if any are True:
         # 1) There are no Orders for the OrderGroup.
         # 2) There is 1 Order in the OrderGroup and the Order.Status is CANCELLED.
-        is_stale = self.orders.count() == 0 or (
+        is_stale = not self.orders.exists() or (
             self.orders.count() == 1
             and self.orders.first().status == Order.Status.CANCELLED
         )
 
-        return not end_date_past and not is_stale
+        return not is_stale
 
     @property
     def status(self):
         # Get all Orders for this OrderGroup.
-        orders = self.orders.all()
+        orders = self.orders.prefetch_related("order_line_items")
 
         # Get any OrderLineItems that are Paid = False and stripe_invoice_line_item_id is not None.
-        unpaid_invoiced_order_line_items = []
-        for order in orders:
-            for order_line_item in order.order_line_items.all():
-                if (
-                    order_line_item.stripe_invoice_line_item_id
-                    and not order_line_item.paid
-                ):
-                    unpaid_invoiced_order_line_items.append(order_line_item)
+        unpaid_invoiced_order_line_items = orders.filter(
+            order_line_items__paid=False,
+            order_line_items__stripe_invoice_line_item_id__isnull=False,
+        ).distinct()
 
         # If there are any unpaid invoiced OrderLineItems, then the OrderGroup is INVOICED.
-        if len(unpaid_invoiced_order_line_items) > 0:
+        if unpaid_invoiced_order_line_items.exists():
             return OrderGroup.Status.INVOICED
 
         # Sort Orders by EndDate (most recent first).
@@ -237,10 +308,8 @@ class OrderGroup(BaseModel):
 
         # If there are no Orders, then the OrderGroup is PENDING.
         order_group_status = OrderGroup.Status.PENDING
-        for order in orders:
-            if order.status == Order.Status.SCHEDULED:
-                order_group_status = OrderGroup.Status.IN_PROGRESS
-                break
+        if orders.filter(status=Order.Status.SCHEDULED).exists():
+            order_group_status = OrderGroup.Status.IN_PROGRESS
 
         return order_group_status
 
@@ -446,18 +515,21 @@ class OrderGroup(BaseModel):
 
     @property
     def order_type(self):
-        orders = self.orders.order_by("-created_on")
-        if orders.count() == 0:
-            return None
-        else:
-            last_order = orders.first()
-            return last_order.order_type
+        last_order = self.orders.order_by("-created_on").first()
+        return last_order.order_type if last_order else None
 
     @property
     def nearest_order(self):
         """Get the nearest order to the current date.
         If it is a future order, return the first future order.
         If it is a past order, return the most recent past order."""
+
+        # If nearest orders have been prefetched, return the nearest order.
+        if hasattr(self, "nearest_future") and hasattr(self, "nearest_past"):
+            nearest = self.nearest_future or self.nearest_past
+            return nearest[0] if nearest else None
+
+        # Otherwise query the database for the nearest order.
         today = datetime.date.today()
 
         # Get the nearest future order
