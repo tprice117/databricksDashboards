@@ -1,4 +1,9 @@
-from .orders.views import OrderViewSet, OrderCancelView, OrderRescheduleView
+from .orders.views import (
+    OrderViewSet,
+    OrderCancelView,
+    OrderRescheduleView,
+    OrderScheduleWindowView,
+)
 from .order_groups.views import (
     OrderGroupViewSet,
     OrderGroupDeliveryView,
