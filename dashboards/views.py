@@ -55,7 +55,7 @@ def sales_dashboard(request):
 def get_sales_dashboard_context(account_owner_id=None):
     context = {}
     date_range_end_date = timezone.now().replace(tzinfo=None)
-    date_range_start_date = (date_range_end_date.replace(day=1) - timedelta(days=1)).replace(month=1, day=1)
+    date_range_start_date = date_range_end_date.replace(year=date_range_end_date.year - 1, day=1)
     delta_month = timezone.now() - timedelta(days=30)
 
     if account_owner_id:
@@ -423,10 +423,7 @@ def get_sales_dashboard_context(account_owner_id=None):
         Order.objects.filter(
             order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
-            end_date__range=[
-                date_range_start_date,
-                min(date_range_end_date, timezone.now().replace(tzinfo=None)),
-            ],
+            end_date__range=[date_range_start_date, date_range_end_date],
         )
         .annotate(month=TruncMonth("end_date"))
         .values("month")
@@ -975,19 +972,33 @@ def customer_first_order(request):
     context = {}
     user_groups = UserGroup.objects.annotate(
         user_id=F("user_addresses__order_groups__orders__order_group__user__id"),
-        order_id=F("user_addresses__order_groups__orders__order_group__user__id"),  # Match order_id with user_id
+        order_id=F("user_addresses__order_groups__orders__id"),
         user_group_name=F("name"),
         user_first_name=F("user_addresses__order_groups__orders__order_group__user__first_name"),
         user_last_name=F("user_addresses__order_groups__orders__order_group__user__last_name"),
         user_email=F("user_addresses__order_groups__orders__order_group__user__email"),
         first_transaction_date=Subquery(
             Order.objects.filter(
-                order_group__user=OuterRef("user_addresses__order_groups__orders__order_group__user")
+                order_group__user=OuterRef("user_addresses__order_groups__orders__order_group__user"),
+                submitted_on__isnull=False,
+                status="COMPLETE"
             )
             .order_by()
             .values("order_group__user")
-            .annotate(min_end_date=Min("end_date"))
+            .annotate(min_end_date=Min(Func(F("end_date"), function="DATE")))
             .values("min_end_date")[:1],
+            output_field=DateField()
+        ),
+        submitted_on=Subquery(
+            Order.objects.filter(
+                order_group__user=OuterRef("user_addresses__order_groups__orders__order_group__user"),
+                submitted_on__isnull=False,
+                status="COMPLETE"
+            )
+            .order_by()
+            .values("order_group__user")
+            .annotate(submitted_on=Min(Func(F("submitted_on"), function="DATE")))
+            .values("submitted_on")[:1],
             output_field=DateField()
         ),
         has_order_review=Case(

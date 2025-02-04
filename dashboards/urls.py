@@ -31,7 +31,7 @@ urlpatterns = [
         name="command_center",
     ),
     path(
-        "sales-leaderboard/",
+        "sales-leaderboard-dev/",
         sales_leaderboard,
         name="sales_leaderboard",
     ),
