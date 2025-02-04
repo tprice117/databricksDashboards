@@ -37,6 +37,7 @@ router.register(
 router.register(r"main-product-categories", views.MainProductCategoryViewSet, "api")
 router.register(r"main-product-infos", views.MainProductInfoViewSet, "api")
 router.register(r"main-products", views.MainProductViewSet, "api")
+router.register(r"main-products-page", views.MainProductPageViewSet)
 router.register(r"main-product-waste-types", views.MainProductWasteTypeViewSet, "api")
 router.register(r"orders", views.OrderViewSet, "api")
 router.register(r"assets", views.assetViewSet, "api")

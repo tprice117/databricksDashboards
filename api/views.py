@@ -22,6 +22,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from requests import Response
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework import status, viewsets
 from rest_framework.decorators import (
     api_view,
@@ -337,6 +338,13 @@ class AddOnViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = AddOnSerializer
     filterset_fields = ["main_product"]
 
+    # Add list view and cache for 2 hour
+    @method_decorator(cache_page(60 * 60 * 2))
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
+
 
 class DisposalLocationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DisposalLocation.objects.all()
@@ -357,6 +365,13 @@ class IndustryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IndustrySerializer
     filterset_fields = ["id", "name"]
 
+    # Add list view and cache for 2 hour
+    @method_decorator(cache_page(60 * 60 * 2))
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
+
 
 @authentication_classes([])
 @permission_classes([])
@@ -364,6 +379,13 @@ class MainProductCategoryGroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductCategoryGroup.objects.all()
     serializer_class = MainProductCategoryGroupSerializer
     filterset_fields = ["id", "name"]
+
+    # Add list view and cache for 2 hour
+    @method_decorator(cache_page(60 * 60 * 2))
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
 
 
 class MainProductAddOnViewSet(viewsets.ReadOnlyModelViewSet):
@@ -379,6 +401,13 @@ class MainProductCategoryInfoViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = MainProductCategoryInfoSerializer
     filterset_fields = ["main_product_category"]
 
+    # Add list view and cache for 2 hour
+    @method_decorator(cache_page(60 * 60 * 2))
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
+
 
 @authentication_classes([])
 @permission_classes([])
@@ -392,8 +421,8 @@ class MainProductCategoryViewSet(viewsets.ReadOnlyModelViewSet):
             "industry",
         )
 
-    # Add list view and cache for 1 hour
-    @method_decorator(cache_page(60 * 60 * 2))  # Cache the view for 2 hours
+    # Add list view and cache for 2 hour
+    @method_decorator(cache_page(60 * 60 * 2))
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         response["Cache-Control"] = "max-age=7200"
@@ -407,6 +436,13 @@ class MainProductInfoViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = MainProductInfoSerializer
     filterset_fields = ["main_product"]
 
+    # Add list view and cache for 2 hour
+    @method_decorator(cache_page(60 * 60 * 2))
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
+
 
 @authentication_classes([])
 @permission_classes([])
@@ -416,13 +452,51 @@ class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ["id", "main_product_category__id", "is_related"]
 
     def get_queryset(self):
-        return self.queryset.prefetch_related(
+        queryset = self.queryset.select_related("main_product_category")
+        return queryset.prefetch_related(
             "add_ons",
             "add_ons__choices",
             "images",
             "products__seller_products__seller_product_seller_locations",
             "products__seller_products__seller_product_seller_locations__order_groups__orders",
+            "main_product_category__industry",
+            "tags",
         )
+
+    # Add list view and cache for 2 hours
+    @method_decorator(cache_page(60 * 60 * 2))
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
+
+
+@authentication_classes([])
+@permission_classes([])
+class MainProductPageViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = MainProduct.objects.all()
+    serializer_class = MainProductSerializer
+    pagination_class = LimitOffsetPagination
+    filterset_fields = ["id", "main_product_category__id", "is_related"]
+
+    def get_queryset(self):
+        queryset = self.queryset.select_related("main_product_category")
+        return queryset.prefetch_related(
+            "add_ons",
+            "add_ons__choices",
+            "images",
+            "products__seller_products__seller_product_seller_locations",
+            "products__seller_products__seller_product_seller_locations__order_groups__orders",
+            "main_product_category__industry",
+            "tags",
+        )
+
+    # Add list view and cache for 2 hours
+    @method_decorator(cache_page(60 * 60 * 2))  # Cache the view for 2 hours
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
 
 
 @authentication_classes([])
@@ -431,6 +505,13 @@ class MainProductWasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProductWasteType.objects.all()
     serializer_class = MainProductWasteTypeSerializer
     filterset_fields = ["main_product"]
+
+    # Add list view and cache for 2 hour
+    @method_decorator(cache_page(60 * 60 * 2))
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
 
 
 class assetViewSet(viewsets.ReadOnlyModelViewSet):
@@ -543,6 +624,13 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         )
         self.queryset = self.queryset.prefetch_related("product_add_on_choices")
         return self.queryset
+
+    # Add list view and cache for 2 hour
+    @method_decorator(cache_page(60 * 60 * 2))
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
 
 
 class SellerProductViewSet(viewsets.ReadOnlyModelViewSet):
@@ -698,6 +786,13 @@ class SellerProductSellerLocationMaterialWasteTypeViewSet(
 class WasteTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = WasteType.objects.all()
     serializer_class = WasteTypeSerializer
+
+    # Add list view and cache for 2 hour
+    @method_decorator(cache_page(60 * 60 * 2))
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response["Cache-Control"] = "max-age=7200"
+        return response
 
 
 # Use-case-specific model views.
