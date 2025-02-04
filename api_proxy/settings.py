@@ -38,7 +38,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
-
 INSTALLED_APPS = [
     # START:  Django Admin Interface
     "admin_interface",
