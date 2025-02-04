@@ -22,7 +22,7 @@ from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.db.models import (
     F,
-    Max,
+    OuterRef,
     Q,
     ExpressionWrapper,
     DurationField,
@@ -32,6 +32,8 @@ from django.db.models import (
     Value,
     When,
     IntegerField,
+    Subquery,
+    Count,
 )
 from django.db.models.functions import Concat, Round, Coalesce
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -2855,7 +2857,7 @@ def bookings_page_settings(request):
 @catch_errors()
 def my_order_groups(request):
     context = get_user_context(request)
-    pagination_limit = 25
+    pagination_limit = 10
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -2865,11 +2867,8 @@ def my_order_groups(request):
 
     query_params = request.GET.copy()
     is_active = request.GET.get("active")
-    if is_active == "on":
-        is_active = True
-    else:
-        is_active = False
-    context["is_active"] = is_active
+    context["is_active"] = is_active == "on"
+
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         my_accounts = request.GET.get("my_accounts")
@@ -2910,7 +2909,12 @@ def my_order_groups(request):
 
         # Select only order_groups where the last order.submitted_on is not null.
         order_groups = order_groups.annotate(
-            last_order_submitted_on=Max("orders__submitted_on")
+            # Using subquery so future annotations are not messed up.
+            last_order_submitted_on=Subquery(
+                Order.objects.filter(order_group=OuterRef("pk"))
+                .order_by("-submitted_on")
+                .values("submitted_on")[:1]
+            )
         ).filter(last_order_submitted_on__isnull=False)
 
         # Active orders are those that have an end_date in the future or are null (recurring orders).
@@ -2925,17 +2929,52 @@ def my_order_groups(request):
             )
 
         # Select related fields to reduce db queries.
-        order_groups = order_groups.select_related(
-            "seller_product_seller_location__seller_product__seller",
-            "seller_product_seller_location__seller_product__product__main_product",
-            # "user_address",
+        order_groups = (
+            order_groups.select_related(
+                "seller_product_seller_location__seller_location",
+                "seller_product_seller_location__seller_product__seller",
+                "seller_product_seller_location__seller_product__product__main_product__main_product_category",
+                "user_address__user__user_group__account_owner",
+            )
+            .prefetch_related(
+                "orders__order_line_items",
+                "seller_product_seller_location__seller_product__product__main_product__images",
+            )
+            .with_nearest_orders()
         )
-        # order_groups = order_groups.prefetch_related("orders")
         order_groups = order_groups.order_by("-end_date")
 
-        paginator = Paginator(order_groups, pagination_limit)
+        # Get the order groups and group them by user_address.
+        addresses = (
+            order_groups.order_by("user_address")
+            .values("user_address")
+            .annotate(count=Count("user_address"))
+        )
+        # Paginate responses by UserAddress before making db queries.
+        paginator = Paginator(addresses, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["page_obj"] = page_obj
+
+        order_groups = order_groups.filter(
+            user_address__in=[item["user_address"] for item in page_obj]
+        )
+        booking_groups = [
+            {
+                # Use list comprehension since .filter() creates a new db query.
+                "items": (
+                    items := [
+                        order_group
+                        for order_group in order_groups
+                        if order_group.user_address.id == item["user_address"]
+                    ]
+                ),
+                "count": item["count"],
+                # We can assume each address has at least one order group.
+                "address": items[0].user_address,
+            }
+            for item in page_obj
+        ]
+        context["bookings"] = booking_groups
 
         if page_number is None:
             page_number = 1
@@ -2964,7 +3003,7 @@ def my_order_groups(request):
         context["page_end_link"] = f"/customer/order_groups/?{query_params.urlencode()}"
 
         return render(
-            request, "customer_dashboard/snippets/order_groups_table.html", context
+            request, "customer_dashboard/snippets/order_groups_list.html", context
         )
     else:
         if query_params.get("active") is None:
@@ -5078,7 +5117,7 @@ def create_lead_board(leads):
             {
                 "name": status_name,
                 "value": status,
-                "leads": leads.filter(status=status),
+                "leads": [lead for lead in leads if lead.status == status],
             }
         )
     return board
