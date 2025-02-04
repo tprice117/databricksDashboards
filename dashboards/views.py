@@ -55,7 +55,7 @@ def sales_dashboard(request):
 def get_sales_dashboard_context(account_owner_id=None):
     context = {}
     date_range_end_date = timezone.now().replace(tzinfo=None)
-    date_range_start_date = (date_range_end_date.replace(day=1) - timedelta(days=1)).replace(month=1, day=1)
+    date_range_start_date = date_range_end_date.replace(year=date_range_end_date.year - 1, day=1)
     delta_month = timezone.now() - timedelta(days=30)
 
     if account_owner_id:
@@ -423,10 +423,7 @@ def get_sales_dashboard_context(account_owner_id=None):
         Order.objects.filter(
             order_filter,
             Q(status="COMPLETE") | Q(status="SCHEDULED"),
-            end_date__range=[
-                date_range_start_date,
-                min(date_range_end_date, timezone.now().replace(tzinfo=None)),
-            ],
+            end_date__range=[date_range_start_date, date_range_end_date],
         )
         .annotate(month=TruncMonth("end_date"))
         .values("month")
