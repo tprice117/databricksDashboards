@@ -972,7 +972,7 @@ def customer_first_order(request):
     context = {}
     user_groups = UserGroup.objects.annotate(
         user_id=F("user_addresses__order_groups__orders__order_group__user__id"),
-        order_id=F("user_addresses__order_groups__orders__order_group__user__id"),  # Match order_id with user_id
+        order_id=F("user_addresses__order_groups__orders__id"),
         user_group_name=F("name"),
         user_first_name=F("user_addresses__order_groups__orders__order_group__user__first_name"),
         user_last_name=F("user_addresses__order_groups__orders__order_group__user__last_name"),
