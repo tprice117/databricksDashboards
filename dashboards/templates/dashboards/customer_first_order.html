@@ -1,5 +1,10 @@
-{% extends 'dashboards/base.html' %} {% load static %} {% load humanize %}
-{% block title %} Customer First Order Dashboard {% endblock %} {% block content %}
+{% extends 'dashboards/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Customer First Order Dashboard{% endblock %}
+
+{% block content %}
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -25,7 +30,8 @@
       width: 100%;
       border-collapse: collapse;
     }
-    th, td {
+    th,
+    td {
       padding: 8px;
       text-align: left;
       border-bottom: 1px solid #ddd;
@@ -38,63 +44,43 @@
   <table id="customer-first-order-table">
     <thead>
       <tr>
+        <th style="display:none;">User ID</th>
         <th>Order ID</th>
         <th>User Group Name</th>
         <th>User First Name</th>
         <th>User Last Name</th>
         <th>User Email</th>
-        <th>submitted On</th>
+        <th>Submitetd on Date</th>
         <th>First Transaction Date</th>
-        <th>Has Order Review?</th>
+        <th>Order Review Check</th>
       </tr>
     </thead>
     <tbody>
-      {% for group in user_groups %}
-      <tr class="order-row" data-status="{{ group.status }}">
-        <td>{{ group.order_id }}</td>
-        <td>{{ group.user_group_name }}</td>
-        <td>{{ group.user_first_name }}</td>
-        <td>{{ group.user_last_name }}</td>
-        <td>{{ group.user_email }}</td>
-        <td>{{ group.submitted_on }}</td>
-        <td>{{ group.first_transaction_date }}</td>
-        <td>{{ group.has_order_review }}</td>
+      {% for user in first_order_users %}
+      <tr>
+        <td style="display:none;">{{ user.user_id }}</td>
+        <td>{{ user.first_order_id }}</td>
+        <td>{{ user.user_group_name }}</td>
+        <td>{{ user.user_first_name }}</td>
+        <td>{{ user.user_last_name }}</td>
+        <td>{{ user.user_email }}</td>
+        <td>{{ user.first_order_submitted_on }}</td>
+        <td>{{ user.first_transaction_date }}</td>
+        <td>{{ user.order_review_check }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 
-<script>
+  <script>
     document.addEventListener("DOMContentLoaded", function () {
-        var table = new DataTable("#customer-first-order-table", {
-            pageLength: 50,
-            columnDefs: [
-                { type: 'date', targets: 5 } // Assuming the date column is the 6th column (index 5)
-            ]
-        });
-        document.querySelectorAll(".status-filter").forEach(function (checkbox) {
-            checkbox.addEventListener("change", function () {
-                var selectedStatuses = Array.from(
-                    document.querySelectorAll(".status-filter:checked")
-                ).map(function (cb) {
-                    return cb.value;
-                });
-
-                document.querySelectorAll(".order-row").forEach(function (row) {
-                    if (
-                        selectedStatuses.length === 0 ||
-                        selectedStatuses.includes(row.dataset.status)
-                    ) {
-                        row.style.display = "";
-                    } else {
-                        row.style.display = "none";
-                    }
-                });
-                table.draw();
-            });
-        });
+      var table = new DataTable("#customer-first-order-table", {
+        pageLength: 50,
+        columnDefs: [
+          { type: 'date', targets: [6, 7] }
+        ]
+      });
     });
-</script>
+  </script>
 </body>
-
 {% endblock %}
