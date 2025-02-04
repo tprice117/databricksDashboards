@@ -979,12 +979,26 @@ def customer_first_order(request):
         user_email=F("user_addresses__order_groups__orders__order_group__user__email"),
         first_transaction_date=Subquery(
             Order.objects.filter(
-                order_group__user=OuterRef("user_addresses__order_groups__orders__order_group__user")
+                order_group__user=OuterRef("user_addresses__order_groups__orders__order_group__user"),
+                submitted_on__isnull=False,
+                status="COMPLETE"
             )
             .order_by()
             .values("order_group__user")
-            .annotate(min_end_date=Min("end_date"))
+            .annotate(min_end_date=Min(Func(F("end_date"), function="DATE")))
             .values("min_end_date")[:1],
+            output_field=DateField()
+        ),
+        submitted_on=Subquery(
+            Order.objects.filter(
+                order_group__user=OuterRef("user_addresses__order_groups__orders__order_group__user"),
+                submitted_on__isnull=False,
+                status="COMPLETE"
+            )
+            .order_by()
+            .values("order_group__user")
+            .annotate(submitted_on=Min(Func(F("submitted_on"), function="DATE")))
+            .values("submitted_on")[:1],
             output_field=DateField()
         ),
         has_order_review=Case(
