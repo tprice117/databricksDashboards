@@ -3,4 +3,7 @@ from .order_groups.serializers import (
     OrderGroupAccessDetailsRequestSerializer,
     OrderGroupPlacementDetailsRequestSerializer,
 )
-from .orders.serializers import OrderRescheduleRequestSerializer
+from .orders.serializers import (
+    OrderRescheduleRequestSerializer,
+    OrderScheduleWindowRequestSerializer,
+)

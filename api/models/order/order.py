@@ -1518,6 +1518,16 @@ class Order(BaseModel):
         self.save()
         return True
 
+    def update_schedule_window(self, schedule_window):
+        """This method updates an order's schedule window (this should only be done while it is still in the cart)."""
+        if self.submitted_on:
+            raise ValidationError(
+                "Order schedule window may only be updated in the cart."
+            )
+        if self.schedule_window != schedule_window:
+            self.schedule_window = schedule_window
+            self.save()
+
     def __str__(self):
         return (
             self.order_group.seller_product_seller_location.seller_product.product.main_product.name
