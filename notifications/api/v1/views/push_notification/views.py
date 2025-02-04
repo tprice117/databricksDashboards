@@ -8,7 +8,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException
 
-from notifications.api.v1.serializers import PushNotificationSerializer
+from notifications.api.v1.serializers import (
+    PushNotificationSerializer,
+    PushNotificationReadAllResponseSerializer,
+)
 from notifications.models import PushNotification, PushNotificationTo
 
 
@@ -30,18 +33,26 @@ class PushNotificationViewSet(
 class PushNotificationReadAllView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        responses={
+            200: PushNotificationReadAllResponseSerializer,
+        },
+    )
     def post(self, request, *args, **kwargs):
         """
         Mark all Push Notifications of logged in user as read.
-        Returns:
-          200 Ok.
         """
-
         try:
-            PushNotificationTo.objects.filter(
+            read_count = PushNotificationTo.objects.filter(
                 user=self.request.user, is_read=False
             ).update(is_read=True, read_at=timezone.now())
-            return Response("OK", status=status.HTTP_200_OK)
+
+            custom_data = {
+                "message": "All notifications marked as read",
+                "status": "success",
+                "read_count": read_count,
+            }
+            return Response(custom_data, status=status.HTTP_200_OK)
         except Exception as e:
             raise APIException(str(e))
 

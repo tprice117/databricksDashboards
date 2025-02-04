@@ -9,3 +9,9 @@ class PushNotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = PushNotification
         fields = "__all__"
+
+
+class PushNotificationReadAllResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+    status = serializers.CharField()
+    read_count = serializers.IntegerField()
