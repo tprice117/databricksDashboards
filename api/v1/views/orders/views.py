@@ -13,7 +13,10 @@ from django_filters import rest_framework as filters
 from api.serializers import OrderSerializer
 from api.models import Order
 from api.filters import OrderFilterset
-from api.v1.serializers import OrderRescheduleRequestSerializer
+from api.v1.serializers import (
+    OrderRescheduleRequestSerializer,
+    OrderScheduleWindowRequestSerializer,
+)
 
 
 class OrderViewSet(
@@ -81,6 +84,41 @@ class OrderRescheduleView(APIView):
         try:
             service_date = serializer.validated_data["date"]
             order.reschedule_order(service_date)
+            return Response(OrderSerializer(order).data)
+        except ValidationError as e:
+            raise DRFValidationError(str(e))
+        except Exception as e:
+            raise APIException(str(e))
+
+
+class OrderScheduleWindowView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=OrderScheduleWindowRequestSerializer,
+        responses={
+            200: OrderSerializer(),
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        """
+        Updates an Order ScheduleWindow.
+        Returns:
+          The Order.
+        """
+        order_id = self.kwargs.get("order_id")
+        # Convert request into serializer.
+        serializer = OrderScheduleWindowRequestSerializer(data=request.data)
+
+        # Validate serializer.
+        if not serializer.is_valid():
+            raise DRFValidationError(serializer.errors)
+
+        order = Order.objects.get(id=order_id)
+
+        try:
+            schedule_window = serializer.validated_data["schedule_window"]
+            order.update_schedule_window(schedule_window)
             return Response(OrderSerializer(order).data)
         except ValidationError as e:
             raise DRFValidationError(str(e))

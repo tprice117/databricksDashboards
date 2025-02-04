@@ -6,6 +6,7 @@ from api.v1.views import (
     OrderViewSet,
     OrderCancelView,
     OrderRescheduleView,
+    OrderScheduleWindowView,
     OrderGroupDeliveryView,
     OrderGroupOneTimeView,
     OrderGroupPickupView,
@@ -66,5 +67,10 @@ urlpatterns += [
         "orders/<uuid:order_id>/reschedule/",
         OrderRescheduleView.as_view(),
         name="api_order_reschedule",
+    ),
+    path(
+        "orders/<uuid:order_id>/schedule-window/",
+        OrderScheduleWindowView.as_view(),
+        name="api_order_schedule_window",
     ),
 ]
