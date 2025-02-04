@@ -1,5 +1,10 @@
-{% extends 'dashboards/base.html' %} {% load static %} {% load humanize %} {%
-block title %}Customer First Order Dashboard{% endblock %} {% block content %}
+{% extends 'dashboards/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Customer First Order Dashboard{% endblock %}
+
+{% block content %}
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,17 +12,11 @@ block title %}Customer First Order Dashboard{% endblock %} {% block content %}
   <script src="https://unpkg.com/htmx.org@1.6.1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/htmx.org@1.6.1"></script>
-
-  <link
-    rel="stylesheet"
-    href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css"
-  />
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
   <script defer src="https://code.jquery.com/jquery-3.7.1.js"></script>
-  <script
-    defer
-    src="https://cdn.datatables.net/2.1.8/js/dataTables.js"
-  ></script>
+  <script defer src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
 </head>
+
 <body>
   <h1>Customer First Orders</h1>
   <style>
@@ -25,8 +24,7 @@ block title %}Customer First Order Dashboard{% endblock %} {% block content %}
       width: 100%;
       border-collapse: collapse;
     }
-    th,
-    td {
+    th, td {
       padding: 8px;
       text-align: left;
       border-bottom: 1px solid #ddd;
@@ -64,9 +62,7 @@ block title %}Customer First Order Dashboard{% endblock %} {% block content %}
         <td>{{ user.user_email }}</td>
         <td>{{ user.first_order_submitted_on }}</td>
         <td>{{ user.first_transaction_date }}</td>
-        <td
-          style="color: {% if user.order_review_check == 'Yes' %}lightgreen{% elif user.order_review_check == 'No' %}lightcoral{% endif %};"
-        >
+        <td style="color: {% if user.order_review_check == 'Yes' %}lightgreen{% elif user.order_review_check == 'No' %}lightcoral{% endif %};">
           {{ user.order_review_check }}
         </td>
       </tr>
