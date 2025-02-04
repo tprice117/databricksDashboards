@@ -66,7 +66,9 @@
         <td>{{ user.user_email }}</td>
         <td>{{ user.first_order_submitted_on }}</td>
         <td>{{ user.first_transaction_date }}</td>
-        <td>{{ user.order_review_check }}</td>
+        <td style="color: {% if user.order_review_check == 'Yes' %}lightgreen{% elif user.order_review_check == 'No' %}lightcoral{% endif %};">
+          {{ user.order_review_check }}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
