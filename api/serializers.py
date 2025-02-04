@@ -568,6 +568,14 @@ class IndustrySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class IndustrySlimSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = Industry
+        fields = "__all__"
+
+
 class MainProductAddOnSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
 
@@ -581,7 +589,7 @@ class MainProductCategorySerializer(serializers.ModelSerializer):
     main_product_category_infos = MainProductCategoryInfoSerializer(
         many=True, read_only=True
     )
-    industry = IndustrySerializer(many=True, read_only=True)
+    industry = IndustrySlimSerializer(many=True, read_only=True)
 
     class Meta:
         model = MainProductCategory
@@ -592,6 +600,29 @@ class MainProductCategorySerializer(serializers.ModelSerializer):
         expanded_fields = super(MainProductCategorySerializer, self).get_field_names(
             declared_fields, info
         )
+
+        if getattr(self.Meta, "extra_fields", None):
+            return expanded_fields + self.Meta.extra_fields
+        else:
+            return expanded_fields
+
+
+class MainProductCategorySlim2Serializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=False, allow_null=True)
+    main_product_category_infos = MainProductCategoryInfoSerializer(
+        many=True, read_only=True
+    )
+    industry = IndustrySlimSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = MainProductCategory
+        fields = "__all__"
+        extra_fields = ["main_product_category_infos"]
+
+    def get_field_names(self, declared_fields, info):
+        expanded_fields = super(
+            MainProductCategorySlim2Serializer, self
+        ).get_field_names(declared_fields, info)
 
         if getattr(self.Meta, "extra_fields", None):
             return expanded_fields + self.Meta.extra_fields
@@ -626,7 +657,7 @@ class MainProductTagSerializer(serializers.ModelSerializer):
 
 class MainProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
-    main_product_category = MainProductCategorySerializer(read_only=True)
+    main_product_category = MainProductCategorySlim2Serializer(read_only=True)
     main_product_infos = MainProductInfoSerializer(many=True, read_only=True)
     images = serializers.SerializerMethodField()
     add_ons = AddOnSerializer(many=True, read_only=True)
