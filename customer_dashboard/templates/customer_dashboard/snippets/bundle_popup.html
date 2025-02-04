@@ -267,10 +267,10 @@
                         <div class="card-body mb-4" style="justify-content: center; display: flex; background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-truck" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/truck.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -278,10 +278,10 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="far fa-circle" style="color: black; font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: transparent; border-width: 4px; border: solid; border-color: black;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-money-bill" style="color: black; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" style="filter: invert(100%);" src="{% static 'customer_dashboard/svg-loaders/dollar.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -289,15 +289,16 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="far fa-circle" style="color: black; font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: transparent; border-width: 4px; border: solid; border-color: black;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-check" style="color: black; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" style="filter: invert(100%);" src="{% static 'customer_dashboard/svg-loaders/check-circle.svg' %}" />
                                 </div>
                             </div>
                         </div>
                         {% for cart_address in cart %}
                             <div id="cart-address-{{forloop.counter}}">
+                                <p class="bundle-list-header">Order in the Cart for: {{ cart_address.address }}</p>
                                 <div class="accordion" role="tablist" id="bundle-results">
                                     {% for seller_address in seller_addresses %}
                                         <div class="accordion-item" style="border: none; margin-bottom: 25px" id="seller-address-{{forloop.counter}}">
@@ -373,10 +374,10 @@
                         <div class="card-body mb-4" style="justify-content: center; display: flex; background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-truck" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/truck.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -384,10 +385,10 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-money-bill" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/dollar.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -395,15 +396,16 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="far fa-circle" style="color: black; font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: transparent; border-width: 4px; border: solid; border-color: black;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-check" style="color: black; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" style="filter: invert(100%);" src="{% static 'customer_dashboard/svg-loaders/check-circle.svg' %}" />
                                 </div>
                             </div>
                         </div>
                         {% for cart_address in cart %}
                             <div id="cart-bundle-address-{{forloop.counter}}">
+                                <p class="bundle-list-header">Order in the Cart for: {{ cart_address.address }}</p>
                                 <div class="accordion" role="tablist" id="bundle-results-2">
                                     <i class="fas fa-exclamation-triangle text-danger" id="empty-bundle-warning-{{forloop.counter}}" style="display: none;">No items in this bundle!</i>
                                     {% for seller_address in seller_addresses %}
@@ -494,10 +496,10 @@
                         <div class="card-body mb-4" style="justify-content: center; display: flex; background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-truck" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/truck.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -505,10 +507,10 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-money-bill" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/dollar.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -516,15 +518,16 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-check" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/check-circle.svg' %}" />
                                 </div>
                             </div>
                         </div>
                         {% for cart_address in cart %}
                             <div id="cart-bundle-confirm-address-{{forloop.counter}}">
+                                <p class="bundle-list-header">Order in the Cart for: {{ cart_address.address }}</p>
                                 <div class="accordion" role="tablist" id="bundle-results-3">
                                     <h4 id="empty-bundle-info-{{forloop.counter}}" style="display: none;">Empty bundles will be removed!</h4>
                                     {% for seller_address in seller_addresses %}
