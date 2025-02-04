@@ -2,323 +2,226 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Bookings
+  Bookings
 {% endblock %}
 {% block stylesheet %}
-    <style></style>
+  <style></style>
 {% endblock %}
 {% block javascript %}
-    <script>
-        let activeFilter = document.getElementById("order-group-active-filter");
-        function updateColumnsVisibility() {
-            // Update the visibility of the columns based on the user's settings
-            document.querySelectorAll(".column-checkbox").forEach(function (el) {
-                // Get the column value
-                const column = el.value;
-                // Get the table element
-                const tableEl = document.getElementById("order-groups-results");
-                if (!tableEl) {
-                    return;
-                }
-                let sessionValue = undefined;
-                if (column === "product") {
-                    sessionValue = '{{ request.session.bookings_page_settings_product|default_if_none:"True" }}';
-                    sessionValue = sessionValue === "" ? "True" : sessionValue;
-                } else if (column === "location") {
-                    sessionValue = '{{ request.session.bookings_page_settings_location|default_if_none:"True" }}';
-                    sessionValue = sessionValue === "" ? "True" : sessionValue;
-                } else if (column === "location_name") {
-                    sessionValue = "{{ request.session.bookings_page_settings_location_name }}";
-                } else if (column === "booking_project_id") {
-                    sessionValue = "{{ request.session.bookings_page_settings_booking_project_id }}";
-                } else if (column === "company_name") {
-                    sessionValue = '{{ request.session.bookings_page_settings_company_name|default_if_none:"True" }}';
-                    sessionValue = sessionValue === "" ? "True" : sessionValue;
-                } else if (column === "supplier") {
-                    sessionValue = '{{ request.session.bookings_page_settings_supplier|default_if_none:"True" }}';
-                    sessionValue = sessionValue === "" ? "True" : sessionValue;
-                } else if (column === "order_type") {
-                    sessionValue = "{{ request.session.bookings_page_settings_order_type }}";
-                } else if (column === "status") {
-                    sessionValue = "{{ request.session.bookings_page_settings_status }}";
-                } else if (column === "account_manager") {
-                    sessionValue = "{{ request.session.bookings_page_settings_account_manager }}";
-                } else if (column === "start_date") {
-                    sessionValue = '{{ request.session.bookings_page_settings_start_date|default_if_none:"True" }}';
-                    sessionValue = sessionValue === "" ? "True" : sessionValue;
-                } else if (column === "nearest_order") {
-                    sessionValue = "{{ request.session.bookings_page_settings_nearest_order }}";
-                }
-                if (sessionValue === undefined) {
-                    return;
-                }
-                // Update current column checkbox checked attribute
-                el.checked = sessionValue === "True";
-                // Get the table column
-                const elList = tableEl.getElementsByClassName(column);
-                // Update the visibility of the column
-                for (let i = 0; i < elList.length; i++) {
-                    if (sessionValue === "True") {
-                        // Remove the d-none class
-                        elList[i].classList.remove("d-none");
-                    } else {
-                        // Add the d-none class
-                        elList[i].classList.add("d-none");
-                    }
-                }
-            });
+  <script>
+    let activeFilter = document.getElementById('order-group-active-filter')
+    function updateColumnsVisibility() {
+      // Update the visibility of the columns based on the user's settings
+      document.querySelectorAll('.column-checkbox').forEach(function (el) {
+        // Get the column value
+        const column = el.value
+        // Get the table element
+        const tableEl = document.getElementById('order-groups-results')
+        if (!tableEl) {
+          return
         }
-        // listen for page load event.
-        // NOTE: Do this first so that the date filter value is set before the change listener is added.
-        document.addEventListener("DOMContentLoaded", function () {
-            // Check if query params has active filter
-            const urlParams = new URLSearchParams(window.location.search);
-            const is_active = urlParams.get("active");
-            if (is_active) {
-                // update date filter value
-                activeFilter.checked = true;
-            }
-            const myAccounts = urlParams.get("my_accounts");
-            if (myAccounts) {
-                // update my_accounts value
-                document.getElementById("order-group-mine-filter").checked = true;
-            }
-            const searchFilter = document.getElementById("location-search-filter");
-            const searchq = urlParams.get("q");
-            if (searchq) {
-                // update date filter value
-                searchFilter.value = searchq;
-            }
-            updateColumnsVisibility();
-        });
-        // listen for htmx afterSettle event.
-        document.body.addEventListener("htmx:afterSettle", function (event) {
-            console.log("htmx:afterSettle", event);
-            updateColumnsVisibility();
-        });
-        function selectActiveFilter(el) {
-            // Get current query params.
-            let queryParams = new URLSearchParams(window.location.search);
-            // Check if date filter has a value
-            if (el.checked) {
-                // update current queryParams for active filter url
-                queryParams.set("active", encodeURIComponent(1));
-            } else {
-                // update current queryParams for in-active filter url
-                queryParams.set("active", encodeURIComponent(0));
-            }
-            // update date filter url with current queryParams
-            const activeFilterUrl = "{% url 'customer_order_groups' %}?" + queryParams.toString();
-        
-            // update hx-get attribute of date filter and tab urls
-            htmx.find("#order-group-active-filter").setAttribute("hx-get", activeFilterUrl);
-            // force htmx to process the new hx-get attributes
-            htmx.process("#order-group-active-filter");
-            // trigger onActiveFilter event
-            htmx.trigger(el, "onActiveFilter");
+        let sessionValue = undefined
+        if (column === 'product') {
+          sessionValue = '{{ request.session.bookings_page_settings_product|default_if_none:"True" }}'
+          sessionValue = sessionValue === '' ? 'True' : sessionValue
+        } else if (column === 'location') {
+          sessionValue = '{{ request.session.bookings_page_settings_location|default_if_none:"True" }}'
+          sessionValue = sessionValue === '' ? 'True' : sessionValue
+        } else if (column === 'location_name') {
+          sessionValue = '{{ request.session.bookings_page_settings_location_name }}'
+        } else if (column === 'booking_project_id') {
+          sessionValue = '{{ request.session.bookings_page_settings_booking_project_id }}'
+        } else if (column === 'company_name') {
+          sessionValue = '{{ request.session.bookings_page_settings_company_name|default_if_none:"True" }}'
+          sessionValue = sessionValue === '' ? 'True' : sessionValue
+        } else if (column === 'supplier') {
+          sessionValue = '{{ request.session.bookings_page_settings_supplier|default_if_none:"True" }}'
+          sessionValue = sessionValue === '' ? 'True' : sessionValue
+        } else if (column === 'order_type') {
+          sessionValue = '{{ request.session.bookings_page_settings_order_type }}'
+        } else if (column === 'status') {
+          sessionValue = '{{ request.session.bookings_page_settings_status }}'
+        } else if (column === 'account_manager') {
+          sessionValue = '{{ request.session.bookings_page_settings_account_manager }}'
+        } else if (column === 'start_date') {
+          sessionValue = '{{ request.session.bookings_page_settings_start_date|default_if_none:"True" }}'
+          sessionValue = sessionValue === '' ? 'True' : sessionValue
+        } else if (column === 'nearest_order') {
+          sessionValue = '{{ request.session.bookings_page_settings_nearest_order }}'
         }
-        // Add change event listener to date filter
-        activeFilter.addEventListener("change", function () {
-            // selectActiveFilter(this);
-        });
-        
-        async function updateColumnSettings(column, isChecked) {
-            const data = new URLSearchParams();
-            data.append("column", column);
-            data.append("is_checked", isChecked);
-            const response = await fetch("{% url 'customer_bookings_page_settings' %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "X-CSRFToken": "{{ csrf_token }}",
-                },
-                body: data.toString(),
-            });
-            if (response.ok) {
-                console.log("Booking Page Settings updated successfully");
-            } else {
-                console.error("Failed update Booking Page Settings", response, response.statusText);
-            }
+        if (sessionValue === undefined) {
+          return
         }
-        // Add onchange event listener to all column-checkbox
-        document.querySelectorAll(".column-checkbox").forEach(function (el) {
-            el.addEventListener("change", function () {
-                // Get the column value
-                const column = el.value;
-                // Get if checkbox is checked
-                const isChecked = el.checked;
-                // Get the table element
-                const tableEl = document.getElementById("order-groups-results");
-                if (!tableEl) {
-                    return;
-                }
-                // Get the table column
-                const elList = tableEl.getElementsByClassName(column);
-                // Update the visibility of the column
-                for (let i = 0; i < elList.length; i++) {
-                    if (isChecked) {
-                        // Remove the d-none class
-                        elList[i].classList.remove("d-none");
-                    } else {
-                        // Add the d-none class
-                        elList[i].classList.add("d-none");
-                    }
-                    // tds[0].style.display = isChecked ? "table-cell" : "none";
-                }
-                updateColumnSettings(column, isChecked);
-            });
-        });
-    </script>
+        // Update current column checkbox checked attribute
+        el.checked = sessionValue === 'True'
+        // Get the table column
+        const elList = tableEl.getElementsByClassName(column)
+        // Update the visibility of the column
+        for (let i = 0; i < elList.length; i++) {
+          if (sessionValue === 'True') {
+            // Remove the d-none class
+            elList[i].classList.remove('d-none')
+          } else {
+            // Add the d-none class
+            elList[i].classList.add('d-none')
+          }
+        }
+      })
+    }
+    // listen for page load event.
+    // NOTE: Do this first so that the date filter value is set before the change listener is added.
+    document.addEventListener('DOMContentLoaded', function () {
+      // Check if query params has active filter
+      const urlParams = new URLSearchParams(window.location.search)
+      const is_active = urlParams.get('active')
+      if (is_active) {
+        // update date filter value
+        activeFilter.checked = true
+      }
+      const myAccounts = urlParams.get('my_accounts')
+      if (myAccounts) {
+        // update my_accounts value
+        document.getElementById('order-group-mine-filter').checked = true
+      }
+      const searchFilter = document.getElementById('location-search-filter')
+      const searchq = urlParams.get('q')
+      if (searchq) {
+        // update date filter value
+        searchFilter.value = searchq
+      }
+      updateColumnsVisibility()
+    })
+    
+    function selectActiveFilter(el) {
+      // Get current query params.
+      let queryParams = new URLSearchParams(window.location.search)
+      // Check if date filter has a value
+      if (el.checked) {
+        // update current queryParams for active filter url
+        queryParams.set('active', encodeURIComponent(1))
+      } else {
+        // update current queryParams for in-active filter url
+        queryParams.set('active', encodeURIComponent(0))
+      }
+      // update date filter url with current queryParams
+      const activeFilterUrl = "{% url 'customer_order_groups' %}?" + queryParams.toString()
+    
+      // update hx-get attribute of date filter and tab urls
+      htmx.find('#order-group-active-filter').setAttribute('hx-get', activeFilterUrl)
+      // force htmx to process the new hx-get attributes
+      htmx.process('#order-group-active-filter')
+      // trigger onActiveFilter event
+      htmx.trigger(el, 'onActiveFilter')
+    }
+    // Add change event listener to date filter
+    activeFilter.addEventListener('change', function () {
+      // selectActiveFilter(this);
+    })
+    
+    async function updateColumnSettings(column, isChecked) {
+      const data = new URLSearchParams()
+      data.append('column', column)
+      data.append('is_checked', isChecked)
+      const response = await fetch("{% url 'customer_bookings_page_settings' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: data.toString()
+      })
+      if (response.ok) {
+        console.log('Booking Page Settings updated successfully')
+      } else {
+        console.error('Failed update Booking Page Settings', response, response.statusText)
+      }
+    }
+    // Add onchange event listener to all column-checkbox
+    document.querySelectorAll('.column-checkbox').forEach(function (el) {
+      el.addEventListener('change', function () {
+        // Get the column value
+        const column = el.value
+        // Get if checkbox is checked
+        const isChecked = el.checked
+        // Get the table element
+        const tableEl = document.getElementById('order-groups-results')
+        if (!tableEl) {
+          return
+        }
+        // Get the table column
+        const elList = tableEl.getElementsByClassName(column)
+        // Update the visibility of the column
+        for (let i = 0; i < elList.length; i++) {
+          if (isChecked) {
+            // Remove the d-none class
+            elList[i].classList.remove('d-none')
+          } else {
+            // Add the d-none class
+            elList[i].classList.add('d-none')
+          }
+          // tds[0].style.display = isChecked ? "table-cell" : "none";
+        }
+        updateColumnSettings(column, isChecked)
+      })
+    })
+  </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-        <div class="d-sm-flex justify-content-between align-items-center mb-4">
-            <h3 class="text-dark mb-0">Bookings</h3><a class="btn btn-primary btn-sm d-sm-inline-block" role="button" href="{% url 'customer_new_order' %}"><i class="fas fa-plus-square fa-sm text-white-50"></i>&nbsp;Create New Booking</a>
-        </div>
-        <div class="row">
-            <div class="col">
-                <div class="container-lg mb-4 border border-primary-subtle rounded-3 pt-4 pb-4">
-                    <form class="row g-3" action="{% url 'customer_order_groups' %}" method="get" hx-get="{% url 'customer_order_groups' %}" hx-disabled-elt="button" hx-target="#order-groups-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
-                        <div class="col-12">
-                            <label for="location-search-filter">Search (address, supplier, PO ID)</label>
-                            <input id="location-search-filter" class="form-control" type="search" name="q" />
-                        </div>
-                        <div class="col-12">
-                            <div class="form-check form-switch">
-                                <input id="order-group-active-filter" class="form-control form-check-input" type="checkbox" checked="" name="active" />
-                                <label class="form-check-label" for="order-group-active-filter">Active Bookings</label>
-                            </div>
-                        </div>
-                        {% if request.user.is_staff %}
-                            <div class="col-12">
-                                <div class="form-check form-switch">
-                                    <input class="form-control form-check-input" type="checkbox" id="order-group-mine-filter" checked="" name="my_accounts" />
-                                    <label class="form-check-label" for="order-group-mine-filter">My Accounts (Filters only on accounts that you manage.)</label>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <a class="btn btn-link" href="{% url 'supplier_bookings' %}?tab=PENDING&my_accounts=on">Submitted Orders for My Account</a>
-                            </div>
-                        {% endif %}
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary float-end">Filter <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars.svg' %}" /></span></button>
-                        </div>
-                    </form>
-                </div>
+  <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
+    <h3 class="text-dark mb-2" data-cart-count="{{ cart_count }}"><strong>Bookings</strong></h3>
+    <form action="{% url 'customer_order_groups' %}" method="get" hx-get="{% url 'customer_order_groups' %}" hx-disabled-elt="button" hx-target="#order-groups-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+      <div class="row mb-0 pb-3 align-items-end justify-content-between flex-nowrap overflow-x-auto">
+        {% if request.user.is_staff %}
+          <div class="col-auto flex-nowrap me-1">
+            <div class="border rounded-4 border-dark p-2">
+              <div class="form-check form-switch px-1 d-flex flex-row align-items-center">
+                <label class="form-check-label float-start text-dark" for="order-group-mine-filter"><strong>My Accounts</strong></label>
+                <input class="form-control form-check-input float-end ms-3" style="width: 3rem; height: 1.5rem;" type="checkbox" id="order-group-mine-filter" name="my_accounts" />
+              </div>
             </div>
+          </div>
+        {% endif %}
+        <div class="col-auto flex-nowrap me-3">
+          <div class="border rounded-4 border-dark p-2">
+            <div class="form-check form-switch px-1 d-flex flex-row align-items-center">
+              <label class="form-check-label float-start text-dark" for="order-group-active-filter"><strong>Active Bookings</strong></label>
+              <input class="form-control form-check-input float-end ms-3" style="width: 3rem; height: 1.5rem;" type="checkbox" id="order-group-active-filter" name="active" />
+            </div>
+          </div>
         </div>
+        <div class="col text-nowrap" style="max-width: 500px;">
+          <label for="location-search-filter" class="mb-1"><small>Search (Supplier, Address, PO ID)</small></label>
+          <div class="input-group border border-dark rounded-2">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input id="location-search-filter" class="form-control text-dark" placeholder="Supplier, Address, or Project ID..." type="search" name="q" />
+          </div>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary shadow float-end">Go <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+        </div>
+        <div class="col"></div>
+      </div>
+    </form>
 
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <div class="dropdown">
-                    <button class="btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Modify Columns</button>
-                    <ul class="dropdown-menu p-4">
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="product" id="column-product" checked />
-                                <label class="form-check-label" for="column-product">Product</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="location" id="column-location" checked />
-                                <label class="form-check-label" for="column-location">Location</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="location_name" id="column-location_name" />
-                                <label class="form-check-label" for="column-location_name">Location Name</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="booking_project_id" id="column-booking_project_id" />
-                                <label class="form-check-label" for="column-booking_project_id">Booking Project</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="company_name" id="column-company_name" checked />
-                                <label class="form-check-label" for="column-supplier">Company Name</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="supplier" id="column-supplier" checked />
-                                <label class="form-check-label" for="column-supplier">Supplier</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="order_type" id="column-order_type" />
-                                <label class="form-check-label" for="column-order_type">Order Type</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="status" id="column-status" />
-                                <label class="form-check-label" for="column-status">Status</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="account_manager" id="column-account_manager" />
-                                <label class="form-check-label" for="column-account_manager">Account Manager</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="start_date" id="column-start_date" checked />
-                                <label class="form-check-label" for="column-start_date">Start Date</label>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="form-check">
-                                <input class="form-check-input column-checkbox" type="checkbox" name="columns" value="nearest_order" id="column-nearest_order" />
-                                <label class="form-check-label" for="column-nearest_order">Nearest Order</label>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-                <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive table mt-2" id="dataTable" role="grid" aria-describedby="dataTable_info">
-                    <table class="table my-0" id="order-groups-results" hx-get="{{ active_orders_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status">
-                        <thead>
-                            <tr>
-                                <th class="product">Product</th>
-                                <th class="location">Location</th>
-                                <th class="d-none location_name">Location Name</th>
-                                <th class="d-none booking_project_id">Booking Project</th>
-                                <th class="company_name">Company Name</th>
-                                <th class="supplier">Supplier</th>
-                                <th class="d-none order_type">Order Type</th>
-                                <th class="d-none status">Status</th>
-                                <th class="d-none account_manager">Account Manager</th>
-                                <th class="start_date">Start Date</th>
-                                <th class="d-none nearest_order">Nearest Order</th>
-                                {% if is_active %}
-                                    <th>Swap</th>
-                                    <th>Removal</th>
-                                {% endif %}
-                                <th>View</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                <div class="row invisible" id="order-groups-pagination"></div>
-            </div>
-        </div>
+    <div class="htmx-indicator" id="htmx-indicator-loading-status">
+      <div class="w-100 d-flex justify-content-center">
+        <div class="spinner-border text-primary m-3 text-center" role="status"></div>
+      </div>
     </div>
+    <div class="p-3">
+      <div id="order-groups-results" hx-get="{{ active_orders_link }}" hx-push-url="true" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-loading-status"></div>
+      <div class="row invisible" id="order-groups-pagination"></div>
+    </div>
+  </div>
 {% endblock %}
 {% block modals %}
-    <div class="modal fade" role="dialog" tabindex="-1" id="order-swap-modal" style="display: none;" tabindex="-1" aria-hidden="true">
-        <span class="htmx-indicator1" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-        <div class="modal-dialog" role="document">
-            <div class="modal-content"></div>
+  <div id="order-swap-modal" class="modal modal-blur fade" style="display: none" role="dialog" aria-hidden="false" tabindex="-1" hx-disabled-elt="button">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div id="htmx-indicator-loading-card" class="modal-content htmx-indicator-card" style="min-height: 300px;">
+        <div class="modal-body d-flex justify-content-center align-items-center p-3">
+          <div class="spinner-border text-primary m-3" role="status"></div>
         </div>
+      </div>
     </div>
+  </div>
 {% endblock %}

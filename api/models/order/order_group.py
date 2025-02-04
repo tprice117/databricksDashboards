@@ -244,14 +244,15 @@ class OrderGroup(BaseModel):
                 sub_obj.delete()
 
             # Delete any related protected objects, like orders and subscriptions.
-            for order in self.orders.all():
+            orders = self.orders.all()
+            for order in orders:
                 # Need to delete all related objects to the order.
                 # Because they are all Protected
                 for order_item in order.order_items:
                     order_item.delete()
 
             # Delete all related orders (bypass order.delete overide to avoid recursive loop).
-            self.orders.all().delete()
+            orders.delete()
             # Recurse through related bookings, deleting each one.
             for related_booking in self.related_bookings.all():
                 related_booking.delete()
@@ -273,22 +274,24 @@ class OrderGroup(BaseModel):
         # 1) The EndDate is NOT None.
         # 2) The EndDate is in the past.
         end_date_past = self.end_date and self.end_date < timezone.now().date()
+        if not end_date_past:
+            return False
 
         # Check if this OrderGroup is "stale".
         # An OrderGroup is stale if any are True:
         # 1) There are no Orders for the OrderGroup.
         # 2) There is 1 Order in the OrderGroup and the Order.Status is CANCELLED.
-        is_stale = self.orders.count() == 0 or (
+        is_stale = not self.orders.exists() or (
             self.orders.count() == 1
             and self.orders.first().status == Order.Status.CANCELLED
         )
 
-        return not end_date_past and not is_stale
+        return not is_stale
 
     @property
     def status(self):
         # Get all Orders for this OrderGroup.
-        orders = self.orders.all().prefetch_related("order_line_items")
+        orders = self.orders.prefetch_related("order_line_items")
 
         # Get any OrderLineItems that are Paid = False and stripe_invoice_line_item_id is not None.
         unpaid_invoiced_order_line_items = orders.filter(
