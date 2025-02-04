@@ -24,6 +24,7 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import now
+from django.core.cache import cache
 
 from api.models import User
 from api.models.order.order import Order
@@ -156,81 +157,98 @@ def calculate_discount_rate(order):
 
 @login_required(login_url="/admin/login/")
 def sales_leaderboard(request):
-    # Get all Users.
-    users = User.objects.filter(
-        is_staff=True,
-        groups__name="Sales",
-    )
+    cache_key = "sales_leaderboard_data"
+    
+    # Cached For 2 Hours
+    cache_timeout = 60 * 60 * 2 
+    
+    cached_data = cache.get(cache_key)
 
-    # Get orders for this month
-    first_of_month = get_first_of_month()
-    orders_this_month = get_orders_this_month(first_of_month)
+    if cached_data:
+        users = cached_data
+    else:
+        # Get all Users.
+        users = User.objects.filter(
+            is_staff=True,
+            groups__name="Sales",
+        ).exclude(
+            id__in=["32a2f4cc-c85e-4bb5-b921-470af24a6561", "2a043030-63ad-4554-a384-a3364c63fe38"]
+        ).prefetch_related('groups')
 
-    # For each User, add their aggregated Order data for this month.
-    for user in users:
-        orders_for_user = orders_this_month.filter(
-            order_group__user_address__user_group__account_owner=user,
-        )
+        # Get orders for this month
+        first_of_month = get_first_of_month()
+        orders_this_month = get_orders_this_month(first_of_month).select_related(
+            'order_group__user_address__user_group__account_owner',
+            'order_group__seller_product_seller_location__seller_product__product__main_product'
+        ).prefetch_related('order_line_items')
 
-        # Total GMV.
-        user.gmv = sum([order.customer_price() for order in orders_for_user])
-
-        # Average Discount.
-        user.avg_discount = (
-            sum([calculate_discount_rate(order) for order in orders_for_user])
-            / len(orders_for_user)
-            if len(orders_for_user) > 0
-            else 0
-        )
-
-        # Net Revenue.
-        user.net_revenue = sum(
-            [order.customer_price() - order.seller_price() for order in orders_for_user]
-        )
-
-        # Order Count.
-        user.order_count = len(orders_for_user)
-
-        # New Buyers.
-        new_buyers = (
-            UserGroup.objects.filter(
-                account_owner=user,
-                user_addresses__order_groups__orders__start_date__gte=first_of_month,
+        # For each User, add their aggregated Order data for this month.
+        for user in users:
+            orders_for_user = orders_this_month.filter(
+                order_group__user_address__user_group__account_owner=user,
             )
-            .distinct()
-            .count()
-        )
-        user.new_buyers = new_buyers
 
-        # Orders created internally vs externally
-        internal_orders_count = orders_for_user.filter(
-            created_by__is_staff=True
-        ).count()
-        external_orders_count = orders_for_user.filter(
-            created_by__is_staff=False
-        ).count()
+            # Total GMV.
+            user.gmv = sum([order.customer_price() for order in orders_for_user])
 
-        user.internal_orders_count = internal_orders_count
-        user.external_orders_count = external_orders_count
+            # Average Discount.
+            user.avg_discount = (
+                sum([calculate_discount_rate(order) for order in orders_for_user])
+                / len(orders_for_user)
+                if len(orders_for_user) > 0
+                else 0
+            )
 
-    # Calculate scores based on standings
-    calculate_standing_scores(users, "new_buyers")
-    calculate_standing_scores(users, "gmv")
-    calculate_standing_scores(users, "external_orders_count")
-    calculate_standing_scores(users, "avg_discount", inverse=True, non_zero_first=True)
+            # Net Revenue.
+            user.net_revenue = sum(
+                [order.customer_price() - order.seller_price() for order in orders_for_user]
+            )
 
-    # Calculate total score and weighted scores for each user
-    for user in users:
-        user.platform_adoption_score = user.external_orders_count_score
-        user.discount_rate_score = user.avg_discount_score
-        user.new_buyers_weighted_score = user.new_buyers_score * 0.4
-        user.gmv_weighted_score = user.gmv_score * 0.25
-        user.platform_adoption_weighted_score = user.platform_adoption_score * 0.25
-        user.discount_rate_weighted_score = user.discount_rate_score * 0.1
-        user.score = calculate_total_score(user)
+            # Order Count.
+            user.order_count = len(orders_for_user)
 
-    # Sort Users by total score (descending).
-    users = sorted(users, key=lambda user: user.score, reverse=True)
+            # New Buyers.
+            new_buyers = (
+                UserGroup.objects.filter(
+                    account_owner=user,
+                    user_addresses__order_groups__orders__start_date__gte=first_of_month,
+                )
+                .distinct()
+                .count()
+            )
+            user.new_buyers = new_buyers
+
+            # Orders created internally vs externally
+            internal_orders_count = orders_for_user.filter(
+                created_by__is_staff=True
+            ).count()
+            external_orders_count = orders_for_user.filter(
+                created_by__is_staff=False
+            ).count()
+
+            user.internal_orders_count = internal_orders_count
+            user.external_orders_count = external_orders_count
+
+        # Calculate scores based on standings
+        calculate_standing_scores(users, "new_buyers")
+        calculate_standing_scores(users, "gmv")
+        calculate_standing_scores(users, "external_orders_count")
+        calculate_standing_scores(users, "avg_discount", inverse=True, non_zero_first=True)
+
+        # Calculate total score and weighted scores for each user
+        for user in users:
+            user.platform_adoption_score = user.external_orders_count_score
+            user.discount_rate_score = user.avg_discount_score
+            user.new_buyers_weighted_score = user.new_buyers_score * 0.4
+            user.gmv_weighted_score = user.gmv_score * 0.25
+            user.platform_adoption_weighted_score = user.platform_adoption_score * 0.25
+            user.discount_rate_weighted_score = user.discount_rate_score * 0.1
+            user.score = calculate_total_score(user)
+
+        # Sort Users by total score (descending).
+        users = sorted(users, key=lambda user: user.score, reverse=True)
+        cache.set(cache_key, users, cache_timeout)
+
     return render(
         request,
         "dashboards/sales_leaderboard.html",

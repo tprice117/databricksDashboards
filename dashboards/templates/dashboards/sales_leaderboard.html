@@ -18,8 +18,8 @@ Sales Leaderboard
                             <th>Avg. Discount</th>
                             <th>Net</th>
                             <th>Order Count</th>
-                            <th>New Companies</th>
-                            <th>New Users</th>
+                            {% comment %} <th>New Companies</th> {% endcomment %}
+                            {% comment %} <th>New Users</th> {% endcomment %}
                             <th>Score</th>
                         </tr>
                     </thead>
@@ -39,8 +39,8 @@ Sales Leaderboard
                             <td>{{user.avg_discount|floatformat:2|intcomma}}%</td>
                             <td>${{user.net_revenue|floatformat:2|intcomma}}</td>
                             <td>{{user.order_count|intcomma}}</td>
-                            <td>{{user.new_companies}}</td>
-                            <td>{{user.new_users}}</td>
+                            {% comment %} <td>{{user.new_companies}}</td> {% endcomment %}
+                            {% comment %} <td>{{user.new_users}}</td> {% endcomment %}
                             <td>{{user.score|floatformat:2}}</td>
                         </tr>
                         {% endfor %}
