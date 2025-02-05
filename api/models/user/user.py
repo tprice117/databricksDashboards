@@ -446,8 +446,22 @@ def user_post_save(sender, instance, created: bool, **kwargs):
                     user_address.user_group = instance.user_group
                     user_address.save()
         else:
-            if instance.user_group is None:
-                user_addresses = instance.useraddress_set.all()
+            user_addresses = instance.useraddress_set.all()
+            # if there possible give the address to the first admin in the group
+            # else try to give the address to a user
+            # else give the address no user
+            users = User.objects.filter(user_group=instance.user_group)
+            admin_user = users.filter(type=UserType.ADMIN).first()
+            user = users.first()
+            if admin_user:
+                for user_address in user_addresses:
+                    user_address.user = admin_user
+                    user_address.save()
+            elif user:
+                for user_address in user_addresses:
+                    user_address.user = user
+                    user_address.save()
+            else:
                 # disconnect user_address from user
                 for user_address in user_addresses:
                     user_address.user = None
