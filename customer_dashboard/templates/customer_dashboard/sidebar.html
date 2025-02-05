@@ -44,14 +44,7 @@
     <hr class="sidebar-divider my-0" />
     <ul class="navbar-nav text-light" id="accordionSidebar">
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_home' %} active{% endif %}" href="{% url 'customer_home' %}"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-      </li>
-      <li class="nav-item">
-        {% if user.is_staff and not is_impersonating %}
-          <button class="nav-link" role="button" onclick="selectCustomerPopup(event);"><i class="fas fa-cart-plus"></i><span>Start New Booking</span></button>
-        {% else %}
-          <a class="nav-link{% if request.resolver_match.url_name == 'customer_new_order' %} active{% endif %}" href="{% url 'customer_new_order' %}"><i class="fas fa-cart-plus"></i><span>Start New Order</span></a>
-        {% endif %}
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_new_order' %} active{% endif %}" href="{% url 'customer_new_order' %}"><i class="far fa-globe-americas"></i><span>Explore</span></a>
       </li>
       <li class="nav-item">
         <a class="nav-link{% if request.resolver_match.url_name == 'customer_cart' %} active{% endif %}" href="{% url 'customer_cart' %}"><i class="fas fa-shopping-cart"></i><span>Cart</span></a>
