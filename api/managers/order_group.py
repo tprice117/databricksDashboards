@@ -9,6 +9,7 @@ class OrderGroupQuerySet(models.QuerySet):
             "orders__order_line_items",
             "user__user_group__credit_applications",
             "seller_product_seller_location__seller_product__product__product_add_on_choices",
+            "seller_product_seller_location__seller_product__product__main_product__related_products",
         )
         self = self.select_related(
             "user",
