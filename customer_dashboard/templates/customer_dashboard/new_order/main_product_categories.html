@@ -22,9 +22,22 @@
     }
     
     document.addEventListener('DOMContentLoaded', function () {
-      // On dom load update filter fields
-      const searchFilter = document.getElementById('category-search-filter')
+      // Prevent form submissions on enter key
+      // (since we want to automatically control hx-get triggers)
+      const form = document.getElementById('filter-form')
+      form.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          // Unselect any selected input (allows you to press Enter key in search bar)
+          document.activeElement.blur()
+        }
+      })
+    
+      // Get URL params
       const urlParams = new URLSearchParams(window.location.search)
+    
+      // Pre-populate form based on url params
+      const searchFilter = document.getElementById('category-search-filter')
       const search = urlParams.get('q')
       if (search) {
         searchFilter.value = search
@@ -61,8 +74,9 @@
     
       addImageLoadEventListeners()
     })
-    let debounceTimeout
     
+    // Debounce Timeout search filter (unused)
+    let debounceTimeout
     function onInputChanged(el) {
       // Only trigger the search if the value is not empty and has more than 1 character and the user has stopped typing.
       // Clear the previous timeout
@@ -75,8 +89,10 @@
         }
       }, 500)
     }
+    // END Debounce Timeout
     
     function toggleViewAll(event, containerId, linkId, numShown = 6) {
+      // Toggles the view all button for the checkboxes
       event.preventDefault()
       const checkboxes = document.querySelectorAll(`#${containerId} .form-check`)
       checkboxes.forEach((checkbox, index) => {
@@ -97,6 +113,7 @@
       checkboxes.forEach((checkbox) => {
         checkbox.checked = false
       })
+      // Trigger hx swap
       htmx.trigger(checkboxes[0], 'confirmed')
     }
     

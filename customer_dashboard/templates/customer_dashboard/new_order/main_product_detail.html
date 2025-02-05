@@ -104,7 +104,7 @@
         <a class="text-reset text-decoration-none" href="{% url 'customer_home' %}?category_group={{ main_product.main_product_category.group.id }}">{{ main_product.main_product_category.group }}</a>
       {% else %}
         <a class="text-reset text-decoration-none" href="{% url 'customer_home' %}">All</a>
-      {% endif %}/ <a href="{% url 'customer_new_order_2' category_id=main_product.main_product_category.id %}" class="text-reset text-decoration-none">{{ main_product.main_product_category }}</a> / <span class="text-primary">{{ main_product.name }}</span>
+      {% endif %}/ <a href="{% url 'customer_home' %}?category={{ main_product.main_product_category.id }}" class="text-reset text-decoration-none">{{ main_product.main_product_category }}</a> / <span class="text-primary">{{ main_product.name }}</span>
     </h6>
     <form action="{% url 'customer_new_order_3' product_id=product_id %}" method="post" class="mb-2" enctype="multipart/form-data">
       {% csrf_token %}
