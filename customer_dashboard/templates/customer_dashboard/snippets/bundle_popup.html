@@ -103,11 +103,13 @@
                 var removalCostInput = jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='removal-rate-']")
                 var deliveryCost = parseFloat(deliveryCostInput.val()) || 0;
                 var removalCost = parseFloat(removalCostInput.val()) || 0;
+                var sellerDeliveryCostPerItem = parseFloat(deliveryCost / numberChecked).toFixed(2)
+                var sellerRemovalCostPerItem = parseFloat(removalCost / numberChecked).toFixed(2)
                 var deliveryCostPerItem = parseFloat(deliveryCost / numberChecked * (1+takeRate / 100)).toFixed(2)
-                var removalCostPerItem = (removalCost / numberChecked * (1+takeRate / 100)).toFixed(2)
-                // $ cost / item count +* take rate = cost per item
-                deliveryCostText.text("$"+deliveryCost+"/"+numberChecked+" items "+"+"+takeRate+"% take rate = $"+deliveryCostPerItem)
-                removalCostText.text("$"+removalCost+"/"+numberChecked+" items"+"+"+takeRate+"% take rate = $"+removalCostPerItem)
+                var removalCostPerItem = parseFloat(removalCost / numberChecked * (1+takeRate / 100)).toFixed(2)
+                // $ cost / item count = seller price + take rate = customer price per item
+                deliveryCostText.text("$"+deliveryCost+" / "+numberChecked+" items = $"+sellerDeliveryCostPerItem+" * "+takeRate+"% take rate = $"+deliveryCostPerItem)
+                removalCostText.text("$"+removalCost+" / "+numberChecked+" items = $"+sellerDeliveryCostPerItem+" * "+takeRate+"% take rate = $"+removalCostPerItem)
             })
             var emptyBundlesWarning = jQuery(`#empty-bundle-info-${bundleId}`)
             emptyBundlesWarning.hide();
