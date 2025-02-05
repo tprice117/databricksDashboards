@@ -1960,28 +1960,27 @@ def new_bundle(request):
                             # messages.error(request, f"Item {order.id} is already in a bundle.")
                             # return HttpResponseRedirect(reverse("customer_cart"))
 
-                    firstHasDelivery = False
                     new_bundle = FreightBundle(
                         name="bundle",
                         delivery_fee=bundle["deliveryCost"],
                         removal_fee=bundle["removalCost"],
                     )
                     new_bundle.save()
+                    # divide the delivery and removal cost among the items
+                    # also add the costs to the order_group
+                    dividedDeliveryCost = bundle["deliveryCost"] / len(bundle["items"])
+                    dividedRemovalCost = bundle["removalCost"] / len(bundle["items"])
                     for orderId in bundle["items"]:
                         order = Order.objects.get(id=orderId)
                         order.order_line_items.all().delete()
-                        if not firstHasDelivery:
-                            firstHasDelivery = True
-                            order.add_line_items(
-                                True,
-                                custom_delivery_fee=bundle["deliveryCost"],
-                                custom_removal_fee=bundle["removalCost"],
-                            )
-                        else:
-                            order.add_line_items(
-                                True, custom_delivery_fee=0, custom_removal_fee=0
-                            )
+                        order.add_line_items(
+                            True,
+                            custom_delivery_fee=dividedDeliveryCost,
+                            custom_removal_fee=dividedRemovalCost,
+                        )
                         order.order_group.freight_bundle = new_bundle
+                        order.order_group.delivery_fee = dividedDeliveryCost
+                        order.order_group.removal_fee = dividedRemovalCost
                         order.order_group.save()
         messages.success(request, "Bundle saved.")
     else:
