@@ -206,7 +206,7 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         if not self.user_id:
-            # Create or attach to Auth0 user.
+            # Attach to Auth0 user (match by email), if one exists.
             user_id = get_user_from_email(self.email)
 
             if user_id:
@@ -214,13 +214,7 @@ class User(AbstractUser):
                 self.user_id = user_id
                 created_by_downstream_team = False
             else:
-                # Create user in Auth0.
-                self.user_id = create_user(self.email)
                 created_by_downstream_team = True
-
-            # Send invite email.
-            if created_by_downstream_team:
-                invite_user(self)
 
             # Send email to internal team. Only on our PROD environment.
             if settings.ENVIRONMENT == "TEST":
