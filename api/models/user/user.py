@@ -39,6 +39,7 @@ mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_API_KEY)
     "salesforce_contact_id",
     "salesforce_seller_location_id",
     "terms_accepted",
+    "user_group",
 )
 class User(AbstractUser):
     class ApolloStage(models.TextChoices):
@@ -436,6 +437,35 @@ def user_post_save(sender, instance, created: bool, **kwargs):
             logger.info(f"New lead created: {lead}")
         except Exception as e:
             logger.error(f"Error creating new lead: {e}", exc_info=e)
+    # user_address must connect to the same user_group as the user is
+    if instance.has_changed("user_group"):
+        if instance.old_value("user_group") is None:
+            if instance.user_group:
+                user_addresses = instance.useraddress_set.all()
+                for user_address in user_addresses:
+                    user_address.user_group = instance.user_group
+                    user_address.save()
+        else:
+            user_addresses = instance.useraddress_set.all()
+            # if there possible give the address to the first admin in the group
+            # else try to give the address to a user
+            # else give the address no user
+            users = User.objects.filter(user_group=instance.user_group)
+            admin_user = users.filter(type=UserType.ADMIN).first()
+            user = users.first()
+            if admin_user:
+                for user_address in user_addresses:
+                    user_address.user = admin_user
+                    user_address.save()
+            elif user:
+                for user_address in user_addresses:
+                    user_address.user = user
+                    user_address.save()
+            else:
+                # disconnect user_address from user
+                for user_address in user_addresses:
+                    user_address.user = None
+                    user_address.save()
 
 
 class CompanyUtils:
