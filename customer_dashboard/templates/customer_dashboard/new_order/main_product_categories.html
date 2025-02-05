@@ -21,8 +21,8 @@
       })
     }
     
-    // On dom load update filter fields
     document.addEventListener('DOMContentLoaded', function () {
+      // On dom load update filter fields
       const searchFilter = document.getElementById('category-search-filter')
       const urlParams = new URLSearchParams(window.location.search)
       const search = urlParams.get('q')
@@ -33,6 +33,7 @@
       if (pickup === 'True') {
         document.getElementById('for-pickup-check').checked = true
       }
+      // Check all the boxes in the query params
       const categoryGroups = urlParams.getAll('category_group')
       const categories = urlParams.getAll('category')
       const industries = urlParams.getAll('industry')
@@ -57,6 +58,7 @@
           checkbox.checked = true
         }
       })
+    
       addImageLoadEventListeners()
     })
     let debounceTimeout
@@ -74,11 +76,11 @@
       }, 500)
     }
     
-    function toggleViewAll(event, containerId, linkId) {
+    function toggleViewAll(event, containerId, linkId, numShown = 6) {
       event.preventDefault()
       const checkboxes = document.querySelectorAll(`#${containerId} .form-check`)
       checkboxes.forEach((checkbox, index) => {
-        if (index >= 6) {
+        if (index >= numShown) {
           checkbox.classList.toggle('d-none')
         }
       })
@@ -140,7 +142,7 @@
 {% block content %}
   <div class="container-fluid">
     <h3 class="text-dark mb-3"><strong>Explore Downstream</strong></h3>
-    <form id="filter-form" hx-trigger="confirmed, change from:input" hx-get="{% url 'customer_new_order' %}" hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status" hx-disabled-elt="input,button">
+    <form id="filter-form" hx-trigger="confirmed, change from:input" hx-get="{% url 'customer_home' %}" hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status" hx-disabled-elt="input,button">
       <div class="row">
         <div class="col col-xl-3 mb-4 mb-xl-0 px-4">
           <!-- Searchbar -->
@@ -151,7 +153,10 @@
           <!-- Category Group Checkboxes -->
           {% if main_product_category_groups %}
             <div class="card border-dark border-2 rounded-4 card-body text-dark">
-              <label for="category_group" class=""><strong>Category Group</strong> <small class="text-muted">({{ main_product_category_groups|length }})</small></label>
+              <label for="category_group" class="">
+                <strong>Category Group</strong>
+                <small class="text-muted">({{ main_product_category_groups|length }})</small>
+              </label>
               <div id="category-group-checkbox-container" class="p-3">
                 {% for group in main_product_category_groups %}
                   <div class="form-check {% if forloop.counter > 6 %}d-none{% endif %} row d-flex flex-nowrap align-items-center">

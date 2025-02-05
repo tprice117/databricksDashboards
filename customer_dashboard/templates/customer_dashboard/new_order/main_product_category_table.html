@@ -45,7 +45,7 @@
 {% endfor %}
 {% if carousels.has_next %}
   <div id="load-btn-{{ carousels.number }}" class="text-center my-4">
-    <button class="btn btn-primary" hx-get="{% url 'customer_new_order' %}?p={{ carousels.next_page_number }}" hx-push-url="false" hx-target="#category-results" hx-indicator="#load-indicator-{{ carousels.number }}" hx-include="#filter-form" hx-swap="beforeend" hx-on::after-request="this.closest('div').remove()">
+    <button class="btn btn-primary" hx-get="{% url 'customer_home' %}?p={{ carousels.next_page_number }}" hx-push-url="false" hx-target="#category-results" hx-indicator="#load-indicator-{{ carousels.number }}" hx-include="#filter-form" hx-swap="beforeend" hx-on::after-request="this.closest('div').remove()">
       Load More
       <span id="load-indicator-{{ carousels.number }}" class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
     </button>
