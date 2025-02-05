@@ -2,7 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-  Create New Booking
+  Explore
 {% endblock %}
 {% block javascript %}
   <script>
@@ -21,7 +21,7 @@
       })
     }
     
-    // On dom load update search field
+    // On dom load update filter fields
     document.addEventListener('DOMContentLoaded', function () {
       const searchFilter = document.getElementById('category-search-filter')
       const urlParams = new URLSearchParams(window.location.search)
@@ -29,10 +29,34 @@
       if (search) {
         searchFilter.value = search
       }
-      const group_id = urlParams.get('group_id')
-      if (group_id) {
-        document.getElementById('table-filter-options').value = group_id
+      const pickup = urlParams.get('pickup')
+      if (pickup === 'True') {
+        document.getElementById('for-pickup-check').checked = true
       }
+      const categoryGroups = urlParams.getAll('category_group')
+      const categories = urlParams.getAll('category')
+      const industries = urlParams.getAll('industry')
+    
+      categoryGroups.forEach((group_id) => {
+        const checkbox = document.getElementById(`group_${group_id}`)
+        if (checkbox) {
+          checkbox.checked = true
+        }
+      })
+    
+      categories.forEach((category_id) => {
+        const checkbox = document.getElementById(`category_${category_id}`)
+        if (checkbox) {
+          checkbox.checked = true
+        }
+      })
+    
+      industries.forEach((industry_id) => {
+        const checkbox = document.getElementById(`industry_${industry_id}`)
+        if (checkbox) {
+          checkbox.checked = true
+        }
+      })
       addImageLoadEventListeners()
     })
     let debounceTimeout
@@ -50,39 +74,162 @@
       }, 500)
     }
     
+    function toggleViewAll(event, containerId, linkId) {
+      event.preventDefault()
+      const checkboxes = document.querySelectorAll(`#${containerId} .form-check`)
+      checkboxes.forEach((checkbox, index) => {
+        if (index >= 6) {
+          checkbox.classList.toggle('d-none')
+        }
+      })
+      const viewAllLink = document.getElementById(linkId)
+      if (viewAllLink.textContent === 'View All') {
+        viewAllLink.textContent = 'View Less'
+      } else {
+        viewAllLink.textContent = 'View All'
+      }
+    }
+    
+    function clearSelections(containerId) {
+      const checkboxes = document.querySelectorAll(`#${containerId} .form-check-input`)
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = false
+      })
+      htmx.trigger(checkboxes[0], 'confirmed')
+    }
+    
     document.addEventListener('htmx:afterSwap', addImageLoadEventListeners)
+    
+    // Show or hide the back-to-top button based on scroll position
+    window.addEventListener('scroll', function () {
+      const backToTopButton = document.getElementById('back-to-top')
+      if (window.scrollY > 1000) {
+        backToTopButton.style.display = 'block'
+      } else {
+        backToTopButton.style.display = 'none'
+      }
+    })
+    
+    // Smooth scroll to top
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
   </script>
 {% endblock %}
 {% block stylesheet %}
-  <style></style>
+  {% comment %}Delete when CSS has loaded onto server{% endcomment %}
+  <style>
+    .hover-float {
+      transition: all 0.2s;
+    }
+    .hover-float:hover {
+      transform: translateY(-5px);
+    }
+    #back-to-top {
+      position: fixed;
+      bottom: 20px;
+      right: 100px;
+      display: none;
+      z-index: 1000;
+    }
+  </style>
 {% endblock %}
 {% block content %}
   <div class="container-fluid">
-    <div class="card-header p-3 mb-2 border">
+    <h3 class="text-dark mb-3"><strong>Explore Downstream</strong></h3>
+    <form id="filter-form" hx-trigger="confirmed, change from:input" hx-get="{% url 'customer_new_order' %}" hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status" hx-disabled-elt="input,button">
       <div class="row">
-        <div class="col">
-          <p class="text-primary m-0 fw-bold" id="table-title">Create New Booking</p>
-          {% comment %} <h3 class="text-dark mb-0">Create New Booking</h3> {% endcomment %}
-          <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        <div class="col col-xl-3 mb-4 mb-xl-0 px-4">
+          <!-- Searchbar -->
+          <div class="input-group border border-dark rounded-2 border-1 mb-4">
+            <span class="input-group-text border-0 text-dark" style="background-color: inherit;" id="inputGroup-sizing-lg"><i class="far fa-search"></i></span>
+            <input id="category-search-filter" class="form-control text-dark" type="search" name="q" placeholder="Search Downstream Marketplace" />
+          </div>
+          <!-- Category Group Checkboxes -->
+          {% if main_product_category_groups %}
+            <div class="card border-dark border-2 rounded-4 card-body text-dark">
+              <label for="category_group" class=""><strong>Category Group</strong> <small class="text-muted">({{ main_product_category_groups|length }})</small></label>
+              <div id="category-group-checkbox-container" class="p-3">
+                {% for group in main_product_category_groups %}
+                  <div class="form-check {% if forloop.counter > 6 %}d-none{% endif %} row d-flex flex-nowrap align-items-center">
+                    <input class="col-auto form-check-input downstream-checkbox" type="checkbox" name="category_group" id="group_{{ group.id }}" value="{{ group.id }}" />
+                    <label class="col-auto form-check-label" for="group_{{ group.id }}">{{ group.name }}</label>
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="flex-row-reverse">
+                <a href="#" class="text-decoration-none small text-muted" onclick="clearSelections('category-group-checkbox-container')">Clear Selections</a>
+                {% if main_product_category_groups|length > 6 %}
+                  <a href="#" id="view-all-category-group-link" class="float-end text-decoration-none small text-primary" onclick="toggleViewAll(event, 'category-group-checkbox-container', 'view-all-category-group-link')">View All</a>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Category Checkboxes -->
+          {% if categories %}
+            <div class="card border-dark border-2 rounded-4 card-body text-dark mt-3">
+              <label for="category" class=""><strong>Category</strong> <small class="text-muted">({{ categories|length }})</small></label>
+              <div id="category-checkbox-container" class="p-3">
+                {% for category in categories %}
+                  <div class="form-check {% if forloop.counter > 6 %}d-none{% endif %} row d-flex flex-nowrap align-items-center">
+                    <input class="col-auto form-check-input downstream-checkbox" type="checkbox" name="category" id="category_{{ category.id }}" value="{{ category.id }}" />
+                    <label class="col-auto form-check-label" for="category_{{ category.id }}">{{ category.name }}</label>
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="flex-row-reverse">
+                <a href="#" class="text-decoration-none small text-muted" onclick="clearSelections('category-checkbox-container')">Clear Selections</a>
+                {% if categories|length > 6 %}
+                  <a href="#" id="view-all-category-link" class="float-end text-decoration-none small text-primary" onclick="toggleViewAll(event, 'category-checkbox-container', 'view-all-category-link')">View All</a>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Industry Checkboxes -->
+          {% if industries %}
+            <div class="card border-dark border-2 rounded-4 card-body text-dark mt-3">
+              <label for="industry" class=""><strong>Industry</strong> <small class="text-muted">({{ industries|length }})</small></label>
+              <div id="industry-checkbox-container" class="p-3">
+                {% for industry in industries %}
+                  <div class="form-check {% if forloop.counter > 6 %}d-none{% endif %} row d-flex flex-nowrap align-items-center">
+                    <input class="col-auto form-check-input downstream-checkbox" type="checkbox" name="industry" id="industry_{{ industry.id }}" value="{{ industry.id }}" />
+                    <label class="col-auto form-check-label" for="industry_{{ industry.id }}">{{ industry.name }}</label>
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="flex-row-reverse">
+                <a href="#" class="text-decoration-none small text-muted" onclick="clearSelections('industry-checkbox-container')">Clear Selections</a>
+                {% if industries|length > 6 %}
+                  <a href="#" id="view-all-industry-link" class="float-end text-decoration-none small text-primary" onclick="toggleViewAll(event, 'industry-checkbox-container', 'view-all-industry-link')">View All</a>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
         </div>
-      </div>
-      <form class="row mt-2 row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-2 row-cols-xxl-2" hx-trigger="confirmed" hx-get="{% url 'customer_new_order' %}" hx-target="#category-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
-        <div class="col">
-          <div class="input-group">
-            <span class="input-group-text" id="inputGroup-sizing-lg">Search</span>
-            <input id="category-search-filter" class="form-control" type="search" name="q" oninput="onInputChanged(this)" />
+        <div class="col col-xl-9 px-4">
+          <!-- Is Delivery Toggle -->
+          <div id="delivery-controls">
+            <div class="btn-group w-100" style="max-width: 400px;">
+              <input type="radio" class="btn-check" name="pickup" id="for-delivery-check" autocomplete="off" value="False" checked />
+              <label class="btn btn-outline-primary px-3" for="for-delivery-check">Delivery</label>
+              <input type="radio" class="btn-check" name="pickup" id="for-pickup-check" autocomplete="off" value="True" />
+              <label class="btn btn-outline-primary px-3" for="for-pickup-check">Pickup</label>
+            </div>
+            <!-- Loading Indicator -->
+            <span class="htmx-indicator mb-0 ms-2" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+          </div>
+          <div id="category-results">
+            {% include 'customer_dashboard/new_order/main_product_category_table.html' with carousels=carousels %}
           </div>
         </div>
-        <div class="col">
-          <select id="table-filter-options" class="form-select" aria-label="Filter Data By" name="group_id" onchange="htmx.trigger(this, 'confirmed');">
-            <option value="" selected>Filter By Category (all)</option>
-            {% for group in main_product_category_groups %}
-              <option value="{{ group.id }}">{{ group.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </form>
-    </div>
-    {% include 'customer_dashboard/new_order/main_product_category_table.html' with main_product_categories=main_product_categories %}
+      </div>
+    </form>
   </div>
+  <!-- Back to top button -->
+  <button id="back-to-top" class="btn btn-lg btn-primary" onclick="scrollToTop()">Back to Top</button>
 {% endblock %}

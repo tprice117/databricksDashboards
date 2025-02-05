@@ -9,6 +9,8 @@ from decimal import Decimal
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
+from itertools import groupby
+from operator import attrgetter
 
 import requests
 import stripe
@@ -48,6 +50,7 @@ from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
     AddOn,
     FreightBundle,
+    Industry,
     MainProduct,
     MainProductCategory,
     MainProductCategoryGroup,
@@ -777,31 +780,81 @@ def index(request):
 
 # @login_required(login_url="/admin/login/")
 @catch_errors()
-def new_order(request):
+def explore(request):
     context = get_user_context(request)
+
+    pagination_limit = 15
+    page_number = 1
+
     search_q = request.GET.get("q", None)
-    group_id = request.GET.get("group_id", None)
-    main_product_categories = MainProductCategory.objects.all().order_by("name")
+    categories = request.GET.getlist("category", [])
+    groups = request.GET.getlist("category_group", [])
+    industries = request.GET.getlist("industry", [])
+    allows_pick_up = request.GET.get("pickup", "False")
+
+    main_products = (
+        MainProduct.objects.all()
+        .prefetch_related("images")
+        .select_related("main_product_category")
+        .order_by("main_product_category__sort", "main_product_category", "name")
+        .with_likes()
+        .with_listings()
+    )
     if search_q:
-        main_product_categories = main_product_categories.filter(
-            name__icontains=search_q
+        main_products = main_products.filter(
+            Q(name__icontains=search_q)
+            | Q(main_product_category__name__icontains=search_q)
+            | Q(main_product_category__group__name__icontains=search_q)
+            | Q(main_product_category__industry__name__icontains=search_q)
         )
-    context["main_product_categories"] = main_product_categories
+    if groups:
+        main_products = main_products.filter(main_product_category__group_id__in=groups)
+    if categories:
+        main_products = main_products.filter(main_product_category_id__in=categories)
+    if industries:
+        main_products = main_products.filter(
+            main_product_category__industry__id__in=industries
+        )
+    if allows_pick_up == "True":
+        main_products = main_products.filter(allows_pick_up=True)
+
+    carousels = [
+        {
+            "main_product_category": key,
+            # Group is a generator
+            "main_products": list(group),
+        }
+        for key, group in groupby(
+            main_products, key=attrgetter("main_product_category")
+        )
+    ]
+
     context["main_product_category_groups"] = (
         MainProductCategoryGroup.objects.all().order_by("sort")
     )
-    if group_id:
-        context["main_product_categories"] = context["main_product_categories"].filter(
-            group_id=group_id
-        )
-    print(context["main_product_category_groups"].count())
+    context["categories"] = MainProductCategory.objects.all().order_by("sort")
+    context["industries"] = Industry.objects.all().order_by("sort")
 
     if request.headers.get("HX-Request"):
+        if request.GET.get("p", None):
+            page_number = request.GET.get("p")
+
+        # Load page N
+        paginator = Paginator(carousels, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+
+        context["carousels"] = page_obj
         return render(
             request,
             "customer_dashboard/new_order/main_product_category_table.html",
             context,
         )
+
+    # Use the first page
+    paginator = Paginator(carousels, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+
+    context["carousels"] = page_obj
 
     return render(
         request, "customer_dashboard/new_order/main_product_categories.html", context
@@ -5110,17 +5163,15 @@ def create_lead_board(leads):
     """
     Create a board structure from the given leads queryset.
     """
-    board = []
     # TODO: handle scale of leads (i.e. limit number of results, filter lanes)
-    for status, status_name in Lead.Status.get_ordered_choices():
-        board.append(
-            {
-                "name": status_name,
-                "value": status,
-                "leads": [lead for lead in leads if lead.status == status],
-            }
-        )
-    return board
+    return [
+        {
+            "name": status_name,
+            "value": status,
+            "leads": [lead for lead in leads if lead.status == status],
+        }
+        for status, status_name in Lead.Status.get_ordered_choices()
+    ]
 
 
 @login_required(login_url="/admin/login/")

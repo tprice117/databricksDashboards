@@ -175,7 +175,7 @@
 {% endblock %}
 {% block content %}
   <div class="container-fluid" hx-disabled-elt=".status-card, button, .form-control, .pagi-link">
-    <h3 class="text-dark mb-2" data-cart-count="{{ cart_count }}"><strong>Bookings</strong></h3>
+    <h3 class="text-dark mb-2"><strong>Bookings</strong></h3>
     <form action="{% url 'customer_order_groups' %}" method="get" hx-get="{% url 'customer_order_groups' %}" hx-disabled-elt="button" hx-target="#order-groups-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
       <div class="row mb-0 pb-3 align-items-end justify-content-between flex-nowrap overflow-x-auto">
         {% if request.user.is_staff %}
