@@ -607,3 +607,10 @@ input.downstream-number {
   .form-check-input.downstream-checkbox :checked {
     background-color: var(--bs-primary) !important;
   }
+
+.hover-float {
+    transition: all 0.2s;
+}
+.hover-float:hover {
+    transform: translateY(-5px);
+}
