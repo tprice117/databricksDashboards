@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path, reverse_lazy
-from django.views.generic.base import RedirectView
+from django.views.generic.base import RedirectView, TemplateView
 from rest_framework import routers
 
 from api import views
@@ -198,4 +198,12 @@ urlpatterns = [
     path("apple-app-site-association", views.apple_app_site_association),
     path(".well-known/apple-app-site-association", views.apple_app_site_association),
     path(".well-known/assetlinks.json", views.asset_link),
+    # Robots.txt
+    path(
+        "robots.txt",
+        TemplateView.as_view(
+            template_name="robots.txt",
+            content_type="text/plain",
+        ),
+    ),
 ]
