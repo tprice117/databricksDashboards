@@ -101,9 +101,9 @@
   <div class="container-xxl">
     <h6 class="pb-3 mb-3">
       {% if main_product.main_product_category.group %}
-        <a class="text-reset text-decoration-none" href="{% url 'customer_new_order' %}?group_id={{ main_product.main_product_category.group.id }}">{{ main_product.main_product_category.group }}</a>
+        <a class="text-reset text-decoration-none" href="{% url 'customer_home' %}?category_group={{ main_product.main_product_category.group.id }}">{{ main_product.main_product_category.group }}</a>
       {% else %}
-        <a class="text-reset text-decoration-none" href="{% url 'customer_new_order' %}">All</a>
+        <a class="text-reset text-decoration-none" href="{% url 'customer_home' %}">All</a>
       {% endif %}/ <a href="{% url 'customer_new_order_2' category_id=main_product.main_product_category.id %}" class="text-reset text-decoration-none">{{ main_product.main_product_category }}</a> / <span class="text-primary">{{ main_product.name }}</span>
     </h6>
     <form action="{% url 'customer_new_order_3' product_id=product_id %}" method="post" class="mb-2" enctype="multipart/form-data">
