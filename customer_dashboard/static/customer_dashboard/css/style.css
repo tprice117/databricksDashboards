@@ -207,7 +207,7 @@ Radio Select
   
 .downstream-radio .form-check-label {
     margin-left: 0.5em;
-    text-align: center;
+    text-align: start;
     vertical-align: middle;
     cursor: pointer;
 }
