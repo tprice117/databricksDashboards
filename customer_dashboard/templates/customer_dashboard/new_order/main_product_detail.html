@@ -105,7 +105,7 @@
       {% endif %}
       <a href="{% url 'customer_home' %}?category={{ main_product.main_product_category.slug }}" class="text-reset text-decoration-none">{{ main_product.main_product_category }}</a> / <span class="text-primary">{{ main_product.name }}</span>
     </h6>
-    <form action="{% url 'customer_new_order_3' product_slug=main_product.slug %}" method="post" class="mb-2" enctype="multipart/form-data">
+    <form action="{% url 'customer_products' main_product.slug %}" method="post" class="mb-2" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="row row-cols-1 row-cols-sm-1 row-cols-md-2">
         <div class="col col-xl-5 px-4">

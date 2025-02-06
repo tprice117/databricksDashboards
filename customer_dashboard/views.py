@@ -965,20 +965,26 @@ def user_address_search(request):
 
 # @login_required(login_url="/admin/login/")
 @catch_errors()
-def new_order_2(request, category_slug):
+def new_order_2(request, category_id):
     context = get_user_context(request)
-    main_product_category = MainProductCategory.objects.filter(slug=category_slug)
+
+    main_product_category = MainProductCategory.objects.filter(id=category_id)
+
+    if not main_product_category.exists():
+        messages.error(request, "Product not found.")
+        return HttpResponseRedirect(reverse("customer_home"))
+
     main_product_category = main_product_category.prefetch_related(
         "main_products__mainproductinfo_set"
-    )
-    main_product_category = main_product_category.first()
+    ).first()
+
     main_products = main_product_category.main_products.all().order_by("sort")
     # if this is a search then filter the main products
     search_q = request.GET.get("q", None)
     if search_q:
         main_products = main_products.filter(name__icontains=search_q)
     context["main_product_category"] = main_product_category
-    context["category_id"] = main_product_category.id
+    context["category_id"] = category_id
     context["main_products"] = []
     for main_product in main_products:
         main_product_dict = {}
@@ -998,21 +1004,33 @@ def new_order_2(request, category_slug):
     return render(request, "customer_dashboard/new_order/main_products.html", context)
 
 
-# @login_required(login_url="/admin/login/")
 @catch_errors()
-def new_order_3(request, product_slug):
+def product_details(request, product_slug):
+    main_product = MainProduct.objects.filter(slug=product_slug)
+    if not main_product.exists():
+        messages.error(request, "Product not found.")
+        return HttpResponseRedirect(reverse("customer_home"))
+    return new_order_3(request, main_product)
+
+
+@catch_errors()
+def product_details_legacy(request, product_id):
+    main_product = MainProduct.objects.filter(id=product_id)
+    if not main_product.exists():
+        messages.error(request, "Product not found.")
+        return HttpResponseRedirect(reverse("customer_home"))
+    return new_order_3(request, main_product)
+
+
+@catch_errors()
+def new_order_3(request, main_product):
     context = get_user_context(request)
     # TODO: Add a button that allows adding an address.
     # The button could open a modal that allows adding an address.
-    main_product = MainProduct.objects.filter(slug=product_slug)
     main_product = main_product.select_related(
         "main_product_category"
     ).prefetch_related("images", "related_products")
     main_product = main_product.first()
-
-    if not main_product:
-        messages.error(request, "Product not found.")
-        return HttpResponseRedirect(reverse("customer_home"))
 
     context["main_product"] = main_product
     context["product_id"] = main_product.id
