@@ -453,14 +453,18 @@ class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset.select_related("main_product_category")
-        return queryset.prefetch_related(
-            "add_ons",
-            "add_ons__choices",
-            "images",
-            "products__seller_products__seller_product_seller_locations",
-            "products__seller_products__seller_product_seller_locations__order_groups__orders",
-            "main_product_category__industry",
-            "tags",
+        return (
+            queryset.prefetch_related(
+                "add_ons",
+                "add_ons__choices",
+                "images",
+                "products__seller_products__seller_product_seller_locations",
+                "products__seller_products__seller_product_seller_locations__order_groups__orders",
+                "main_product_category__industry",
+                "tags",
+            )
+            .with_likes()
+            .with_listings()
         )
 
     # Add list view and cache for 2 hours
@@ -527,7 +531,15 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Using queryset defined in api/managers/order_group.py
-        return self.queryset.for_user(self.request.user)
+        return (
+            self.queryset.for_user(self.request.user)
+            .prefetch_related(
+                "orders",
+                "user__user_group__users",
+                "seller_product_seller_location__seller_product__product__main_product__main_product_category__industry",
+            )
+            .with_nearest_orders()
+        )
 
 
 class OrderGroupAttachmentViewSet(viewsets.ModelViewSet):

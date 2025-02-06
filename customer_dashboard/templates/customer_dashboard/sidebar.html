@@ -1,4 +1,14 @@
 {% load static %}
+{% block stylesheet %}
+  <style>
+    .sidebar .nav-link.active {
+      background: var(--bs-primary);
+      border: 1px solid var(--bs-primary);
+      border-radius: 0.5rem;
+      color: var(--bs-light);
+    }
+  </style>
+{% endblock %}
 {% block javascript %}
   <script>
     function handleSidebarToggle() {
@@ -14,7 +24,7 @@
     window.addEventListener('load', handleSidebarToggle)
   </script>
 {% endblock %}
-<nav class="navbar align-items-start sidebar sidebar-dark accordion bg-gradient-primary p-0 navbar-dark" id="sidebar" style="background: var(--bs-primary);">
+<nav class="navbar align-items-start sidebar sidebar-dark accordion bg-gradient-secondary p-0 navbar-dark" id="sidebar" style="background: var(--bs-secondary);">
   <div class="container-fluid d-flex flex-column p-0">
     {% if user_group.branding.logo %}
       <a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0" href="#" style="padding: 8px 5px;"><img src="{{ user_group.branding.logo.url }}" alt="Company Logo" class="object-fit-contain rounded mw-100 mh-100" /></a>
@@ -34,14 +44,7 @@
     <hr class="sidebar-divider my-0" />
     <ul class="navbar-nav text-light" id="accordionSidebar">
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_home' %} active{% endif %}" href="{% url 'customer_home' %}"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-      </li>
-      <li class="nav-item">
-        {% if user.is_staff and not is_impersonating %}
-          <button class="nav-link" role="button" onclick="selectCustomerPopup(event);"><i class="fas fa-cart-plus"></i><span>Start New Booking</span></button>
-        {% else %}
-          <a class="nav-link{% if request.resolver_match.url_name == 'customer_new_order' %} active{% endif %}" href="{% url 'customer_new_order' %}"><i class="fas fa-cart-plus"></i><span>Start New Order</span></a>
-        {% endif %}
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_home' %} active{% endif %}" href="{% url 'customer_home' %}"><i class="far fa-globe-americas"></i><span>Explore</span></a>
       </li>
       <li class="nav-item">
         <a class="nav-link{% if request.resolver_match.url_name == 'customer_cart' %} active{% endif %}" href="{% url 'customer_cart' %}"><i class="fas fa-shopping-cart"></i><span>Cart</span></a>

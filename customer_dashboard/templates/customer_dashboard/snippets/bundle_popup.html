@@ -98,14 +98,18 @@
                 // adjust the delivery cost
                 var deliveryCostText = jQuery(item).find("#delivery-cost")
                 var removalCostText = jQuery(item).find("#removal-cost")
+                var takeRate = item.getAttribute("data-take-rate") || 0;
                 var deliveryCostInput = jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='delivery-rate-']")
                 var removalCostInput = jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='removal-rate-']")
-                var deliveryCost = parseFloat(deliveryCostInput.val())
-                var removalCost = parseFloat(removalCostInput.val())
-                var deliveryCostPerItem = parseFloat(deliveryCost / numberChecked).toFixed(2)
-                var removalCostPerItem = (removalCost / numberChecked).toFixed(2)
-                deliveryCostText.text("$"+deliveryCost+"/"+numberChecked+" items = $"+deliveryCostPerItem)
-                removalCostText.text("$"+removalCost+"/"+numberChecked+" items = $"+removalCostPerItem)
+                var deliveryCost = parseFloat(deliveryCostInput.val()) || 0;
+                var removalCost = parseFloat(removalCostInput.val()) || 0;
+                var sellerDeliveryCostPerItem = parseFloat(deliveryCost / numberChecked).toFixed(2)
+                var sellerRemovalCostPerItem = parseFloat(removalCost / numberChecked).toFixed(2)
+                var deliveryCostPerItem = parseFloat(deliveryCost / numberChecked * (1+takeRate / 100)).toFixed(2)
+                var removalCostPerItem = parseFloat(removalCost / numberChecked * (1+takeRate / 100)).toFixed(2)
+                // $ cost / item count = seller price + take rate = customer price per item
+                deliveryCostText.text("$"+deliveryCost+" / "+numberChecked+" items = $"+sellerDeliveryCostPerItem+" * "+takeRate+"% take rate = $"+deliveryCostPerItem)
+                removalCostText.text("$"+removalCost+" / "+numberChecked+" items = $"+sellerDeliveryCostPerItem+" * "+takeRate+"% take rate = $"+removalCostPerItem)
             })
             var emptyBundlesWarning = jQuery(`#empty-bundle-info-${bundleId}`)
             emptyBundlesWarning.hide();
@@ -147,37 +151,10 @@
                 emptyBundles = false
             }
             var cartItems = jQuery(bucket).find("[id^='cart-bundled-item-']")
-            var highestDeliveryPrice = 0
-            var highestRemovalPrice = 0
             cartItems.each(function(index2, item) {
                 jQuery(item).toggle(cartBucketItemChecked[index][index2]).attr('style', function() {
                     return cartBucketItemChecked[index][index2] ? '' : 'display: none !important';
                 });
-                if (cartBucketItemChecked[index][index2]) {
-                    var itemDeliveryPrice = parseFloat(item.getAttribute("data-delivery-price"))
-                    var itemRemovalPrice = parseFloat(item.getAttribute("data-removal-price"))
-                    if (itemDeliveryPrice > highestDeliveryPrice) {
-                        highestDeliveryPrice = itemDeliveryPrice
-                    }
-                    if (itemRemovalPrice > highestRemovalPrice) {
-                        highestRemovalPrice = itemRemovalPrice
-                    }
-                }
-            })
-            // set the default delivery cost
-            var default_delivery_price_button = jQuery(bucket).find("#default-delivery-price")
-            var default_removal_price_button = jQuery(bucket).find("#default-removal-price")
-            var default_delivery_price_text = default_delivery_price_button.next();
-            var default_removal_price_text = default_removal_price_button.next();
-            default_delivery_price_text.text("default is: $"+highestDeliveryPrice)
-            default_removal_price_text.text("default is: $"+highestRemovalPrice)
-            default_delivery_price_button.bind("click", function() {
-                var deliveryInput = jQuery(bucket).find("[id^='delivery-rate-']")
-                deliveryInput.attr('value', highestDeliveryPrice);
-            })
-            default_removal_price_button.bind("click", function() {
-                var removalInput = jQuery(bucket).find("[id^='removal-rate-']")
-                removalInput.attr('value', highestRemovalPrice);
             })
         })
         // show warning if there are no bundles
@@ -267,10 +244,10 @@
                         <div class="card-body mb-4" style="justify-content: center; display: flex; background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-truck" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/truck.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -278,10 +255,10 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="far fa-circle" style="color: black; font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: transparent; border-width: 4px; border: solid; border-color: black;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-money-bill" style="color: black; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" style="filter: invert(100%);" src="{% static 'customer_dashboard/svg-loaders/dollar.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -289,15 +266,16 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="far fa-circle" style="color: black; font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: transparent; border-width: 4px; border: solid; border-color: black;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-check" style="color: black; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" style="filter: invert(100%);" src="{% static 'customer_dashboard/svg-loaders/check-circle.svg' %}" />
                                 </div>
                             </div>
                         </div>
                         {% for cart_address in cart %}
                             <div id="cart-address-{{forloop.counter}}">
+                                <p class="bundle-list-header">Order in the Cart for: {{ cart_address.address }}</p>
                                 <div class="accordion" role="tablist" id="bundle-results">
                                     {% for seller_address in seller_addresses %}
                                         <div class="accordion-item" style="border: none; margin-bottom: 25px" id="seller-address-{{forloop.counter}}">
@@ -373,10 +351,10 @@
                         <div class="card-body mb-4" style="justify-content: center; display: flex; background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-truck" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/truck.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -384,10 +362,10 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-money-bill" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/dollar.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -395,15 +373,16 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="far fa-circle" style="color: black; font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: transparent; border-width: 4px; border: solid; border-color: black;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-check" style="color: black; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" style="filter: invert(100%);" src="{% static 'customer_dashboard/svg-loaders/check-circle.svg' %}" />
                                 </div>
                             </div>
                         </div>
                         {% for cart_address in cart %}
                             <div id="cart-bundle-address-{{forloop.counter}}">
+                                <p class="bundle-list-header">Order in the Cart for: {{ cart_address.address }}</p>
                                 <div class="accordion" role="tablist" id="bundle-results-2">
                                     <i class="fas fa-exclamation-triangle text-danger" id="empty-bundle-warning-{{forloop.counter}}" style="display: none;">No items in this bundle!</i>
                                     {% for seller_address in seller_addresses %}
@@ -464,15 +443,11 @@
                                                         <label for="currency">Delivery Rate:</label>
                                                         <span style="padding: 0; position: relative; left: 15px; font-size: 18px; display: flex; align-items: center; color: black;" class="col-auto">$</span>
                                                         <input class="downstream-number" type="number" id="delivery-rate-{{forloop.counter}}" style="padding-left: 20px;" name="delivery-rate" step="0.01" min="0" placeholder="0.00" value={% if seller_address.delivery_fee %}"{{seller_address.delivery_fee}}"{% endif %} required>
-                                                        <button type="button" class="btn btn-primary" id="default-delivery-price">Use Default</button>
-                                                        <p>default is: $</p>
                                                     </div>
                                                     <div class="row" style="width: 150px">
                                                         <label for="currency">Removal Rate:</label> 
                                                         <span style="padding: 0; position: relative; left: 15px; font-size: 18px; display: flex; align-items: center; color: black;" class="col-auto">$</span>
                                                         <input class="downstream-number" type="number" id="removal-rate-{{forloop.counter}}" style="padding-left: 20px;" name="removal-rate" step="0.01" min="0" placeholder="0.00" value={% if seller_address.removal_fee %}"{{seller_address.removal_fee}}"{% endif %} required>
-                                                        <button type="button" class="btn btn-primary" id="default-removal-price">Use Default</button>
-                                                        <p>default is: $</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -494,10 +469,10 @@
                         <div class="card-body mb-4" style="justify-content: center; display: flex; background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-truck" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/truck.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -505,10 +480,10 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-money-bill" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/dollar.svg' %}" />
                                 </div>
                             </div>
                             <div class="col-auto my-auto p-0">
@@ -516,15 +491,16 @@
                             </div>
                             <div class="stack">
                                 <div class="stack-bottom">
-                                    <i class="fas fa-circle" style="color: var(--bs-primary); font-size: 80px;"></i>
+                                    <div class="rounded-circle" style="width: 80px; height:80px; background: var(--bs-primary); border: none;"></div>
                                 </div>
                                 <div class="stack-top">
-                                    <i class="fas fa-check" style="color: white; font-size: 30px;"></i>
+                                    <img class="svg-loader large-svg-loader" src="{% static 'customer_dashboard/svg-loaders/check-circle.svg' %}" />
                                 </div>
                             </div>
                         </div>
                         {% for cart_address in cart %}
                             <div id="cart-bundle-confirm-address-{{forloop.counter}}">
+                                <p class="bundle-list-header">Order in the Cart for: {{ cart_address.address }}</p>
                                 <div class="accordion" role="tablist" id="bundle-results-3">
                                     <h4 id="empty-bundle-info-{{forloop.counter}}" style="display: none;">Empty bundles will be removed!</h4>
                                     {% for seller_address in seller_addresses %}
@@ -547,7 +523,7 @@
                                                         {% for item in cart_address.items %}
                                                             {% if item.seller_address.id == seller_address.address.id %}
                                                                 {% if item.can_bundle %}
-                                                                    <div class="col-6 d-flex align-items-stretch cart-item" id="cart-bundled-confirm-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}" data-order-id="{{item.order.id}}">
+                                                                    <div class="col-6 d-flex align-items-stretch cart-item" id="cart-bundled-confirm-item-{{forloop.counter}}" data-delivery-price="{{item.delivery_fee}}" data-removal-price="{{item.removal_fee}}" data-order-id="{{item.order.id}}" data-take-rate="{{item.order.order_group.take_rate}}">
                                                                         <div class="card p-3" style="background: var(--bs-card-cap-bg); border: none; border-radius: 15px;">
                                                                             <div class="row">
                                                                                 <div class="col-auto my-auto">

@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
+from api.managers.main_product import MainProductQuerySet
 from api.models.main_product.main_product_category import MainProductCategory
 from api.models.main_product.main_product_tag import MainProductTag
 from common.models import BaseModel
@@ -67,6 +68,9 @@ class MainProduct(BaseModel):
         "self", blank=True, symmetrical=False, related_name="parent_products"
     )
 
+    # Managers
+    objects = MainProductQuerySet.as_manager()
+
     def __str__(self):
         return f"{self.main_product_category.name} - {self.name}"
 
@@ -126,9 +130,10 @@ class MainProduct(BaseModel):
     def listings_count(self):
         """
         Get the total number of supplier listings for this product.
-
-        Prefetch "products__seller_products__seller_product_seller_locations" for efficiency.
         """
+        # Check if listings_count has been included in query.
+        if hasattr(self, "listings"):
+            return self.listings
         return self.products.aggregate(
             listings_count=models.Count(
                 "seller_products__seller_product_seller_locations",
@@ -140,9 +145,10 @@ class MainProduct(BaseModel):
     def likes_count(self):
         """
         Get the total number of likes for this product.
-
-        Prefetch "products__seller_products__seller_product_seller_locations__order_groups__orders" for efficiency.
         """
+        # Check if likes_count has been included in query.
+        if hasattr(self, "likes"):
+            return self.likes
         return self.products.aggregate(
             likes_count=models.Count(
                 "seller_products__seller_product_seller_locations__order_groups__orders__review",

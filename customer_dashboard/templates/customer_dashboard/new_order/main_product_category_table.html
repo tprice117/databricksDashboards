@@ -1,33 +1,53 @@
 {% load static %}
 {% load humanize %}
-<div class="row row-cols-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3 row-cols-xxl-4 g-4" id="category-results">
-  {% for main_product_category in main_product_categories %}
-    <div class="col-lg-4 d-flex align-items-stretch">
-      <div class="card shadow mb-4 w-100">
-        <div class="image-container">
-          <img class="card-img-top img-fluid"
-            src="{% if main_product_category.icon %}
-              {{ main_product_category.icon.url }}
+{% for row in carousels %}
+  <div class="my-4">
+    <h5 class="text-dark mb-3"><strong>{{ row.main_product_category.name }}</strong></h5>
+    <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-4 row-cols-xxl-4 g-4 flex-nowrap overflow-x-auto mb-4 px-3" id="category-results">
+      {% for main_product in row.main_products %}
+        <div class="col-lg-3 d-flex align-items-stretch">
+          <div class="card lead-card border-0 w-100 hover-float">
+            {% if user.is_staff and not is_impersonating %}
+              <a href="#" class="text-decoration-none text-reset overlay" role="button" onclick="selectCustomerPopup(event);"></a>
             {% else %}
-              {% static 'customer_dashboard/img/logo.png' %}
-            {% endif %}" />
-        </div>
-        <div class="card-body" style="padding-top: 0px;padding-right: 0px;padding-left: 0px;">
-          <div class="row">
-            <div class="col" style="padding-right: 24px;padding-left: 24px;padding-top: 12px;">
-              <h5>{{ main_product_category.name }}</h5>
-              {% comment %} <p style="margin-bottom: 0px;" hx-get="{% url 'customer_category_price' category_id=main_product_category.id %}" hx-trigger="load" hx-swap="outerHTML" hx-indicator="#htmx-indicator-status">
-                <span class="htmx-indicator" id="htmx-indicator-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-              </p> {% endcomment %}
+              <a href="{% url 'customer_new_order_3' product_id=main_product.id %}" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top"></a>
+            {% endif %}
+            <div class="inner">
+              <div class="image-container position-relative">
+                <img class="card-img-top img-fluid"
+                  src="{% if main_product.images.exists %}
+                    {{ main_product.images.first.image.url }}
+                  {% elif row.main_product_category.icon %}
+                    {{ row.main_product_category.icon.url }}
+                  {% else %}
+                    {% static 'customer_dashboard/img/logo.png' %}
+                  {% endif %}" />
+                {% if row.main_product_category.group %}
+                  <div class="position-absolute bottom-0 start-50 translate-middle-x bg-white border border-primary badge rounded-pill text-truncate" style="width: 85%; bottom: 15px !important;">
+                    <span class="text-primary"><b>{{ row.main_product_category.group.name }}</b></span>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="card-body pt-0">
+                <h6 class="text-dark mb-1"><strong>{{ main_product.name }}</strong></h6>
+                <p class="text-muted mb-0">
+                  {% with listings_count=main_product.listings_count %}
+                    {{ listings_count }} listing{{ listings_count|pluralize }}
+                  {% endwith %}&nbsp;|&nbsp; <i class="far fa-thumbs-up me-2"></i>{{ main_product.likes_count|intcomma }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-        <div class="card-footer">
-          <a class="btn btn-primary float-end" role="button" href="{% url 'customer_new_order_2' category_id=main_product_category.id %}">Build &amp; Price</a>
-        </div>
-      </div>
+      {% endfor %}
     </div>
-  {% endfor %}
-  <div class="col"></div>
-  <div class="col"></div>
-</div>
+  </div>
+{% endfor %}
+{% if carousels.has_next %}
+  <div id="load-btn-{{ carousels.number }}" class="text-center my-4">
+    <button class="btn btn-primary" hx-get="{% url 'customer_home' %}?p={{ carousels.next_page_number }}" hx-push-url="false" hx-target="#category-results" hx-indicator="#load-indicator-{{ carousels.number }}" hx-include="#filter-form" hx-swap="beforeend" hx-on::after-request="this.closest('div').remove()">
+      Load More
+      <span id="load-indicator-{{ carousels.number }}" class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+    </button>
+  </div>
+{% endif %}

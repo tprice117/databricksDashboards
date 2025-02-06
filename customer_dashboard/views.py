@@ -9,6 +9,8 @@ from decimal import Decimal
 from functools import wraps
 from typing import List, Union
 from urllib.parse import urlencode
+from itertools import groupby
+from operator import attrgetter
 
 import requests
 import stripe
@@ -22,7 +24,7 @@ from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.db.models import (
     F,
-    Max,
+    OuterRef,
     Q,
     ExpressionWrapper,
     DurationField,
@@ -32,6 +34,8 @@ from django.db.models import (
     Value,
     When,
     IntegerField,
+    Subquery,
+    Count,
 )
 from django.db.models.functions import Concat, Round, Coalesce
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -46,6 +50,7 @@ from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
     AddOn,
     FreightBundle,
+    Industry,
     MainProduct,
     MainProductCategory,
     MainProductCategoryGroup,
@@ -775,31 +780,126 @@ def index(request):
 
 # @login_required(login_url="/admin/login/")
 @catch_errors()
-def new_order(request):
+def explore(request):
     context = get_user_context(request)
+
+    pagination_limit = 15
+    page_number = 1
+
     search_q = request.GET.get("q", None)
-    group_id = request.GET.get("group_id", None)
-    main_product_categories = MainProductCategory.objects.all().order_by("name")
-    if search_q:
-        main_product_categories = main_product_categories.filter(
-            name__icontains=search_q
-        )
-    context["main_product_categories"] = main_product_categories
-    context["main_product_category_groups"] = (
-        MainProductCategoryGroup.objects.all().order_by("sort")
+    categories_checked = request.GET.getlist("category", [])
+    groups_checked = request.GET.getlist("category_group", [])
+    industries_checked = request.GET.getlist("industry", [])
+    allows_pick_up = request.GET.get("pickup", "False")
+
+    main_products = (
+        MainProduct.objects.all()
+        .prefetch_related("images")
+        .select_related("main_product_category")
+        .order_by("main_product_category__sort", "main_product_category", "name")
+        .with_likes()
+        .with_listings()
     )
-    if group_id:
-        context["main_product_categories"] = context["main_product_categories"].filter(
-            group_id=group_id
+    if search_q:
+        main_products = main_products.filter(
+            Q(name__icontains=search_q)
+            | Q(main_product_category__name__icontains=search_q)
+            | Q(main_product_category__group__name__icontains=search_q)
+            | Q(main_product_category__industry__name__icontains=search_q)
         )
-    print(context["main_product_category_groups"].count())
+    if groups_checked:
+        main_products = main_products.filter(
+            main_product_category__group_id__in=groups_checked
+        )
+    if categories_checked:
+        main_products = main_products.filter(
+            main_product_category_id__in=categories_checked
+        )
+    if industries_checked:
+        main_products = main_products.filter(
+            main_product_category__industry__id__in=industries_checked
+        )
+    if allows_pick_up == "True":
+        main_products = main_products.filter(allows_pick_up=True)
+
+    carousels = [
+        {
+            "main_product_category": key,
+            # Group is a generator
+            "main_products": list(group),
+        }
+        for key, group in groupby(
+            main_products, key=attrgetter("main_product_category")
+        )
+    ]
 
     if request.headers.get("HX-Request"):
+        if request.GET.get("p", None):
+            page_number = request.GET.get("p")
+
+        # Load page N
+        paginator = Paginator(carousels, pagination_limit)
+        page_obj = paginator.get_page(page_number)
+
+        context["carousels"] = page_obj
         return render(
             request,
             "customer_dashboard/new_order/main_product_category_table.html",
             context,
         )
+
+    # Use the first page
+    paginator = Paginator(carousels, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+
+    context["carousels"] = page_obj
+
+    # Reorder main product category groups
+    if groups_checked:
+        preserved_order = Case(
+            # Generate list of position orders
+            *[When(pk=pk, then=pos) for pos, pk in enumerate(groups_checked)],
+            # default is end of groups list
+            default=Value(len(groups_checked)),
+            output_field=IntegerField(),
+        )
+        main_product_category_groups = MainProductCategoryGroup.objects.all().order_by(
+            preserved_order, "sort"
+        )
+    else:
+        main_product_category_groups = MainProductCategoryGroup.objects.all().order_by(
+            "sort"
+        )
+
+    # Reorder categories
+    if categories_checked:
+        preserved_order = Case(
+            *[When(pk=pk, then=pos) for pos, pk in enumerate(categories_checked)],
+            default=Value(len(categories_checked)),
+            output_field=IntegerField(),
+        )
+        categories = MainProductCategory.objects.all().order_by(preserved_order, "sort")
+    else:
+        categories = MainProductCategory.objects.all().order_by("sort")
+
+    # Reorder industries
+    if industries_checked:
+        preserved_order = Case(
+            *[When(pk=pk, then=pos) for pos, pk in enumerate(industries_checked)],
+            default=Value(len(industries_checked)),
+            output_field=IntegerField(),
+        )
+        industries = Industry.objects.all().order_by(preserved_order)
+    else:
+        industries = Industry.objects.all()
+
+    context.update(
+        {
+            "main_product_category_groups": main_product_category_groups,
+            "categories": categories,
+            "industries": industries,
+        }
+    )
 
     return render(
         request, "customer_dashboard/new_order/main_product_categories.html", context
@@ -1079,7 +1179,7 @@ def new_order_4(request):
             context["product"] = products.first()
         if context.get("product", None) is None:
             messages.error(request, "Product not found.")
-            return HttpResponseRedirect(reverse("customer_new_order"))
+            return HttpResponseRedirect(reverse("customer_home"))
 
         # Discount
         context["max_discount_100"] = round(
@@ -1544,9 +1644,7 @@ def new_order_5(request):
                                     request,
                                     "Material waste type not found. Please contact us if this continues.",
                                 )
-                                return HttpResponseRedirect(
-                                    reverse("customer_new_order")
-                                )
+                                return HttpResponseRedirect(reverse("customer_home"))
 
                         # Get the default take rate and calculate the take rate based on the discount.
                         default_take_rate_percent: Decimal = (
@@ -1958,28 +2056,27 @@ def new_bundle(request):
                             # messages.error(request, f"Item {order.id} is already in a bundle.")
                             # return HttpResponseRedirect(reverse("customer_cart"))
 
-                    firstHasDelivery = False
                     new_bundle = FreightBundle(
                         name="bundle",
                         delivery_fee=bundle["deliveryCost"],
                         removal_fee=bundle["removalCost"],
                     )
                     new_bundle.save()
+                    # divide the delivery and removal cost among the items
+                    # also add the costs to the order_group
+                    dividedDeliveryCost = bundle["deliveryCost"] / len(bundle["items"])
+                    dividedRemovalCost = bundle["removalCost"] / len(bundle["items"])
                     for orderId in bundle["items"]:
                         order = Order.objects.get(id=orderId)
                         order.order_line_items.all().delete()
-                        if not firstHasDelivery:
-                            firstHasDelivery = True
-                            order.add_line_items(
-                                True,
-                                custom_delivery_fee=bundle["deliveryCost"],
-                                custom_removal_fee=bundle["removalCost"],
-                            )
-                        else:
-                            order.add_line_items(
-                                True, custom_delivery_fee=0, custom_removal_fee=0
-                            )
+                        order.add_line_items(
+                            True,
+                            custom_delivery_fee=dividedDeliveryCost,
+                            custom_removal_fee=dividedRemovalCost,
+                        )
                         order.order_group.freight_bundle = new_bundle
+                        order.order_group.delivery_fee = dividedDeliveryCost
+                        order.order_group.removal_fee = dividedRemovalCost
                         order.order_group.save()
         messages.success(request, "Bundle saved.")
     else:
@@ -1997,7 +2094,7 @@ def new_order_6(request, order_group_id):
         messages.success(request, "Order removed from cart.")
     else:
         messages.error(request, f"Order not found [{order_group_id}].")
-    return HttpResponseRedirect(reverse("customer_new_order"))
+    return HttpResponseRedirect(reverse("customer_home"))
 
 
 @login_required(login_url="/admin/login/")
@@ -2855,7 +2952,7 @@ def bookings_page_settings(request):
 @catch_errors()
 def my_order_groups(request):
     context = get_user_context(request)
-    pagination_limit = 25
+    pagination_limit = 10
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -2865,11 +2962,8 @@ def my_order_groups(request):
 
     query_params = request.GET.copy()
     is_active = request.GET.get("active")
-    if is_active == "on":
-        is_active = True
-    else:
-        is_active = False
-    context["is_active"] = is_active
+    context["is_active"] = is_active == "on"
+
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         my_accounts = request.GET.get("my_accounts")
@@ -2910,7 +3004,12 @@ def my_order_groups(request):
 
         # Select only order_groups where the last order.submitted_on is not null.
         order_groups = order_groups.annotate(
-            last_order_submitted_on=Max("orders__submitted_on")
+            # Using subquery so future annotations are not messed up.
+            last_order_submitted_on=Subquery(
+                Order.objects.filter(order_group=OuterRef("pk"))
+                .order_by("-submitted_on")
+                .values("submitted_on")[:1]
+            )
         ).filter(last_order_submitted_on__isnull=False)
 
         # Active orders are those that have an end_date in the future or are null (recurring orders).
@@ -2925,17 +3024,52 @@ def my_order_groups(request):
             )
 
         # Select related fields to reduce db queries.
-        order_groups = order_groups.select_related(
-            "seller_product_seller_location__seller_product__seller",
-            "seller_product_seller_location__seller_product__product__main_product",
-            # "user_address",
+        order_groups = (
+            order_groups.select_related(
+                "seller_product_seller_location__seller_location",
+                "seller_product_seller_location__seller_product__seller",
+                "seller_product_seller_location__seller_product__product__main_product__main_product_category",
+                "user_address__user__user_group__account_owner",
+            )
+            .prefetch_related(
+                "orders__order_line_items",
+                "seller_product_seller_location__seller_product__product__main_product__images",
+            )
+            .with_nearest_orders()
         )
-        # order_groups = order_groups.prefetch_related("orders")
         order_groups = order_groups.order_by("-end_date")
 
-        paginator = Paginator(order_groups, pagination_limit)
+        # Get the order groups and group them by user_address.
+        addresses = (
+            order_groups.order_by("user_address")
+            .values("user_address")
+            .annotate(count=Count("user_address"))
+        )
+        # Paginate responses by UserAddress before making db queries.
+        paginator = Paginator(addresses, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["page_obj"] = page_obj
+
+        order_groups = order_groups.filter(
+            user_address__in=[item["user_address"] for item in page_obj]
+        )
+        booking_groups = [
+            {
+                # Use list comprehension since .filter() creates a new db query.
+                "items": (
+                    items := [
+                        order_group
+                        for order_group in order_groups
+                        if order_group.user_address.id == item["user_address"]
+                    ]
+                ),
+                "count": item["count"],
+                # We can assume each address has at least one order group.
+                "address": items[0].user_address,
+            }
+            for item in page_obj
+        ]
+        context["bookings"] = booking_groups
 
         if page_number is None:
             page_number = 1
@@ -2964,12 +3098,12 @@ def my_order_groups(request):
         context["page_end_link"] = f"/customer/order_groups/?{query_params.urlencode()}"
 
         return render(
-            request, "customer_dashboard/snippets/order_groups_table.html", context
+            request, "customer_dashboard/snippets/order_groups_list.html", context
         )
     else:
         if query_params.get("active") is None:
             query_params["active"] = "on"
-        if request.user.is_staff:
+        if request.user.is_staff and not is_impersonating(request):
             if query_params.get("my_accounts") is None:
                 query_params["my_accounts"] = "on"
         context["active_orders_link"] = (
@@ -3567,7 +3701,7 @@ def new_location(request):
     postal_code = request.GET.get("zip")
     # This is a request from our website, so we want to redirect back to the bookings page on save.
     if street or city or state or postal_code:
-        request.session["new_location_return_to"] = reverse("customer_new_order")
+        request.session["new_location_return_to"] = reverse("customer_home")
 
     # If there is a return_to url, then save it in the session.
     redirect_url = request.GET.get("return_to", None)
@@ -5071,17 +5205,15 @@ def create_lead_board(leads):
     """
     Create a board structure from the given leads queryset.
     """
-    board = []
     # TODO: handle scale of leads (i.e. limit number of results, filter lanes)
-    for status, status_name in Lead.Status.get_ordered_choices():
-        board.append(
-            {
-                "name": status_name,
-                "value": status,
-                "leads": leads.filter(status=status),
-            }
-        )
-    return board
+    return [
+        {
+            "name": status_name,
+            "value": status,
+            "leads": [lead for lead in leads if lead.status == status],
+        }
+        for status, status_name in Lead.Status.get_ordered_choices()
+    ]
 
 
 @login_required(login_url="/admin/login/")

@@ -164,6 +164,10 @@
     .form-check-input.downstream-checkbox :checked {
       background-color: var(--bs-primary) !important;
     }
+    .large-svg-loader {
+      width: 40px !important;
+      height: 40px !important;
+    }
   </style>
 {% endblock %}
 {% block javascript %}
@@ -466,7 +470,7 @@
     </h3>
     {% if request.user.is_staff %}
       <form action="{% url 'customer_locations' %}" method="get" hx-get="{% url 'customer_cart' %}" hx-target="#cart-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
-        <div class="row mb-3 align-items-end justify-content-between flex-nowrap overflow-x-auto">
+        <div class="row mb-0 pb-3 align-items-end justify-content-between flex-nowrap overflow-x-auto">
           <div class="col-auto flex-nowrap me-3">
             <div class="border rounded-4 border-dark p-2">
               <div class="form-check form-switch px-1 d-flex flex-row align-items-center">
