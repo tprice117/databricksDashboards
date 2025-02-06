@@ -100,13 +100,12 @@
 {% block content %}
   <div class="container-xxl">
     <h6 class="pb-3 mb-3">
-      {% if main_product.main_product_category.group %}
-        <a class="text-reset text-decoration-none" href="{% url 'customer_home' %}?category_group={{ main_product.main_product_category.group.id }}">{{ main_product.main_product_category.group }}</a>
-      {% else %}
-        <a class="text-reset text-decoration-none" href="{% url 'customer_home' %}">All</a>
-      {% endif %}/ <a href="{% url 'customer_home' %}?category={{ main_product.main_product_category.id }}" class="text-reset text-decoration-none">{{ main_product.main_product_category }}</a> / <span class="text-primary">{{ main_product.name }}</span>
+      <a class="text-reset text-decoration-none" href="{% url 'customer_home' %}">All</a> /{% if main_product.main_product_category.group %}
+        <a class="text-reset text-decoration-none" href="{% url 'customer_home' %}?category_group={{ main_product.main_product_category.group.slug }}">{{ main_product.main_product_category.group }}</a> /
+      {% endif %}
+      <a href="{% url 'customer_home' %}?category={{ main_product.main_product_category.slug }}" class="text-reset text-decoration-none">{{ main_product.main_product_category }}</a> / <span class="text-primary">{{ main_product.name }}</span>
     </h6>
-    <form action="{% url 'customer_new_order_3' product_id=product_id %}" method="post" class="mb-2" enctype="multipart/form-data">
+    <form action="{% url 'customer_new_order_3' product_slug=main_product.slug %}" method="post" class="mb-2" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="row row-cols-1 row-cols-sm-1 row-cols-md-2">
         <div class="col col-xl-5 px-4">

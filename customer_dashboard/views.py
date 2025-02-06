@@ -809,15 +809,15 @@ def explore(request):
         )
     if groups_checked:
         main_products = main_products.filter(
-            main_product_category__group_id__in=groups_checked
+            main_product_category__group__slug__in=groups_checked
         )
     if categories_checked:
         main_products = main_products.filter(
-            main_product_category_id__in=categories_checked
+            main_product_category__slug__in=categories_checked
         )
     if industries_checked:
         main_products = main_products.filter(
-            main_product_category__industry__id__in=industries_checked
+            main_product_category__industry__slug__in=industries_checked
         )
     if allows_pick_up == "True":
         main_products = main_products.filter(allows_pick_up=True)
@@ -858,7 +858,7 @@ def explore(request):
     if groups_checked:
         preserved_order = Case(
             # Generate list of position orders
-            *[When(pk=pk, then=pos) for pos, pk in enumerate(groups_checked)],
+            *[When(slug=slug, then=pos) for pos, slug in enumerate(groups_checked)],
             # default is end of groups list
             default=Value(len(groups_checked)),
             output_field=IntegerField(),
@@ -874,7 +874,7 @@ def explore(request):
     # Reorder categories
     if categories_checked:
         preserved_order = Case(
-            *[When(pk=pk, then=pos) for pos, pk in enumerate(categories_checked)],
+            *[When(slug=slug, then=pos) for pos, slug in enumerate(categories_checked)],
             default=Value(len(categories_checked)),
             output_field=IntegerField(),
         )
@@ -885,7 +885,7 @@ def explore(request):
     # Reorder industries
     if industries_checked:
         preserved_order = Case(
-            *[When(pk=pk, then=pos) for pos, pk in enumerate(industries_checked)],
+            *[When(slug=slug, then=pos) for pos, slug in enumerate(industries_checked)],
             default=Value(len(industries_checked)),
             output_field=IntegerField(),
         )
@@ -907,10 +907,10 @@ def explore(request):
 
 
 @login_required(login_url="/admin/login/")
-def new_order_category_price(request, category_id):
+def new_order_category_price(request, category_slug):
     context = {}
     # NOTE: Causes a lot of heavy db queries. Need to optimize.
-    main_product_category = MainProductCategory.objects.get(id=category_id)
+    main_product_category = MainProductCategory.objects.get(slug=category_slug)
     context["price_from"] = main_product_category.price_from
     # Assume htmx request
     # if request.headers.get("HX-Request"):
@@ -965,9 +965,9 @@ def user_address_search(request):
 
 # @login_required(login_url="/admin/login/")
 @catch_errors()
-def new_order_2(request, category_id):
+def new_order_2(request, category_slug):
     context = get_user_context(request)
-    main_product_category = MainProductCategory.objects.filter(id=category_id)
+    main_product_category = MainProductCategory.objects.filter(slug=category_slug)
     main_product_category = main_product_category.prefetch_related(
         "main_products__mainproductinfo_set"
     )
@@ -978,7 +978,7 @@ def new_order_2(request, category_id):
     if search_q:
         main_products = main_products.filter(name__icontains=search_q)
     context["main_product_category"] = main_product_category
-    context["category_id"] = category_id
+    context["category_id"] = main_product_category.id
     context["main_products"] = []
     for main_product in main_products:
         main_product_dict = {}
@@ -1000,23 +1000,28 @@ def new_order_2(request, category_id):
 
 # @login_required(login_url="/admin/login/")
 @catch_errors()
-def new_order_3(request, product_id):
+def new_order_3(request, product_slug):
     context = get_user_context(request)
-    context["product_id"] = product_id
     # TODO: Add a button that allows adding an address.
     # The button could open a modal that allows adding an address.
-    main_product = MainProduct.objects.filter(id=product_id)
+    main_product = MainProduct.objects.filter(slug=product_slug)
     main_product = main_product.select_related(
         "main_product_category"
     ).prefetch_related("images", "related_products")
     main_product = main_product.first()
+
+    if not main_product:
+        messages.error(request, "Product not found.")
+        return HttpResponseRedirect(reverse("customer_home"))
+
     context["main_product"] = main_product
+    context["product_id"] = main_product.id
     product_waste_types = MainProductWasteType.objects.filter(
         main_product_id=main_product.id
     )
     product_waste_types = product_waste_types.select_related("waste_type")
     context["product_waste_types"] = product_waste_types
-    add_ons = AddOn.objects.filter(main_product_id=product_id)
+    add_ons = AddOn.objects.filter(main_product_id=main_product.id)
     # Get addon choices for each add_on and display the choices under the add_on.
     # TODO: Should I only show ProductAddOnChoice so we know the product actually has these?
     context["product_add_ons"] = []

@@ -10,7 +10,7 @@
             {% if user.is_staff and not is_impersonating %}
               <a href="#" class="text-decoration-none text-reset overlay" role="button" onclick="selectCustomerPopup(event);"></a>
             {% else %}
-              <a href="{% url 'customer_new_order_3' product_id=main_product.id %}" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top"></a>
+              <a href="{% url 'customer_new_order_3' product_slug=main_product.slug %}" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top"></a>
             {% endif %}
             <div class="inner">
               <div class="image-container position-relative">

@@ -32,8 +32,9 @@ class MainProductAdmin(BaseModelAdmin, ExportActionMixin):
                     "name",
                     "description",
                     "main_product_category",
-                    "sort",
                     "main_product_code",
+                    "slug",
+                    "sort",
                 ]
             },
         ),
@@ -108,6 +109,7 @@ class MainProductAdmin(BaseModelAdmin, ExportActionMixin):
         AddOnInline,
     ]
     filter_horizontal = ["tags", "related_products"]
+    prepopulated_fields = {"slug": ("name",)}
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "related_products":

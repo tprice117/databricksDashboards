@@ -132,17 +132,17 @@ urlpatterns = [
     # NEW ORDER #
     path("customer/order/new/", views.explore, name="customer_new_order"),
     path(
-        "customer/order/category/<uuid:category_id>/price/",
+        "customer/order/category/<slug:category_slug>/price/",
         views.new_order_category_price,
         name="customer_category_price",
     ),
     path(
-        "customer/order/new/product/<uuid:category_id>/",
+        "customer/order/new/product/<slug:category_slug>/",
         views.new_order_2,
         name="customer_new_order_2",
     ),
     path(
-        "customer/order/new/options/<uuid:product_id>/",
+        "customer/products/<slug:product_slug>/",
         views.new_order_3,
         name="customer_new_order_3",
     ),
