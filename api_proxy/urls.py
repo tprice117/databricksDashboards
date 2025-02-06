@@ -7,102 +7,88 @@ from api import views
 from api_proxy import login_router
 
 router = routers.DefaultRouter()
-router.register(r"advertisements", views.AdvertisementViewSet, "api")
+router.register(r"advertisements", views.AdvertisementViewSet)
 router.register(
-    r"disposal-location-waste-types", views.DisposalLocationWasteTypeViewSet, "api"
+    r"disposal-location-waste-types", views.DisposalLocationWasteTypeViewSet
 )
-router.register(r"disposal-locations", views.DisposalLocationViewSet, "api")
-router.register(r"industries", views.IndustryViewSet, "api")
-router.register(r"sellers", views.SellerViewSet, "api")
-router.register(r"seller-locations", views.SellerLocationViewSet, "api")
-router.register(r"users", views.UserViewSet, "api")
-router.register(r"user-groups", views.UserGroupViewSet, "api")
-router.register(r"user-group-billings", views.UserGroupBillingViewSet, "api")
+router.register(r"disposal-locations", views.DisposalLocationViewSet)
+router.register(r"industries", views.IndustryViewSet)
+router.register(r"sellers", views.SellerViewSet)
+router.register(r"seller-locations", views.SellerLocationViewSet)
+router.register(r"users", views.UserViewSet)
+router.register(r"user-groups", views.UserGroupViewSet)
+router.register(r"user-group-billings", views.UserGroupBillingViewSet)
 router.register(
-    r"user-group-credit-applications", views.UserGroupCreditApplicationViewSet, "api"
+    r"user-group-credit-applications", views.UserGroupCreditApplicationViewSet
 )
-router.register(r"user-group-legal", views.UserGroupLegalViewSet, "api")
-router.register(r"user-user-addresses", views.UserUserAddressViewSet, "api")
-router.register(r"user-addresses", views.UserAddressViewSet, "api")
-router.register(r"user-address-types", views.UserAddressTypeViewSet, "api")
-router.register(r"add-on-choices", views.AddOnChoiceViewSet, "api")
-router.register(r"add-ons", views.AddOnViewSet, "api")
-router.register(r"main-product-add-ons", views.MainProductAddOnViewSet, "api")
-router.register(
-    r"main-product-category-infos", views.MainProductCategoryInfoViewSet, "api"
-)
-router.register(
-    r"main-product-category-groups", views.MainProductCategoryGroupViewSet, "api"
-)
-router.register(r"main-product-categories", views.MainProductCategoryViewSet, "api")
-router.register(r"main-product-infos", views.MainProductInfoViewSet, "api")
-router.register(r"main-products", views.MainProductViewSet, "api")
+router.register(r"user-group-legal", views.UserGroupLegalViewSet)
+router.register(r"user-user-addresses", views.UserUserAddressViewSet)
+router.register(r"user-addresses", views.UserAddressViewSet)
+router.register(r"user-address-types", views.UserAddressTypeViewSet)
+router.register(r"add-on-choices", views.AddOnChoiceViewSet)
+router.register(r"add-ons", views.AddOnViewSet)
+router.register(r"main-product-add-ons", views.MainProductAddOnViewSet)
+router.register(r"main-product-category-infos", views.MainProductCategoryInfoViewSet)
+router.register(r"main-product-category-groups", views.MainProductCategoryGroupViewSet)
+router.register(r"main-product-categories", views.MainProductCategoryViewSet)
+router.register(r"main-product-infos", views.MainProductInfoViewSet)
+router.register(r"main-products", views.MainProductViewSet)
 router.register(r"main-products-page", views.MainProductPageViewSet)
-router.register(r"main-product-waste-types", views.MainProductWasteTypeViewSet, "api")
-router.register(r"orders", views.OrderViewSet, "api")
-router.register(r"assets", views.assetViewSet, "api")
-router.register(r"order-groups", views.OrderGroupViewSet, "api")
-router.register(r"order-group-attachments", views.OrderGroupAttachmentViewSet, "api")
-router.register(r"order-line-items", views.OrderLineItemViewSet, "api")
-router.register(r"order-line-item-types", views.OrderLineItemTypeViewSet, "api")
-router.register(r"order-disposal-tickets", views.OrderDisposalTicketViewSet, "api")
-router.register(r"subscriptions", views.SubscriptionViewSet, "api")
-router.register(r"payouts", views.PayoutViewSet, "api")
-router.register(r"product-add-on-choices", views.ProductAddOnChoiceViewSet, "api")
-router.register(r"products", views.ProductViewSet, "api")
-router.register(r"seller-products", views.SellerProductViewSet, "api")
+router.register(r"main-product-waste-types", views.MainProductWasteTypeViewSet)
+router.register(r"orders", views.OrderViewSet)
+router.register(r"assets", views.assetViewSet)
+router.register(r"order-groups", views.OrderGroupViewSet)
+router.register(r"order-group-attachments", views.OrderGroupAttachmentViewSet)
+router.register(r"order-line-items", views.OrderLineItemViewSet)
+router.register(r"order-line-item-types", views.OrderLineItemTypeViewSet)
+router.register(r"order-disposal-tickets", views.OrderDisposalTicketViewSet)
+router.register(r"subscriptions", views.SubscriptionViewSet)
+router.register(r"payouts", views.PayoutViewSet)
+router.register(r"product-add-on-choices", views.ProductAddOnChoiceViewSet)
+router.register(r"products", views.ProductViewSet)
+router.register(r"seller-products", views.SellerProductViewSet)
 router.register(
-    r"seller-product-seller-locations", views.SellerProductSellerLocationViewSet, "api"
+    r"seller-product-seller-locations", views.SellerProductSellerLocationViewSet
 )
 router.register(
     r"seller-product-seller-location-services",
     views.SellerProductSellerLocationServiceViewSet,
-    "api",
 )
 router.register(
-    r"service-recurring-frequencies", views.ServiceRecurringFrequencyViewSet, "api"
+    r"service-recurring-frequencies", views.ServiceRecurringFrequencyViewSet
 )
 router.register(
     r"main-product-service-recurring-frequencies",
     views.MainProductServiceRecurringFrequencyViewSet,
-    "api",
 )
 router.register(
     r"seller-product-seller-location-service-recurring-frequencies",
     views.SellerProductSellerLocationServiceRecurringFrequencyViewSet,
-    "api",
 )
 router.register(
     r"seller-product-seller-location-rentals",
     views.SellerProductSellerLocationRentalViewSet,
-    "api",
 )
 router.register(
     r"seller-product-seller-location-materials",
     views.SellerProductSellerLocationMaterialViewSet,
-    "api",
 )
 router.register(
     r"seller-product-seller-location-material-waste-types",
     views.SellerProductSellerLocationMaterialWasteTypeViewSet,
-    "api",
 )
-router.register(r"seller-invoice-payables", views.SellerInvoicePayableViewSet, "api")
+router.register(r"seller-invoice-payables", views.SellerInvoicePayableViewSet)
 router.register(
-    r"seller-invoice-payable-line-items",
-    views.SellerInvoicePayableLineItemViewSet,
-    "api",
+    r"seller-invoice-payable-line-items", views.SellerInvoicePayableLineItemViewSet
 )
-router.register(r"waste-types", views.WasteTypeViewSet, "api")
-router.register(r"day-of-weeks", views.DayOfWeekViewSet, "api")
-router.register(r"time-slots", views.TimeSlotViewSet, "api")
+router.register(r"waste-types", views.WasteTypeViewSet)
+router.register(r"day-of-weeks", views.DayOfWeekViewSet)
+router.register(r"time-slots", views.TimeSlotViewSet)
 
 # Use-case-specific model endpoints.
-router.register(
-    r"user-addresses-for-seller", views.UserAddressesForSellerViewSet, "api"
-)
-router.register(r"order-groups-for-seller", views.OrderGroupsForSellerViewSet, "api")
-router.register(r"orders-for-seller", views.OrdersForSellerViewSet, "api")
+router.register(r"user-addresses-for-seller", views.UserAddressesForSellerViewSet)
+router.register(r"order-groups-for-seller", views.OrderGroupsForSellerViewSet)
+router.register(r"orders-for-seller", views.OrdersForSellerViewSet)
 
 urlpatterns = [
     # Login Redirect.
