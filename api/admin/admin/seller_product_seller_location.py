@@ -34,6 +34,7 @@ class SellerProductSellerLocationAdmin(BaseModelAdmin, ExportActionMixin):
         "seller_location__name",
         "seller_location__seller__name",
         "seller_product__product__main_product__name",
+        "seller_product__product__product_code",
     ]
     list_display = (
         "seller_product",

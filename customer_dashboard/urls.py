@@ -130,6 +130,7 @@ urlpatterns = [
         name="customer_impersonation_stop",
     ),
     # NEW ORDER #
+    path("customer/order/new/", views.explore, name="customer_new_order"),
     path(
         "customer/order/category/<uuid:category_id>/price/",
         views.new_order_category_price,

@@ -69,7 +69,13 @@
         </li>
       {% endif %}
       <div class="d-none d-sm-block topbar-divider"></div>
-      {% include 'customer_dashboard/snippets/profile_dropdown.html' %}
+      {% if request.user.is_authenticated %}
+        {% include 'customer_dashboard/snippets/profile_dropdown.html' %}
+      {% else %}
+        <li class="nav-item">
+          <a class="nav-link text-primary" href="{% url 'login' %}">Login</a>
+        </li>
+      {% endif %}
     </ul>
   </div>
 </nav>
