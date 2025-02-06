@@ -1259,7 +1259,13 @@ class Order(BaseModel):
             delivery_fee = 0
             re_get_taxes = False
             for order_line_item in self.order_line_items.exclude_adjustments():
-                if order_line_item.tax is None and order_line_item.customer_price() > 0:
+                # If the OrderLineItem does not have a Stripe Invoice Line Item ID
+                # and tax is None and price is greater than 0, then it needs to be re-calculated.
+                if (
+                    not order_line_item.stripe_invoice_line_item_id
+                    and order_line_item.tax is None
+                    and order_line_item.customer_price() > 0
+                ):
                     re_get_taxes = True
                 all_line_items.append(order_line_item)
                 if order_line_item.order_line_item_type.code == "DELIVERY":
