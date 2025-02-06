@@ -3,6 +3,7 @@ from typing import Optional
 
 from rest_framework import serializers
 from api.serializers import (
+    UserSerializer,
     UserAddressSerializer,
     WasteTypeSerializer,
     TimeSlotSerializer,
@@ -36,6 +37,7 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
 
 class OrderGroupListSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    user = UserSerializer(read_only=True)
     user_address = UserAddressSerializer(read_only=True)
     seller_product_seller_location = SellerProductSellerLocationSerializer(
         read_only=True
