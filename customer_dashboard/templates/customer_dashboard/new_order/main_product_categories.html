@@ -163,10 +163,11 @@
       <div class="row">
         <div class="col col-xl-3 mb-4 mb-xl-0 px-4">
           <!-- Searchbar -->
-          <div class="input-group border border-dark rounded-2 border-1 mb-4">
+          <div class="input-group border border-dark rounded-2 border-1 mb-2">
             <span class="input-group-text border-0 text-dark" style="background-color: inherit;" id="inputGroup-sizing-lg"><i class="far fa-search"></i></span>
             <input id="category-search-filter" class="form-control text-dark" type="search" name="q" placeholder="Search Downstream Marketplace" />
           </div>
+          <br />
           <!-- Category Group Checkboxes -->
           {% if main_product_category_groups %}
             <div class="card border-dark border-2 rounded-4 card-body text-dark">
@@ -235,7 +236,7 @@
         </div>
         <div class="col col-xl-9 px-4">
           <!-- Is Delivery Toggle -->
-          <div id="delivery-controls">
+          <div id="delivery-controls" class="mb-2">
             <div class="btn-group w-100" style="max-width: 400px;">
               <input type="radio" class="btn-check" name="pickup" id="for-delivery-check" autocomplete="off" value="False" checked />
               <label class="btn btn-outline-primary px-3" for="for-delivery-check">Delivery</label>
@@ -245,6 +246,8 @@
             <!-- Loading Indicator -->
             <span class="htmx-indicator mb-0 ms-2" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
           </div>
+          <br />
+          <!-- Category Results -->
           <div id="category-results">
             {% include 'customer_dashboard/new_order/main_product_category_table.html' with carousels=carousels %}
           </div>
