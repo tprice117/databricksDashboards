@@ -783,9 +783,6 @@ def index(request):
 def explore(request):
     context = get_user_context(request)
 
-    pagination_limit = 15
-    page_number = 1
-
     search_q = request.GET.get("q", None)
     categories_checked = request.GET.getlist("category", [])
     groups_checked = request.GET.getlist("category_group", [])
@@ -796,10 +793,10 @@ def explore(request):
         MainProduct.objects.all()
         .prefetch_related("images")
         .select_related("main_product_category")
-        .order_by("main_product_category__sort", "main_product_category", "name")
         .with_likes()
         .with_listings()
     )
+    # Filter down query
     if search_q:
         main_products = main_products.filter(
             Q(name__icontains=search_q)
@@ -822,38 +819,65 @@ def explore(request):
     if allows_pick_up == "True":
         main_products = main_products.filter(allows_pick_up=True)
 
+    # Get main product categories with their listings so we can display categories with the most total listings first
+    main_product_categories = list(
+        MainProductCategory.objects.filter(main_products__in=main_products)
+        .annotate(
+            total_listings=Count(
+                "main_products__products__seller_products__seller_product_seller_locations",
+                distinct=True,
+                filter=Q(main_products__in=main_products),
+            )
+        )
+        .order_by("-total_listings")
+        .values_list("id", flat=True)
+    )
+
+    # Paginate
+    pagination_limit = 15
+    page_number = 1
+    if request.headers.get("HX-Request") and request.GET.get("p", None):
+        # Only get the page number from query if it's an htmx request (load more button)
+        page_number = request.GET.get("p")
+
+    # Load page N
+    paginator = Paginator(main_product_categories, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+
+    # Filter down query to the page object
+    main_products = main_products.filter(main_product_category__in=page_obj)
+
+    # Create a dictionary to map category IDs to their order in page_obj
+    category_order = {category_id: index for index, category_id in enumerate(page_obj)}
+
     carousels = [
         {
             "main_product_category": key,
-            # Group is a generator
+            # Group is a generator, must evaluate to list here or else it will lose the data
             "main_products": list(group),
         }
         for key, group in groupby(
-            main_products, key=attrgetter("main_product_category")
+            main_products.order_by("main_product_category", "name"),
+            key=attrgetter("main_product_category"),
         )
     ]
 
+    # Sort the carousels by total listings
+    context["carousels"] = sorted(
+        carousels,
+        key=lambda product: category_order[product["main_product_category"].id],
+    )
+    context["page_obj"] = page_obj
+
     if request.headers.get("HX-Request"):
-        if request.GET.get("p", None):
-            page_number = request.GET.get("p")
-
-        # Load page N
-        paginator = Paginator(carousels, pagination_limit)
-        page_obj = paginator.get_page(page_number)
-
-        context["carousels"] = page_obj
         return render(
             request,
             "customer_dashboard/new_order/main_product_category_table.html",
             context,
         )
 
-    # Use the first page
-    paginator = Paginator(carousels, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-
-    context["carousels"] = page_obj
-
+    # Checkboxes
+    # Float checkboxes that have already been selected to appear at the top of the list
     # Reorder main product category groups
     if groups_checked:
         preserved_order = Case(

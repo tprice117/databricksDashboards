@@ -32,6 +32,8 @@
           document.activeElement.blur()
         }
       })
+      // Load images
+      addImageLoadEventListeners()
     
       // Get URL params
       const urlParams = new URLSearchParams(window.location.search)
@@ -71,8 +73,6 @@
           checkbox.checked = true
         }
       })
-    
-      addImageLoadEventListeners()
     })
     
     // Debounce Timeout search filter (unused)
