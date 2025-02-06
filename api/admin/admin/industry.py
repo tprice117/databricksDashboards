@@ -45,9 +45,11 @@ class IndustryAdmin(ImportExportModelAdmin, ExportActionMixin):
                     "name",
                     "description",
                     "image",
+                    "slug",
                     "sort",
                 ]
             },
         ),
     ]
     inlines = [MainProductCategoryInlines]
+    prepopulated_fields = {"slug": ("name",)}
