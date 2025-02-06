@@ -22,7 +22,6 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from requests import Response
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework import status, viewsets
 from rest_framework.decorators import (
     api_view,
@@ -53,6 +52,7 @@ from billing.utils.billing import BillingUtils
 from common.models.choices.user_type import UserType
 from notifications.utils import internal_email
 from payment_methods.utils.ds_payment_methods.ds_payment_methods import DSPaymentMethods
+from common.utils.pagination import CustomLimitOffsetPagination
 
 from .models import (
     AddOn,
@@ -480,7 +480,7 @@ class MainProductViewSet(viewsets.ReadOnlyModelViewSet):
 class MainProductPageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = MainProduct.objects.all()
     serializer_class = MainProductSerializer
-    pagination_class = LimitOffsetPagination
+    pagination_class = CustomLimitOffsetPagination
     filterset_fields = ["id", "main_product_category__id", "is_related"]
 
     def get_queryset(self):

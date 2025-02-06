@@ -227,7 +227,7 @@ class UserGroup(BaseModel):
         )
         credit_used = 0
         for order_line_item in order_line_items:
-            credit_used += order_line_item.customer_price()
+            credit_used += order_line_item.customer_price_with_tax()
         return credit_used
 
     def invite_user(self, user):
