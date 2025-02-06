@@ -8,7 +8,6 @@ from rest_framework.exceptions import (
     APIException,
     ValidationError as DRFValidationError,
 )
-from rest_framework.pagination import LimitOffsetPagination
 from django_filters import rest_framework as filters
 
 from api.filters import OrderGroupFilterset
@@ -20,6 +19,7 @@ from api.v1.serializers import (
     OrderGroupPlacementDetailsRequestSerializer,
     OrderGroupListSerializer,
 )
+from common.utils.pagination import CustomLimitOffsetPagination
 
 
 class OrderGroupViewSet(
@@ -31,7 +31,7 @@ class OrderGroupViewSet(
     queryset = OrderGroup.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = OrderGroupFilterset
-    pagination_class = LimitOffsetPagination
+    pagination_class = CustomLimitOffsetPagination
 
     def get_queryset(self):
         # Using queryset defined in api/managers/order_group.py
