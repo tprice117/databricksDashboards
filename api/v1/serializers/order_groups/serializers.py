@@ -9,20 +9,11 @@ from api.serializers import (
     TimeSlotSerializer,
     ServiceRecurringFrequencySerializer,
     DayOfWeekSerializer,
-    ProductSerializer,
     SellerLocationSerializer,
+    SellerProductSerializer,
     OrderSerializer,
 )
-from api.models import OrderGroup, SellerProductSellerLocation, SellerProduct
-
-
-class SellerProductSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-    product = ProductSerializer(read_only=True)
-
-    class Meta:
-        model = SellerProduct
-        fields = "__all__"
+from api.models import OrderGroup, SellerProductSellerLocation
 
 
 class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
