@@ -372,8 +372,14 @@
             <hr />
             <p class="text-success">{{ form_msg }}</p>
           {% endif %}
-          <!-- Submit Button -->
-          <button class="btn btn-primary w-100 p-2 my-3 shadow" type="submit" name="action_button" id="submit-button"><small>Find a Supplier</small></button>
+          {% if request.user.is_authenticated %}
+            <!-- Submit Button -->
+            <button class="btn btn-primary w-100 p-2 my-3 shadow" type="submit" name="action_button" id="submit-button"><small>Find a Supplier</small></button>
+          {% else %}
+            {% comment %}Button to let users know they need to log in. In the future we will have addresses prefilled so users can get as far as the supplier pricing list before having to login.{% endcomment %}
+            <button class="btn btn-primary w-100 p-2 my-3 shadow disabled" name="action_button" id="submit-button" disabled><small>Find a Supplier</small></button>
+            <a class="btn btn-light w-100 p-2 my-2 shadow" href="{% url 'login' %}"><i class="far fa-sign-in-alt me-2"></i><small>Login to Continue</small></a>
+          {% endif %}
         </div>
       </div>
     </form>
