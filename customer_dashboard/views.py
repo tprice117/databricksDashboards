@@ -5528,3 +5528,16 @@ def lead_detail(request, lead_id):
     )
 
     return render(request, "customer_dashboard/leads/lead_detail.html", context)
+
+
+def error_404(request, exception):
+    context = {}
+    context["exception"] = exception
+    context["request"] = request
+    return render(request, "customer_dashboard/404.html", context)
+
+
+def error_500(request):
+    context = {}
+    context["request"] = request
+    return render(request, "customer_dashboard/500.html", context)
