@@ -15,7 +15,6 @@ urlpatterns = [
         views.user_address_search,
         name="customer_user_address_search",
     ),
-    path("customer/", views.explore, name="customer_home"),
     path("customer/logout/", views.customer_logout, name="customer_logout"),
     path("customer/profile/", views.profile, name="customer_profile"),
     path("customer/company/", views.company_detail, name="customer_company"),
@@ -130,9 +129,21 @@ urlpatterns = [
         name="customer_impersonation_stop",
     ),
     # NEW ORDER #
+    path("customer/", views.explore, name="customer_home"),
+    path(
+        "customer/products/<slug:product_slug>/",
+        views.product_details,
+        name="customer_products",
+    ),
+    path(
+        "customer/order/new/suppliers/",
+        views.new_order_4,
+        name="customer_new_order_4",
+    ),
+    ## Legacy Urls ##
     path("customer/order/new/", views.explore, name="customer_new_order"),
     path(
-        "customer/order/category/<uuid:category_id>/price/",
+        "customer/order/category/<slug:category_slug>/price/",
         views.new_order_category_price,
         name="customer_category_price",
     ),
@@ -141,16 +152,14 @@ urlpatterns = [
         views.new_order_2,
         name="customer_new_order_2",
     ),
+    # new_order_3 is potentially relevant since slug may be null
     path(
         "customer/order/new/options/<uuid:product_id>/",
-        views.new_order_3,
+        views.product_details_legacy,
         name="customer_new_order_3",
     ),
-    path(
-        "customer/order/new/suppliers/",
-        views.new_order_4,
-        name="customer_new_order_4",
-    ),
+    ## END Legacy Urls ##
+    # CART #
     path(
         "customer/cart/send_quote/",
         views.cart_send_quote,
