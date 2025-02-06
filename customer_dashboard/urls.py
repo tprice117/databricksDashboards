@@ -152,6 +152,7 @@ urlpatterns = [
         views.new_order_2,
         name="customer_new_order_2",
     ),
+    # new_order_3 is potentially relevant since slug may be null
     path(
         "customer/order/new/options/<uuid:product_id>/",
         views.product_details_legacy,
