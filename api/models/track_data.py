@@ -1,6 +1,5 @@
 from typing import Iterable
 from django.db.models.signals import post_init
-from django.db import models
 
 
 def track_data(*fields: Iterable[str]):
@@ -30,15 +29,7 @@ def track_data(*fields: Iterable[str]):
     def _store(self):
         "Updates a local copy of attributes values"
         if self.id:
-            self.__data = dict(
-                (
-                    f,
-                    getattr(self, f).id
-                    if isinstance(getattr(self, f), models.Model)
-                    else getattr(self, f),
-                )
-                for f in fields
-            )
+            self.__data = dict((f, getattr(self, f)) for f in fields)
         else:
             self.__data = UNSAVED
 
