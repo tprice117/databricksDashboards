@@ -206,6 +206,6 @@ urlpatterns = [
     ),
 ]
 
-handler404 = "customer_dashboard.views.error_404"
+# handler404 = "customer_dashboard.views.error_404"
 
-handler500 = "customer_dashboard.views.error_500"
+# handler500 = "customer_dashboard.views.error_500"
