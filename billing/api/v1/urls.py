@@ -5,7 +5,9 @@ import billing.api.v1.views as views
 
 router = DefaultRouter()
 router.register(r"invoices", views.InvoiceViewSet)
-router.register(r"invoice/expanded", views.InvoiceExpandedViewSet)
+router.register(
+    r"invoice/expanded", views.InvoiceExpandedViewSet, basename="invoice-expanded"
+)
 
 urlpatterns = router.urls
 
