@@ -13,7 +13,7 @@ class OrderGroupFilterset(filters.FilterSet):
 
     active = filters.BooleanFilter(field_name="active", method="get_active")
     code = filters.CharFilter(field_name="code", method="get_code")
-    status = filters.ChoiceFilter(
+    status = filters.MultipleChoiceFilter(
         field_name="orders__status", method="get_status", choices=Order.Status.choices
     )
     user = filters.CharFilter(field_name="user", lookup_expr="exact")
@@ -60,10 +60,10 @@ class OrderGroupFilterset(filters.FilterSet):
             Q(end_date=None) | Q(end_date__gt=datetime.datetime.now())
         )
 
-    def get_status(self, queryset, name, value):
+    def get_status(self, queryset, name, values):
         # Get all order_groups where latest order has a specific status
-        if value:
-            return queryset.filter(orders__status=value)
+        if values:
+            return queryset.filter(orders__status__in=values)
         else:
             return queryset.all()
 
