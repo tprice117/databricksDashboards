@@ -93,6 +93,13 @@ class UserGroup(BaseModel):
         default=False,
         help_text="Send invoices when all OrderGroups in a project are completed.",
     )
+    stripe_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        unique=True,
+        help_text="Stripe Customer ID",
+    )
     # END SECTION: Invoicing and Payment
     is_superuser = models.BooleanField(default=False)
     share_code = models.CharField(max_length=6, blank=True)
