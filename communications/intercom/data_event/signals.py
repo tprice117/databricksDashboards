@@ -3,6 +3,7 @@ import logging
 from typing import Union
 
 from django.db.models.signals import post_delete, post_save
+from django.db import models
 
 from api.models import Order, User, UserAddress
 from communications import intercom
@@ -34,6 +35,10 @@ def get_updated_metadata(
     for key, val in old_data.items():
         oldval = get_json_safe_value(val)
         newval = get_json_safe_value(getattr(db_obj, key))
+        if isinstance(newval, models.Model):
+            newval = get_json_safe_value(newval.id)
+        if isinstance(oldval, models.Model):
+            oldval = get_json_safe_value(oldval.id)
         changes[f"Updated {key}"] = f"new:[{newval}] | old:[{oldval}]"
     return changes
 
@@ -50,6 +55,8 @@ def get_tracked_data(db_obj: Union[User, UserAddress, Order]) -> dict:
     data = {}
     for key, val in db_obj.__data.items():
         dbval = get_json_safe_value(getattr(db_obj, key))
+        if isinstance(dbval, models.Model):
+            dbval = get_json_safe_value(dbval.id)
         if dbval is not None:
             data[key] = dbval
     return data
