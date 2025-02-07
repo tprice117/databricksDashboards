@@ -3,76 +3,35 @@
 {% load humanize %}
 {% load sales_stream_tags %}
 {% block stylesheet %}
-    <style>
-        /* Custom Button Styles */
-        .bg-blue {
-            background-color: #0583c7;
-        }
-        
-        .btn-blue {
-            --bs-btn-color: #fff;
-            --bs-btn-bg: #0583c7;
-            --bs-btn-border-color: #0583c7;
-            --bs-btn-hover-color: #fff;
-            --bs-btn-hover-bg: #036da6;
-            --bs-btn-hover-border-color: #036da6;
-            --bs-btn-focus-shadow-rgb: 217, 236, 236;
-            --bs-btn-active-color: #fff;
-            --bs-btn-active-bg: #035f91;
-            --bs-btn-active-border-color: #035f91;
-            --bs-btn-disabled-color: #fff;
-            --bs-btn-disabled-bg: #4a8cad;
-            --bs-btn-disabled-border-color: #4a8cad;
-        }
-        
-        .bg-orange {
-            background-color: #f39913;
-        }
-        
-        .btn-orange {
-            --bs-btn-color: #000;
-            --bs-btn-bg: #f39913;
-            --bs-btn-border-color: #f39913;
-            --bs-btn-hover-color: #000;
-            --bs-btn-hover-bg: #df8d11;
-            --bs-btn-hover-border-color: #df8d11;
-            --bs-btn-focus-shadow-rgb: 217, 236, 236;
-            --bs-btn-active-color: #000;
-            --bs-btn-active-bg: #d4850e;
-            --bs-btn-active-border-color: #d4850e;
-            --bs-btn-disabled-color: #000;
-            --bs-btn-disabled-bg: #d6a966;
-            --bs-btn-disabled-border-color: #d6a966;
-        }
-    </style>
+  <style></style>
 {% endblock %}
 <div class="p-3" role="tablist" id="cart-results">
-    {% for cart_address in cart %}
-        <div class="card shadow-sm mb-3">
-            <div class="card-header p-4 rounded-3 bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
-                <h6 class="mb-0 d-flex align-items-center text-nowrap" style="width: 95%;">
-                    <span class="text-truncate">
-                        {% if cart_address.address.name %}
-                            {{ cart_address.address.name }} |
-                        {% endif %}{{ cart_address.address.formatted_address }}
-                    </span>&nbsp;|&nbsp;
-                    <span><strong>{{ cart_address.total|currency }}</strong></span>
-                    <span id="count-{{ cart_address.address.id }}" class="badge text-bg-primary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
-                    {% if request.user.is_staff %}
-                        <span class="badge text-primary bg-white">
-                            {% if cart_address.address.user_group.name %}
-                                {{ cart_address.address.user_group.name }}
-                            {% elif cart_address.address.user.user_group.name %}
-                                {{ cart_address.address.user.user_group.name }}
-                            {% endif %}
-                        </span>
-                    {% endif %}
-                    <span class="col"></span>
-                    <span class="ms-2 badge text-primary bg-white">{{ cart_address.address.user.full_name }}</span>
-                </h6>
-            </div>
-            <!-- prettier-ignore -->
-            <div class="collapse item-{{ forloop.counter }} {% if forloop.first %}show {% else %}collapsed{% endif %}"
+  {% for cart_address in cart %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header p-4 rounded-3 bg-secondary text-white {% if not forloop.first %}collapsed {% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#cart-results .item-{{ forloop.counter }}" aria-expanded="{{ forloop.first|lower }}" aria-controls="cart-results .item-{{ forloop.counter }}">
+        <h6 class="mb-0 d-flex align-items-center text-nowrap" style="width: 95%;">
+          <span class="text-truncate">
+            {% if cart_address.address.name %}
+              {{ cart_address.address.name }} |
+            {% endif %}{{ cart_address.address.formatted_address }}
+          </span>&nbsp;|&nbsp;
+          <span><strong>{{ cart_address.total|currency }}</strong></span>
+          <span id="count-{{ cart_address.address.id }}" class="badge text-bg-primary ms-2 me-2" data-count="{{ cart_address.count }}">{{ cart_address.count }} item{{ cart_address.count|pluralize }}</span>
+          {% if request.user.is_staff %}
+            <span class="badge text-primary bg-white">
+              {% if cart_address.address.user_group.name %}
+                {{ cart_address.address.user_group.name }}
+              {% elif cart_address.address.user.user_group.name %}
+                {{ cart_address.address.user.user_group.name }}
+              {% endif %}
+            </span>
+          {% endif %}
+          <span class="col"></span>
+          <span class="ms-2 badge text-primary bg-white">{{ cart_address.address.user.full_name }}</span>
+        </h6>
+      </div>
+      <!-- prettier-ignore -->
+      <div class="collapse item-{{ forloop.counter }} {% if forloop.first %}show {% endif %}"
         role="tabpanel">
         <div class="card-body">
           {% for item in cart_address.items %}
@@ -106,15 +65,15 @@
           </div>
         </div>
       </div>
-        </div>
-    {% endfor %}
+    </div>
+  {% endfor %}
 </div>
 
 <h3 id="cart-title" class="text-dark mb-2" data-cart-count="{{ cart_count }}" hx-swap-oob="true">
-    <strong>Cart ({{ cart_count }})</strong>
-    {% if help_text %}
-        <small class="ms-3 text-muted">{{ help_text }}</small>
-    {% endif %}
+  <strong>Cart ({{ cart_count }})</strong>
+  {% if help_text %}
+    <small class="ms-3 text-muted">{{ help_text }}</small>
+  {% endif %}
 </h3>
 <h4 id="cart-subtotal" class="float-end mt-2" data-subtotal="{{ subtotal }}" hx-swap-oob="true"><strong>Subtotal: {{ subtotal|currency }}</strong></h4>
 {% include 'customer_dashboard/snippets/bundle_popup_1.html' %}

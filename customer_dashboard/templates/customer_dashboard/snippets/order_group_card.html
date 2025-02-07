@@ -3,9 +3,8 @@
 {% load humanize %}
 {% load sales_stream_tags %}
 {% with order_group=item %}
-  <div class="col-xl-4 col-md-6 col-12 mb-2">
-    <!-- prettier-ignore -->
-    <div class="card lead-card {% if order_group.parent_booking or order_group.related_bookings.exists %}border-primary rounded{% else %}border-0{% endif %}" style="background-color: var(--bs-card-cap-bg);" onmouseover="this.style.backgroundColor='#f0f0f0';" onmouseout="this.style.backgroundColor='var(--bs-card-cap-bg)';">
+  <!-- prettier-ignore -->
+  <div class="card lead-card {% if order_group.parent_booking or order_group.related_bookings.exists %}border-primary rounded{% else %}border-0{% endif %}" style="background-color: var(--bs-card-cap-bg);" onmouseover="this.style.backgroundColor='#f0f0f0';" onmouseout="this.style.backgroundColor='var(--bs-card-cap-bg)';">
     <!-- Card Overlay -->
     <a href="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top"></a>
     <!-- Card Content -->
@@ -39,16 +38,18 @@
             </div>
             <div class="row mb-3">
                 <div class="d-flex align-items-center">
-                    <img class="cart-item-seller-logo img-container-sm me-2"
-                    alt="Seller logo"
-                    width="50"
-                    height="50"
-                    src="{% if order_group.seller_product_seller_location.seller_location.location_logo_image %}
-                    {{ order_group.seller_product_seller_location.seller_location.location_logo_image.url }}
-                    {% else %}
-                    {% static 'customer_dashboard/img/defualt_logo.png' %}
-                    {% endif %}" />
-                    <p class="cart-item-seller-name mb-0 text-truncate">{{ order_group.seller_product_seller_location.seller_location.name }}</p>
+                    {% if type != "related" %}
+                        <img class="cart-item-seller-logo img-container-sm me-2"
+                        alt="Seller logo"
+                        width="50"
+                        height="50"
+                        src="{% if order_group.seller_product_seller_location.seller_location.location_logo_image %}
+                        {{ order_group.seller_product_seller_location.seller_location.location_logo_image.url }}
+                        {% else %}
+                        {% static 'customer_dashboard/img/defualt_logo.png' %}
+                        {% endif %}" />
+                        <p class="cart-item-seller-name mb-0 text-truncate">{{ order_group.seller_product_seller_location.seller_location.name }}</p>
+                    {% endif %}
                 </div>
             </div>
             <div class="row">
@@ -63,13 +64,26 @@
                         <a class="btn btn-primary btn-sm w-100" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_swap' order_group_id=order_group.id %}">Request Swap <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
                     </div>
                         {% endif %}
+                    {% if type == "parent"%}
+                    <div class="col px-2">
+                        <button class="btn btn-primary btn-sm w-100 disabled" style="pointer-events: none;" type="button" title="This feature is not available yet." disabled>Add Linked Products <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+                    </div>
+                    {% elif type == "not_related" and order_group.parent_booking %}
+                    <div class="col px-2">
+                            <a href="{% url 'customer_order_group_detail' order_group.parent_booking_id %}" class="btn btn-light btn-sm w-100" title="Click to view parent booking details.">View Related Booking</a>
+                        </div>
+                    {% endif %}
                 {% endif %}
             </div>
             {% endwith %}
             {% endwith %}
         </div>
       </div>
+      {% if type == "related" %}
+        <div class="position-absolute start-50 translate-middle bg-white border border-primary badge rounded-circle" style="top: -5px !important;">
+            <span class="text-primary"><i class="far fa-link"></i></span>
+        </div>
+      {% endif %}
     </div>
     </div>
-  </div>
 {% endwith %}
