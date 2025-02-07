@@ -784,6 +784,7 @@ def explore(request):
     context = get_user_context(request)
 
     search_q = request.GET.get("q", None)
+    group_id = request.GET.get("group_id", None)
     categories_checked = request.GET.getlist("category", [])
     groups_checked = request.GET.getlist("category_group", [])
     industries_checked = request.GET.getlist("industry", [])
@@ -804,6 +805,8 @@ def explore(request):
             | Q(main_product_category__group__name__icontains=search_q)
             | Q(main_product_category__industry__name__icontains=search_q)
         )
+    if group_id:
+        main_products = main_products.filter(main_product_category__group_id=group_id)
     if groups_checked:
         main_products = main_products.filter(
             main_product_category__group__slug__in=groups_checked
