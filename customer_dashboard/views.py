@@ -5534,10 +5534,10 @@ def error_404(request, exception):
     context = {}
     context["exception"] = exception
     context["request"] = request
-    return render(request, "customer_dashboard/404.html", context)
+    return render(request, "customer_dashboard/404.html", context, status=404)
 
 
 def error_500(request):
     context = {}
     context["request"] = request
-    return render(request, "customer_dashboard/500.html", context)
+    return render(request, "customer_dashboard/500.html", context, status=500)
