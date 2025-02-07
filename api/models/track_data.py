@@ -47,6 +47,7 @@ def track_data(*fields: Iterable[str]):
             for k, v in data.items():
                 self.__data[k] = v
             # self.__data = data
+
         cls.set_tracked_data = set_tracked_data
 
         def has_changed(self, field: str):
@@ -54,11 +55,13 @@ def track_data(*fields: Iterable[str]):
             if self.__data is UNSAVED:
                 return False
             return self.__data.get(field) != getattr(self, field)
+
         cls.has_changed = has_changed
 
         def old_value(self, field: str):
             "Returns the previous value of ``field``"
             return self.__data.get(field)
+
         cls.old_value = old_value
 
         def whats_changed(self) -> dict:
@@ -70,18 +73,22 @@ def track_data(*fields: Iterable[str]):
                 if v != getattr(self, k):
                     changed[k] = v
             return changed
+
         cls.whats_changed = whats_changed
 
         # Ensure we are updating local attributes on model init
         def _post_init(sender, instance, **kwargs):
             _store(instance)
+
         post_init.connect(_post_init, sender=cls, weak=False)
 
         # Ensure we are updating local attributes on model save
         def save(self, *args, **kwargs):
             save._original(self, *args, **kwargs)
             _store(self)
+
         save._original = cls.save
         cls.save = save
         return cls
+
     return inner
