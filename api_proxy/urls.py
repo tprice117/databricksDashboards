@@ -33,7 +33,9 @@ router.register(r"main-product-category-groups", views.MainProductCategoryGroupV
 router.register(r"main-product-categories", views.MainProductCategoryViewSet)
 router.register(r"main-product-infos", views.MainProductInfoViewSet)
 router.register(r"main-products", views.MainProductViewSet)
-router.register(r"main-products-page", views.MainProductPageViewSet)
+router.register(
+    r"main-products-page", views.MainProductPageViewSet, basename="main-products-page"
+)
 router.register(r"main-product-waste-types", views.MainProductWasteTypeViewSet)
 router.register(r"orders", views.OrderViewSet)
 router.register(r"assets", views.assetViewSet)
@@ -86,9 +88,19 @@ router.register(r"day-of-weeks", views.DayOfWeekViewSet)
 router.register(r"time-slots", views.TimeSlotViewSet)
 
 # Use-case-specific model endpoints.
-router.register(r"user-addresses-for-seller", views.UserAddressesForSellerViewSet)
-router.register(r"order-groups-for-seller", views.OrderGroupsForSellerViewSet)
-router.register(r"orders-for-seller", views.OrdersForSellerViewSet)
+router.register(
+    r"user-addresses-for-seller",
+    views.UserAddressesForSellerViewSet,
+    basename="user-addresses-for-seller",
+)
+router.register(
+    r"order-groups-for-seller",
+    views.OrderGroupsForSellerViewSet,
+    basename="order-groups-for-seller",
+)
+router.register(
+    r"orders-for-seller", views.OrdersForSellerViewSet, basename="orders-for-seller"
+)
 
 urlpatterns = [
     # Login Redirect.
