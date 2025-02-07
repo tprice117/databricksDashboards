@@ -8,6 +8,7 @@ class MainProductCategoryGroup(BaseModel):
     name = models.CharField(max_length=80)
     sort = models.IntegerField()
     icon = models.ImageField(upload_to=get_file_path, blank=True, null=True)
+    slug = models.SlugField(max_length=80, unique=True, blank=True, null=True)
 
     def __str__(self):
         return self.name

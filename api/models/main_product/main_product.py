@@ -18,6 +18,7 @@ class MainProduct(BaseModel):
     ar_url = models.URLField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     image_del = models.TextField(blank=True, null=True)
+    slug = models.SlugField(max_length=80, unique=True, blank=True, null=True)
     sort = models.IntegerField()
     tags = models.ManyToManyField(
         MainProductTag,

@@ -26,10 +26,12 @@ class MainProductCategoryGroupAdmin(BaseModelAdmin, ExportActionMixin):
             {
                 "fields": [
                     "name",
-                    "sort",
                     "icon",
+                    "slug",
+                    "sort",
                 ]
             },
         ),
         BaseModelAdmin.audit_fieldset,
     ]
+    prepopulated_fields = {"slug": ("name",)}

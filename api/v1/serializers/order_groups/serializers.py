@@ -3,25 +3,17 @@ from typing import Optional
 
 from rest_framework import serializers
 from api.serializers import (
+    UserSerializer,
     UserAddressSerializer,
     WasteTypeSerializer,
     TimeSlotSerializer,
     ServiceRecurringFrequencySerializer,
     DayOfWeekSerializer,
-    ProductSerializer,
     SellerLocationSerializer,
+    SellerProductSerializer,
     OrderSerializer,
 )
-from api.models import OrderGroup, SellerProductSellerLocation, SellerProduct
-
-
-class SellerProductSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(required=False, allow_null=True)
-    product = ProductSerializer(read_only=True)
-
-    class Meta:
-        model = SellerProduct
-        fields = "__all__"
+from api.models import OrderGroup, SellerProductSellerLocation
 
 
 class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
@@ -36,6 +28,7 @@ class SellerProductSellerLocationSerializer(serializers.ModelSerializer):
 
 class OrderGroupListSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, allow_null=True)
+    user = UserSerializer(read_only=True)
     user_address = UserAddressSerializer(read_only=True)
     seller_product_seller_location = SellerProductSellerLocationSerializer(
         read_only=True

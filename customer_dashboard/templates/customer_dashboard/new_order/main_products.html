@@ -64,7 +64,7 @@
           <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
         </div>
       </div>
-      <form class="row mt-2 row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-2 row-cols-xxl-2" hx-trigger="confirmed" hx-get="{% url 'customer_new_order_2' category_id %}" hx-target="#product-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
+      <form class="row mt-2 row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-2 row-cols-xxl-2" hx-trigger="confirmed" hx-get="{% url 'customer_new_order_2' main_product_category.id %}" hx-target="#product-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status">
         <div class="col">
           <div class="input-group">
             <span class="input-group-text" id="inputGroup-sizing-lg">Search</span>

@@ -41,6 +41,7 @@ class MainProductCategory(BaseModel):
             validate_file_extension,
         ],
     )
+    slug = models.SlugField(max_length=80, unique=True, blank=True, null=True)
     sort = models.IntegerField()
     main_product_category_code = models.CharField(max_length=255, blank=True, null=True)
     industry = models.ManyToManyField(

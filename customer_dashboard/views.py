@@ -783,10 +783,8 @@ def index(request):
 def explore(request):
     context = get_user_context(request)
 
-    pagination_limit = 15
-    page_number = 1
-
     search_q = request.GET.get("q", None)
+    group_id = request.GET.get("group_id", None)
     categories_checked = request.GET.getlist("category", [])
     groups_checked = request.GET.getlist("category_group", [])
     industries_checked = request.GET.getlist("industry", [])
@@ -796,10 +794,10 @@ def explore(request):
         MainProduct.objects.all()
         .prefetch_related("images")
         .select_related("main_product_category")
-        .order_by("main_product_category__sort", "main_product_category", "name")
         .with_likes()
         .with_listings()
     )
+    # Filter down query
     if search_q:
         main_products = main_products.filter(
             Q(name__icontains=search_q)
@@ -807,58 +805,87 @@ def explore(request):
             | Q(main_product_category__group__name__icontains=search_q)
             | Q(main_product_category__industry__name__icontains=search_q)
         )
+    if group_id:
+        main_products = main_products.filter(main_product_category__group_id=group_id)
     if groups_checked:
         main_products = main_products.filter(
-            main_product_category__group_id__in=groups_checked
+            main_product_category__group__slug__in=groups_checked
         )
     if categories_checked:
         main_products = main_products.filter(
-            main_product_category_id__in=categories_checked
+            main_product_category__slug__in=categories_checked
         )
     if industries_checked:
         main_products = main_products.filter(
-            main_product_category__industry__id__in=industries_checked
+            main_product_category__industry__slug__in=industries_checked
         )
     if allows_pick_up == "True":
         main_products = main_products.filter(allows_pick_up=True)
 
+    # Get main product categories with their listings so we can display categories with the most total listings first
+    main_product_categories = list(
+        MainProductCategory.objects.filter(main_products__in=main_products)
+        .annotate(
+            total_listings=Count(
+                "main_products__products__seller_products__seller_product_seller_locations",
+                distinct=True,
+                filter=Q(main_products__in=main_products),
+            )
+        )
+        .order_by("-total_listings")
+        .values_list("id", flat=True)
+    )
+
+    # Paginate
+    pagination_limit = 15
+    page_number = 1
+    if request.headers.get("HX-Request") and request.GET.get("p", None):
+        # Only get the page number from query if it's an htmx request (load more button)
+        page_number = request.GET.get("p")
+
+    # Load page N
+    paginator = Paginator(main_product_categories, pagination_limit)
+    page_obj = paginator.get_page(page_number)
+
+    # Filter down query to the page object
+    main_products = main_products.filter(main_product_category__in=page_obj)
+
+    # Create a dictionary to map category IDs to their order in page_obj
+    category_order = {category_id: index for index, category_id in enumerate(page_obj)}
+
     carousels = [
         {
             "main_product_category": key,
-            # Group is a generator
+            # Group is a generator, must evaluate to list here or else it will lose the data
             "main_products": list(group),
         }
         for key, group in groupby(
-            main_products, key=attrgetter("main_product_category")
+            main_products.order_by("main_product_category", "name"),
+            key=attrgetter("main_product_category"),
         )
     ]
 
+    # Sort the carousels by total listings
+    context["carousels"] = sorted(
+        carousels,
+        key=lambda product: category_order[product["main_product_category"].id],
+    )
+    context["page_obj"] = page_obj
+
     if request.headers.get("HX-Request"):
-        if request.GET.get("p", None):
-            page_number = request.GET.get("p")
-
-        # Load page N
-        paginator = Paginator(carousels, pagination_limit)
-        page_obj = paginator.get_page(page_number)
-
-        context["carousels"] = page_obj
         return render(
             request,
             "customer_dashboard/new_order/main_product_category_table.html",
             context,
         )
 
-    # Use the first page
-    paginator = Paginator(carousels, pagination_limit)
-    page_obj = paginator.get_page(page_number)
-
-    context["carousels"] = page_obj
-
+    # Checkboxes
+    # Float checkboxes that have already been selected to appear at the top of the list
     # Reorder main product category groups
     if groups_checked:
         preserved_order = Case(
             # Generate list of position orders
-            *[When(pk=pk, then=pos) for pos, pk in enumerate(groups_checked)],
+            *[When(slug=slug, then=pos) for pos, slug in enumerate(groups_checked)],
             # default is end of groups list
             default=Value(len(groups_checked)),
             output_field=IntegerField(),
@@ -874,7 +901,7 @@ def explore(request):
     # Reorder categories
     if categories_checked:
         preserved_order = Case(
-            *[When(pk=pk, then=pos) for pos, pk in enumerate(categories_checked)],
+            *[When(slug=slug, then=pos) for pos, slug in enumerate(categories_checked)],
             default=Value(len(categories_checked)),
             output_field=IntegerField(),
         )
@@ -885,7 +912,7 @@ def explore(request):
     # Reorder industries
     if industries_checked:
         preserved_order = Case(
-            *[When(pk=pk, then=pos) for pos, pk in enumerate(industries_checked)],
+            *[When(slug=slug, then=pos) for pos, slug in enumerate(industries_checked)],
             default=Value(len(industries_checked)),
             output_field=IntegerField(),
         )
@@ -907,10 +934,10 @@ def explore(request):
 
 
 @login_required(login_url="/admin/login/")
-def new_order_category_price(request, category_id):
+def new_order_category_price(request, category_slug):
     context = {}
     # NOTE: Causes a lot of heavy db queries. Need to optimize.
-    main_product_category = MainProductCategory.objects.get(id=category_id)
+    main_product_category = MainProductCategory.objects.get(slug=category_slug)
     context["price_from"] = main_product_category.price_from
     # Assume htmx request
     # if request.headers.get("HX-Request"):
@@ -967,11 +994,17 @@ def user_address_search(request):
 @catch_errors()
 def new_order_2(request, category_id):
     context = get_user_context(request)
+
     main_product_category = MainProductCategory.objects.filter(id=category_id)
+
+    if not main_product_category.exists():
+        messages.error(request, "Product not found.")
+        return HttpResponseRedirect(reverse("customer_home"))
+
     main_product_category = main_product_category.prefetch_related(
         "main_products__mainproductinfo_set"
-    )
-    main_product_category = main_product_category.first()
+    ).first()
+
     main_products = main_product_category.main_products.all().order_by("sort")
     # if this is a search then filter the main products
     search_q = request.GET.get("q", None)
@@ -998,25 +1031,42 @@ def new_order_2(request, category_id):
     return render(request, "customer_dashboard/new_order/main_products.html", context)
 
 
-# @login_required(login_url="/admin/login/")
 @catch_errors()
-def new_order_3(request, product_id):
+def product_details(request, product_slug):
+    main_product = MainProduct.objects.filter(slug=product_slug)
+    if not main_product.exists():
+        messages.error(request, "Product not found.")
+        return HttpResponseRedirect(reverse("customer_home"))
+    return new_order_3(request, main_product)
+
+
+@catch_errors()
+def product_details_legacy(request, product_id):
+    main_product = MainProduct.objects.filter(id=product_id)
+    if not main_product.exists():
+        messages.error(request, "Product not found.")
+        return HttpResponseRedirect(reverse("customer_home"))
+    return new_order_3(request, main_product)
+
+
+@catch_errors()
+def new_order_3(request, main_product):
     context = get_user_context(request)
-    context["product_id"] = product_id
     # TODO: Add a button that allows adding an address.
     # The button could open a modal that allows adding an address.
-    main_product = MainProduct.objects.filter(id=product_id)
     main_product = main_product.select_related(
         "main_product_category"
     ).prefetch_related("images", "related_products")
     main_product = main_product.first()
+
     context["main_product"] = main_product
+    context["product_id"] = main_product.id
     product_waste_types = MainProductWasteType.objects.filter(
         main_product_id=main_product.id
     )
     product_waste_types = product_waste_types.select_related("waste_type")
     context["product_waste_types"] = product_waste_types
-    add_ons = AddOn.objects.filter(main_product_id=product_id)
+    add_ons = AddOn.objects.filter(main_product_id=main_product.id)
     # Get addon choices for each add_on and display the choices under the add_on.
     # TODO: Should I only show ProductAddOnChoice so we know the product actually has these?
     context["product_add_ons"] = []
