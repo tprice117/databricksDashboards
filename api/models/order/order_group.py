@@ -274,8 +274,6 @@ class OrderGroup(BaseModel):
         # 1) The EndDate is NOT None.
         # 2) The EndDate is in the past.
         end_date_past = self.end_date and self.end_date < timezone.now().date()
-        if not end_date_past:
-            return False
 
         # Check if this OrderGroup is "stale".
         # An OrderGroup is stale if any are True:
@@ -286,7 +284,7 @@ class OrderGroup(BaseModel):
             and self.orders.first().status == Order.Status.CANCELLED
         )
 
-        return not is_stale
+        return not end_date_past and not is_stale
 
     @property
     def status(self):
