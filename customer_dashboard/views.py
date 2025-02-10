@@ -801,9 +801,6 @@ def explore(request):
         .with_listings()
     )
 
-    # Filter out main products with no listings
-    main_products = main_products.filter(listings__gt=0)
-
     # Filter down query
     if search_q:
         main_products = main_products.filter(
@@ -867,7 +864,7 @@ def explore(request):
             "main_products": list(group),
         }
         for key, group in groupby(
-            main_products.order_by("main_product_category", "-listings"),
+            main_products.order_by("main_product_category", "name"),
             key=attrgetter("main_product_category"),
         )
     ]
