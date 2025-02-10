@@ -365,6 +365,7 @@ REST_FRAMEWORK = {
     "COERCE_DECIMAL_TO_STRING": False,
     # "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+    "DEFAULT_PAGINATION_CLASS": "common.utils.pagination.CustomLimitOffsetPagination",
 }
 
 if ENVIRONMENT == "TEST":
