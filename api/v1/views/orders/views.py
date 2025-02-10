@@ -29,7 +29,7 @@ class OrderViewSet(
 
     def get_queryset(self):
         # Using queryset defined in api/managers/order.py
-        return self.queryset.for_user(self.request.user)
+        return self.queryset.for_user(self.request.user, allow_all=False)
 
 
 class OrderCancelView(APIView):
