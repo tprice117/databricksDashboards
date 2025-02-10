@@ -115,13 +115,13 @@
             <div id="imageCarousel" class="carousel slide" data-bs-ride="carousel">
               <div class="carousel-inner">
                 {% for main_product_image in images %}
-                  <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                  <div class="carousel-item w-100 {% if forloop.first %}active{% endif %}">
                     <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
                       <img class="d-block w-100 h-100 object-fit-contain" style="border-radius: 37px;" src="{{ main_product_image.image.url }}" alt="Slide {{ forloop.counter0 }}" />
                     </div>
                   </div>
                 {% empty %}
-                  <div class="carousel-item active">
+                  <div class="carousel-item w-100 active">
                     <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
                       <img class="d-block w-100 h-100"
                         style="border-radius: 37px;"

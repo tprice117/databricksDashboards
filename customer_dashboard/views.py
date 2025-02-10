@@ -800,6 +800,7 @@ def explore(request):
         .with_likes()
         .with_listings()
     )
+
     # Filter down query
     if search_q:
         main_products = main_products.filter(
@@ -894,11 +895,11 @@ def explore(request):
             output_field=IntegerField(),
         )
         main_product_category_groups = MainProductCategoryGroup.objects.all().order_by(
-            preserved_order, "sort"
+            preserved_order, "name"
         )
     else:
         main_product_category_groups = MainProductCategoryGroup.objects.all().order_by(
-            "sort"
+            "name"
         )
 
     # Reorder categories
@@ -908,9 +909,9 @@ def explore(request):
             default=Value(len(categories_checked)),
             output_field=IntegerField(),
         )
-        categories = MainProductCategory.objects.all().order_by(preserved_order, "sort")
+        categories = MainProductCategory.objects.all().order_by(preserved_order, "name")
     else:
-        categories = MainProductCategory.objects.all().order_by("sort")
+        categories = MainProductCategory.objects.all().order_by("name")
 
     # Reorder industries
     if industries_checked:
@@ -919,9 +920,9 @@ def explore(request):
             default=Value(len(industries_checked)),
             output_field=IntegerField(),
         )
-        industries = Industry.objects.all().order_by(preserved_order)
+        industries = Industry.objects.all().order_by(preserved_order, "sort", "name")
     else:
-        industries = Industry.objects.all()
+        industries = Industry.objects.all().order_by("sort", "name")
 
     context.update(
         {
