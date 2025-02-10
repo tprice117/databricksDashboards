@@ -4,9 +4,9 @@ from common.models.choices.user_type import UserType
 
 
 class UserAddressQuerySet(models.QuerySet):
-    def for_user(self, user):
-        if user == "ALL" or user.is_staff:
-            # Staff User: If User is Staff or "ALL".
+    def for_user(self, user, allow_all=True):
+        if allow_all and user.is_staff:
+            # Staff User: If User is Staff.
             return self.all()
         elif user.user_group and user.type == UserType.ADMIN:
             # Company Admin: If User is in a UserGroup and is Admin.
