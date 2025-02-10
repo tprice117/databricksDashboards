@@ -8,7 +8,7 @@
         <small class="ms-2 text-muted fw-light">{{ results }} product{{ results|pluralize }}</small>
       {% endwith %}
     </h5>
-    <div id="carousel-{{ forloop.counter }}" class="carousel slide g-4 flex-nowrap mb-4" style="padding: 0 52px;" id="category-results">
+    <div id="carousel-{{ forloop.counter }}" class="carousel slide g-4 flex-nowrap mb-4" style="padding: 0 60px;" id="category-results">
       <div class="carousel-inner d-flex align-items-stretch">
         {% for main_product in row.main_products %}
           {% comment %}Delete style attr once css loaded. Don't want min-content, want to use width from cols.{% endcomment %}
