@@ -4,11 +4,11 @@ from common.models.choices.user_type import UserType
 
 
 class OrderQuerySet(models.QuerySet):
-    def for_user(self, user):
+    def for_user(self, user, allow_all=True):
         self = self.prefetch_related("order_line_items")
         self = self.select_related("order_group__subscription")
-        if user == "ALL" or user.is_staff:
-            # Staff User: If User is Staff or "ALL".
+        if allow_all and user.is_staff:
+            # Staff User: If User is Staff.
             return self.all()
         elif user.user_group and user.type == UserType.ADMIN:
             # Company Admin: If User is in a UserGroup and is Admin.
