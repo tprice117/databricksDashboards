@@ -29,4 +29,11 @@ class FreightBundle(BaseModel):
             for order in order_group.orders.all():
                 order.order_line_items.all().delete()
                 order.add_line_items(True)
+                order.order_group.delivery_fee = (
+                    order.order_group.seller_product_seller_location.delivery_fee
+                )
+                order.order_group.removal_fee = (
+                    order.order_group.seller_product_seller_location.removal_fee
+                )
+                order.order_group.save()
         super().delete()
