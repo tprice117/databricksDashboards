@@ -21,6 +21,40 @@
       })
     }
     
+    function addCarouselListeners() {
+      // Carousels w/ Multiple Items
+      const carouselNext = document.querySelectorAll('.carousel-control-next')
+      const carouselPrev = document.querySelectorAll('.carousel-control-prev')
+    
+      carouselNext.forEach((next) => {
+        next.addEventListener('click', function () {
+          const carouselId = next.getAttribute('href')
+          const carousel = document.querySelector(carouselId)
+          const carouselInner = carousel.querySelector('.carousel-inner')
+          const carouselWidth = carouselInner.scrollWidth
+          if (carouselInner.scrollLeft + carouselInner.clientWidth < carouselWidth) {
+            carouselInner.scrollBy({
+              left: carouselInner.clientWidth,
+              behavior: 'smooth'
+            })
+          }
+        })
+      })
+      carouselPrev.forEach((prev) => {
+        prev.addEventListener('click', function () {
+          const carouselId = prev.getAttribute('href')
+          const carousel = document.querySelector(carouselId)
+          const carouselInner = carousel.querySelector('.carousel-inner')
+          if (carouselInner.scrollLeft > 0) {
+            carouselInner.scrollBy({
+              left: -carouselInner.clientWidth,
+              behavior: 'smooth'
+            })
+          }
+        })
+      })
+    }
+    
     document.addEventListener('DOMContentLoaded', function () {
       // Prevent form submissions on enter key
       // (since we want to automatically control hx-get triggers)
@@ -34,6 +68,9 @@
       })
       // Load images
       addImageLoadEventListeners()
+    
+      // Add carousel listeners
+      addCarouselListeners()
     
       // Get URL params
       const urlParams = new URLSearchParams(window.location.search)
@@ -118,6 +155,7 @@
     }
     
     document.addEventListener('htmx:afterSwap', addImageLoadEventListeners)
+    document.addEventListener('htmx:afterSwap', addCarouselListeners)
     
     // Show or hide the back-to-top button based on scroll position
     window.addEventListener('scroll', function () {
