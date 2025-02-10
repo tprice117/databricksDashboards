@@ -2118,9 +2118,11 @@ def new_bundle(request):
 
                     try:
                         deliveryCost = Decimal(bundle["deliveryCost"])
-                        removalCost = Decimal(bundle["removalCost"])
                     except:
                         deliveryCost = 0
+                    try:
+                        removalCost = Decimal(bundle["removalCost"])
+                    except:
                         removalCost = 0
 
                     new_bundle = FreightBundle(
