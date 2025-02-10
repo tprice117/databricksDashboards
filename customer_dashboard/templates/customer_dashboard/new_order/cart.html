@@ -459,6 +459,240 @@
         }
     });
     </script>
+    <script>
+      var bundleId = 1
+      var saveBundle = function() {
+          // pass a list of bundles
+          // each bundle should have items, deliveryCost, and removalCost
+          // items should be a list of orderIds
+          var cartAddress = jQuery(`[id^='cart-address-${bundleId}']`)
+          var cartBuckets = jQuery(cartAddress).find("[id^='seller-address-']")
+          var cartBucketItemChecked = []
+          cartBuckets.each(function(index, bucket) {
+            var cartItems = jQuery(bucket).find("[id^='cart-item-']")
+            // loop through each item in the bucket and mark down is it checked
+            // they are not in array form
+            cartBucketItemChecked[index] = []
+            cartItems.each(function(index2, item) {
+              var checkbox = jQuery(item).find("input[type='checkbox']")
+              cartBucketItemChecked[index][index2] = checkbox.is(":checked")
+            })
+          })
+          var bundleAddress = jQuery(`[id^='cart-bundle-confirm-address-${bundleId}']`)
+          var cartBundleBuckets = jQuery(bundleAddress).find("[id^='bundle-confirm-seller-address-']")
+          var bundles = []
+          cartBundleBuckets.each(function(index, bucket) {
+              var cartItems = jQuery(bucket).find("[id^='cart-bundled-confirm-item-']")
+              var numberChecked = cartBucketItemChecked[index].filter(Boolean).length;
+              var seller_address_id = bucket.getAttribute("data-seller-address")
+              if (numberChecked >= 2) {
+                  var orderItems = []
+                  cartItems.each(function(index2, item) {
+                      if (cartBucketItemChecked[index][index2]) {
+                          var orderId = jQuery(item).attr("data-order-id")
+                          orderItems.push(orderId)
+                      }
+                  })
+                  var deliveryCost = parseFloat(jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='delivery-rate-']").val())
+                  var removalCost = parseFloat(jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='removal-rate-']").val())
+                  bundles.push({items:orderItems,deliveryCost:deliveryCost,removalCost:removalCost})
+              } else {
+                  // this will delete the bundle if it has less than 2 items
+                  // pass the items so you know which bundle to delete
+                  if (cartItems[0]!= null) {
+                      var orderItems = []
+                      cartItems.each(function(index2, item) {
+                          var orderId = jQuery(item).attr("data-order-id")
+                          orderItems.push(orderId)
+                      })
+                      bundles.push({empty:true,items:orderItems})
+                  }
+              }
+          })
+          const form = jQuery("#bundle-form")
+    
+          const input = jQuery(form).find("#bundles")
+          input.attr("value",JSON.stringify(bundles))
+    
+          form.submit();
+      }
+      var showBundleConfirme = function() {
+          // loop through all the cart buckets i.e. user_address
+          // find items check in each
+          // if less that 2 are checked in a bucket. don't count that bucket
+          var cartAddress = jQuery(`[id^='cart-address-${bundleId}']`)
+          var cartBuckets = jQuery(cartAddress).find("[id^='seller-address-']")
+          var cartBucketItemChecked = []
+          cartBuckets.each(function(index, bucket) {
+            var cartItems = jQuery(bucket).find("[id^='cart-item-']")
+            // loop through each item in the bucket and mark down is it checked
+            // they are not in array form
+            cartBucketItemChecked[index] = []
+            cartItems.each(function(index2, item) {
+              var checkbox = jQuery(item).find("input[type='checkbox']")
+              cartBucketItemChecked[index][index2] = checkbox.is(":checked")
+            })
+          })
+    
+          var bundleAddress = jQuery(`[id^='cart-bundle-confirm-address-${bundleId}']`)
+          var cartBundleBuckets = jQuery(bundleAddress).find("[id^='bundle-confirm-seller-address-']")
+          var emptyBundles = true
+          cartBundleBuckets.each(function(index, bucket) {
+              var numberChecked = cartBucketItemChecked[index].filter(Boolean).length;
+              jQuery(bucket).toggle(numberChecked >= 2).attr('style', function() {
+                  return numberChecked >= 2 ? 'border: none; margin-bottom: 25px' : 'border: none; margin-bottom: 25px; display: none !important';
+              });
+              if (numberChecked >= 2) {
+                  emptyBundles = false
+              }
+              var cartItems = jQuery(bucket).find("[id^='cart-bundled-confirm-item-']")
+              var numberChecked = cartBucketItemChecked[index].filter(Boolean).length;
+              cartItems.each(function(index2, item) {
+                  jQuery(item).toggle(cartBucketItemChecked[index][index2]).attr('style', function() {
+                      return cartBucketItemChecked[index][index2] ? '' : 'display: none !important';
+                  });
+                  // adjust the delivery cost
+                  var deliveryCostText = jQuery(item).find("#delivery-cost")
+                  var removalCostText = jQuery(item).find("#removal-cost")
+                  var takeRate = item.getAttribute("data-take-rate") || 0;
+                  var deliveryCostInput = jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='delivery-rate-']")
+                  var removalCostInput = jQuery(`[id^='cart-bundle-address-${bundleId}']`).find(`#bundle-seller-address-${index+1}`).find("[id^='removal-rate-']")
+                  var deliveryCost = parseFloat(deliveryCostInput.val()) || 0;
+                  var removalCost = parseFloat(removalCostInput.val()) || 0;
+                  var sellerDeliveryCostPerItem = parseFloat(deliveryCost / numberChecked).toFixed(2)
+                  var sellerRemovalCostPerItem = parseFloat(removalCost / numberChecked).toFixed(2)
+                  var deliveryCostPerItem = parseFloat(deliveryCost / numberChecked * (1+takeRate / 100)).toFixed(2)
+                  var removalCostPerItem = parseFloat(removalCost / numberChecked * (1+takeRate / 100)).toFixed(2)
+                  // $ cost / item count = seller price + take rate = customer price per item
+                  deliveryCostText.text("$"+deliveryCost+" / "+numberChecked+" items = $"+sellerDeliveryCostPerItem+" * "+takeRate+"% take rate = $"+deliveryCostPerItem)
+                  removalCostText.text("$"+removalCost+" / "+numberChecked+" items = $"+sellerDeliveryCostPerItem+" * "+takeRate+"% take rate = $"+removalCostPerItem)
+              })
+              var emptyBundlesWarning = jQuery(`#empty-bundle-info-${bundleId}`)
+              emptyBundlesWarning.hide();
+              if (emptyBundles) {
+                  // bundle will be removed
+                  emptyBundlesWarning.show();
+              }
+          })
+      }
+      var showBundles = function() {
+          // loop through all the cart buckets i.e. user_address
+          // find items check in each
+          // if less that 2 are checked in a bucket. don't count that bucket
+          var cartAddress = jQuery(`[id^='cart-address-${bundleId}']`)
+          var cartBuckets = jQuery(cartAddress).find("[id^='seller-address-']")
+          var cartBucketItemChecked = []
+          var cardHeight = 0
+          cartBuckets.each(function(index, bucket) {
+            var cartItems = jQuery(bucket).find("[id^='cart-item-']")
+            // loop through each item in the bucket and mark down is it checked
+            // loop through and find the tallest card size
+            // they are not in array form
+            cartBucketItemChecked[index] = []
+            cartItems.each(function(index2, item) {
+              var checkbox = jQuery(item).find("input[type='checkbox']")
+              cartBucketItemChecked[index][index2] = checkbox.is(":checked")
+            })
+          })
+          var bundleAddress = jQuery(`[id^='cart-bundle-address-${bundleId}']`)
+          var cartBundleBuckets = jQuery(bundleAddress).find("[id^='bundle-seller-address-']")
+          var emptyBundles = true
+          cartBundleBuckets.each(function(index, bucket) {
+              var numberChecked = cartBucketItemChecked[index].filter(Boolean).length;
+              console.log(numberChecked)
+              jQuery(bucket).toggle(numberChecked >= 2).attr('style', function() {
+                  return numberChecked >= 2 ? 'border: none; margin-bottom: 25px' : 'border: none; margin-bottom: 25px; display: none !important';
+              });
+              if (numberChecked >= 2) {
+                  emptyBundles = false
+              }
+              var cartItems = jQuery(bucket).find("[id^='cart-bundled-item-']")
+              cartItems.each(function(index2, item) {
+                  jQuery(item).toggle(cartBucketItemChecked[index][index2]).attr('style', function() {
+                      return cartBucketItemChecked[index][index2] ? '' : 'display: none !important';
+                  });
+              })
+          })
+          // show warning if there are no bundles
+          var emptyBundlesWarning = jQuery(`#empty-bundle-warning-${bundleId}`)
+          emptyBundlesWarning.hide();
+          if (emptyBundles) {
+              emptyBundlesWarning.show();
+          }
+      }
+      document.addEventListener('htmx:afterSwap', function(event) {
+        console.log(event.target.id)
+        if (event.target.id === 'cart-results') {
+          // show the address that goes with this bundle button
+          var bundleButtons = jQuery("[id^='bundle-button-']")
+          var cartAddresses = jQuery("[id^='cart-address-']")
+          var cartBundleAddresses = jQuery("[id^='cart-bundle-address-']")
+          var cartBundleConfirmAddresses = jQuery("[id^='cart-bundle-confirm-address-']")
+          var bundleListHeader = jQuery(".bundle-list-header")
+          
+          bundleButtons.each(function(index, button) {
+            $(button).on("click", function() {
+              cartAddresses.hide();
+              cartBundleAddresses.hide();
+              cartBundleConfirmAddresses.hide();
+              bundleId = $(button).attr("id").split("-")[2];
+              cartAddresses.filter("#cart-address-" + bundleId).show();
+              cartBundleAddresses.filter("#cart-bundle-address-" + bundleId).show();
+              cartBundleConfirmAddresses.filter("#cart-bundle-confirm-address-" + bundleId).show();
+              var address = jQuery(`[id^='cart-address-${bundleId}']`)
+              var cartBundleBuckets = jQuery(address).find("[id^='seller-address-']")
+              console.log(index,bundleId)
+              cartBundleBuckets.each(function(index, bucket) {
+                console.log("hello")
+                var cartItems = jQuery(bucket).find("[id^='cart-item-']")
+                var numberItems = cartItems.length
+                console.log(cartItems.length)
+                jQuery(bucket).toggle(numberItems >= 2).attr('style', function() {
+                    return numberItems >= 2 ? 'border: none; margin-bottom: 25px' : 'border: none; margin-bottom: 25px; display: none !important;';
+                });
+              })
+            })
+          })
+        
+          var closeButton1 = jQuery("#close-1")
+          var setPricingButton1 =jQuery("#set-pricing-1")
+          var backButton2 = jQuery("#back-2")
+          var reviewBundleButton2 = jQuery("#review-bundle-2")
+          var backButton3 = jQuery("#back-3")
+          var saveBundleButton3 = jQuery("#save-bundle-3")
+      
+          setPricingButton1.bind("click", function() {
+            // show the correct content
+            jQuery(".step1-body").hide()
+            jQuery(".step2-body").show()
+            showBundles()
+          });
+          closeButton1.bind("click", function() {
+            // hide the popup
+            jQuery('#bundle-orders-modal').modal('hide');
+          });
+          reviewBundleButton2.bind("click", function() { 
+            // show the correct content
+            jQuery(".step2-body").hide()
+            jQuery(".step3-body").show()
+            showBundleConfirme()
+          });
+          backButton2.bind("click", function() { 
+            // show the correct content
+            jQuery(".step2-body").hide()
+            jQuery(".step1-body").show()
+          });
+          saveBundleButton3.bind("click", function() { 
+            saveBundle()
+          });
+          backButton3.bind("click", function() { 
+            // show the correct content
+            jQuery(".step3-body").hide()
+            jQuery(".step2-body").show()
+          });
+        }
+      })
+    </script>
 {% endblock %}
 {% block content %}
   <div class="container-fluid mb-2" hx-disabled-elt=".status-card, button, .form-control, .form-select, .pagi-link">
