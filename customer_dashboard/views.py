@@ -36,6 +36,7 @@ from django.db.models import (
     IntegerField,
     Subquery,
     Count,
+    Max,
 )
 from django.db.models.functions import Concat, Round, Coalesce
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -251,14 +252,16 @@ def get_user_group(request: HttpRequest) -> Union[UserGroup, None]:
     """
 
     if is_impersonating(request) and request.session["customer_user_group_id"]:
-        user_group = UserGroup.objects.get(id=request.session["customer_user_group_id"])
+        user_group = UserGroup.objects.select_related("branding").get(
+            id=request.session["customer_user_group_id"]
+        )
     elif request.user.is_staff:
         user_group = None
     else:
         # Normal user
         if request.session.get("customer_user_group_id"):
             try:
-                user_group = UserGroup.objects.get(
+                user_group = UserGroup.objects.select_related("branding").get(
                     id=request.session["customer_user_group_id"]
                 )
             except UserGroup.DoesNotExist:
@@ -1597,7 +1600,7 @@ def customer_cart_po_edit(request, order_group_id):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
-def new_order_5(request):
+def cart(request):
     context = get_user_context(request)
     context["cart"] = {}
     if request.method == "POST":
@@ -1976,12 +1979,19 @@ def new_order_5(request):
 
             # Get the seller price for each order and add it to the context.
             for bucket in context["cart"]:
-                bucket["ids"] = [str(item["order"].id) for item in bucket["items"]]
+                bucket["ids"] = []
+                bucket["parent_bookings"] = set()
                 supplier_total = 0
                 # context["cart"][addr]["show_quote"] = True
                 checkout_order = None
                 for item in bucket["items"]:
                     order = item["order"]
+                    bucket["ids"].append(str(order.id))
+                    # If the order does not have a parent booking, it is a parent booking.
+                    # Add its id to the parent bookings set.
+                    if not order.order_group.parent_booking:
+                        bucket["parent_bookings"].add(order.order_group_id)
+
                     if order.checkout_order:
                         checkout_order = order.checkout_order
                     supplier_total += order.seller_price()
@@ -3000,7 +3010,7 @@ def bookings_page_settings(request):
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
-def my_order_groups(request):
+def order_groups(request):
     context = get_user_context(request)
     pagination_limit = 10
     page_number = 1
@@ -3084,42 +3094,84 @@ def my_order_groups(request):
             .prefetch_related(
                 "orders__order_line_items",
                 "seller_product_seller_location__seller_product__product__main_product__images",
+                "related_bookings",
             )
             .with_nearest_orders()
         )
-        order_groups = order_groups.order_by("-end_date")
 
         # Get the order groups and group them by user_address.
-        addresses = (
-            order_groups.order_by("user_address")
-            .values("user_address")
-            .annotate(count=Count("user_address"))
+        # Query a list of addresses with the count of bookings for each address.
+        addresses = list(
+            UserAddress.objects.filter(order_groups__id__in=order_groups)
+            .annotate(
+                count=Count("order_groups", distinct=True),
+                end_date=Max("order_groups__end_date"),
+            )
+            .order_by("-end_date")
+            .values_list("id", "count")
         )
         # Paginate responses by UserAddress before making db queries.
         paginator = Paginator(addresses, pagination_limit)
         page_obj = paginator.get_page(page_number)
         context["page_obj"] = page_obj
 
-        order_groups = order_groups.filter(
-            user_address__in=[item["user_address"] for item in page_obj]
-        )
-        booking_groups = [
-            {
-                # Use list comprehension since .filter() creates a new db query.
-                "items": (
-                    items := [
-                        order_group
-                        for order_group in order_groups
-                        if order_group.user_address.id == item["user_address"]
-                    ]
-                ),
-                "count": item["count"],
-                # We can assume each address has at least one order group.
-                "address": items[0].user_address,
+        # Create a dictionary to map addresses to their order in page_obj.
+        address_order = {
+            add[0]: {
+                "count": add[1],
+                "index": index,
             }
-            for item in page_obj
-        ]
-        context["bookings"] = booking_groups
+            for index, add in enumerate(page_obj)
+        }
+
+        # Filter down the order groups to only those in the current page.
+        order_groups = order_groups.filter(
+            user_address__in=address_order.keys()
+        ).order_by("user_address")
+
+        # Construct the order groups list.
+        booking_groups = []
+        for address, items in groupby(order_groups, key=attrgetter("user_address")):
+            bucket = {
+                "r0": {},
+                "nr": [],
+                "user_address": address,
+                "count": address_order[address.id]["count"],
+            }
+            # Create two lists in the bucket: One for Non-Related orders and one for Parent Orders (R0, like root).
+            # Sort the order groups by the number of related bookings, so that the most related bookings are displayed first.
+            # As a bonus we know that related bookings will always be after their parent booking in the iteration.
+            for order_group in sorted(
+                items,
+                key=lambda x: x.related_bookings.count()
+                if hasattr(x, "related_bookings")
+                else 0,
+                reverse=True,
+            ):
+                if (
+                    not order_group.parent_booking
+                    and order_group.related_bookings.exists()
+                ):
+                    # These will be displayed with all related orders underneath.
+                    bucket["r0"][order_group.id] = {
+                        "order_group": order_group,
+                        "related": [],
+                    }
+                elif not order_group.parent_booking or not bucket["r0"].get(
+                    order_group.parent_booking_id
+                ):
+                    # Booking is not related to any other booking in this list.
+                    bucket["nr"].append(order_group)
+                else:
+                    # Add the related booking to the parent booking.
+                    bucket["r0"][order_group.parent_booking_id]["related"].append(
+                        order_group
+                    )
+            booking_groups.append(bucket)
+
+        context["bookings"] = sorted(
+            booking_groups, key=lambda x: address_order[x["user_address"].id]["index"]
+        )
 
         if page_number is None:
             page_number = 1
@@ -3128,24 +3180,26 @@ def my_order_groups(request):
 
         query_params["p"] = 1
         context["page_start_link"] = (
-            f"/customer/order_groups/?{query_params.urlencode()}"
+            f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
         )
         query_params["p"] = page_number
         context["page_current_link"] = (
-            f"/customer/order_groups/?{query_params.urlencode()}"
+            f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
         )
         if page_obj.has_previous():
             query_params["p"] = page_obj.previous_page_number()
             context["page_prev_link"] = (
-                f"/customer/order_groups/?{query_params.urlencode()}"
+                f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
             )
         if page_obj.has_next():
             query_params["p"] = page_obj.next_page_number()
             context["page_next_link"] = (
-                f"/customer/order_groups/?{query_params.urlencode()}"
+                f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
             )
         query_params["p"] = paginator.num_pages
-        context["page_end_link"] = f"/customer/order_groups/?{query_params.urlencode()}"
+        context["page_end_link"] = (
+            f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
+        )
 
         return render(
             request, "customer_dashboard/snippets/order_groups_list.html", context
@@ -3157,7 +3211,7 @@ def my_order_groups(request):
             if query_params.get("my_accounts") is None:
                 query_params["my_accounts"] = "on"
         context["active_orders_link"] = (
-            f"/customer/order_groups/?{query_params.urlencode()}"
+            f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
         )
         return render(request, "customer_dashboard/order_groups.html", context)
 

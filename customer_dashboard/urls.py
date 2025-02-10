@@ -23,19 +23,19 @@ urlpatterns = [
         views.credit_application,
         name="customer_credit_application",
     ),
-    path("customer/order_groups/", views.my_order_groups, name="customer_order_groups"),
+    path("customer/bookings/", views.order_groups, name="customer_order_groups"),
     path(
-        "customer/order_group/<uuid:order_group_id>/",
+        "customer/booking/<uuid:order_group_id>/",
         views.order_group_detail,
         name="customer_order_group_detail",
     ),
     path(
-        "customer/order_group/<uuid:order_group_id>/swap/",
+        "customer/booking/<uuid:order_group_id>/swap/",
         views.order_group_swap,
         name="customer_order_group_swap",
     ),
     path(
-        "customer/order_group/<uuid:order_group_id>/removal/",
+        "customer/booking/<uuid:order_group_id>/removal/",
         views.order_group_swap,
         {"is_removal": True},
         name="customer_order_group_removal",
@@ -168,7 +168,7 @@ urlpatterns = [
     # POST: Create OrderGroup and loads cart. GET: Load cart #
     path(
         "customer/cart/",
-        views.new_order_5,
+        views.cart,
         name="customer_cart",
     ),
     # POST

@@ -161,7 +161,7 @@
     <h3 class="text-dark mb-3"><strong>Explore Downstream</strong></h3>
     <form id="filter-form" hx-trigger="confirmed, change from:input" hx-get="{% url 'customer_home' %}" hx-target="#category-results" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#htmx-indicator-loading-status" hx-disabled-elt="input,button">
       <div class="row">
-        <div class="col col-xl-3 mb-4 mb-xl-0 px-4">
+        <div class="col col-lg-4 col-xl-3 mb-4 mb-xl-0 px-4">
           <!-- Searchbar -->
           <div class="input-group border border-dark rounded-2 border-1 mb-2">
             <span class="input-group-text border-0 text-dark" style="background-color: inherit;" id="inputGroup-sizing-lg"><i class="far fa-search"></i></span>
@@ -234,7 +234,7 @@
             </div>
           {% endif %}
         </div>
-        <div class="col col-xl-9 px-4">
+        <div class="col col-lg-8 col-xl-9 px-4">
           <!-- Is Delivery Toggle -->
           <div id="delivery-controls" class="mb-2">
             <div class="btn-group w-100" style="max-width: 400px;">
