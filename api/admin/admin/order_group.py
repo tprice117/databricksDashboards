@@ -1,7 +1,7 @@
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 
-from api.admin.filters import CreatedDateFilter
+from api.admin.filters import CreatedDateFilter, CartStatusFilter
 from api.admin.inlines import (
     OrderGroupMaterialInline,
     OrderGroupRentalInline,
@@ -32,6 +32,7 @@ class OrderGroupAdmin(admin.ModelAdmin):
     list_filter = [
         UserAddressFilter,
         CreatedDateFilter,
+        CartStatusFilter,
     ]
     autocomplete_fields = [
         "seller_product_seller_location",
@@ -60,9 +61,9 @@ class OrderGroupAdmin(admin.ModelAdmin):
         "user_address",
         "conversation",
         "agreement_signed_by",
+        "parent_booking",
     )
     readonly_fields = (
-        "parent_booking",
         "created_by",
         "created_on",
         "updated_by",

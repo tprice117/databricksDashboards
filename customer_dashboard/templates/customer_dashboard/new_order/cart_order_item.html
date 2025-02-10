@@ -163,9 +163,15 @@
                     </div>
                 </div>
                 {% if order.order_group.parent_booking %}
-                <div class="position-absolute start-50 translate-middle bg-white border border-primary badge rounded-circle" style="top: -5px !important;">
-                    <span class="text-primary"><i class="far fa-link"></i></span>
-                </div>
+                    {% if order.order_group.parent_booking_id in cart_address.parent_bookings %}
+                    <div class="position-absolute start-50 translate-middle bg-white border border-primary badge rounded-circle" style="top: -5px !important;">
+                        <span class="text-primary"><i class="far fa-link"></i></span>
+                    </div>
+                    {% else %}
+                    <div class="position-absolute bg-white border border-primary badge rounded-pill" style="left: 17px; top: 130px;">
+                        <a href="{% url 'customer_order_group_detail' order.order_group.parent_booking_id %}" class="text-primary text-decoration-none" title="Click to view parent booking details.">View Related Booking</a>
+                    </div>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>

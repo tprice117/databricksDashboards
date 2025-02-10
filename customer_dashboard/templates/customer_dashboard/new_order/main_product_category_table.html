@@ -3,9 +3,9 @@
 {% for row in carousels %}
   <div class="mb-3">
     <h5 class="text-dark mb-3"><strong>{{ row.main_product_category.name }}</strong></h5>
-    <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-4 row-cols-xxl-5 g-4 flex-nowrap overflow-x-auto mb-4 px-3" id="category-results">
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-5 g-4 flex-nowrap overflow-x-auto mb-4 px-3" id="category-results">
       {% for main_product in row.main_products %}
-        <div class="col-lg-3 d-flex align-items-stretch">
+        <div class="col-xl-3 d-flex align-items-stretch">
           <div class="card lead-card border-0 w-100 hover-float">
             {% if user.is_staff and not is_impersonating %}
               <a href="#" class="text-decoration-none text-reset overlay" role="button" onclick="selectCustomerPopup(event);"></a>
@@ -45,6 +45,10 @@
         </div>
       {% endfor %}
     </div>
+  </div>
+{% empty %}
+  <div class="text-center">
+    <h5 class="text-muted">No results.</h5>
   </div>
 {% endfor %}
 {% if page_obj.has_next %}

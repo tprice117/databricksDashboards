@@ -1595,6 +1595,9 @@ def listings(request):
 
     context = {}
     seller = get_seller(request)
+    listings = SellerProductSellerLocation.objects.select_related(
+        "seller_product__product__main_product", "seller_location__seller"
+    )
 
     if not seller:
         if (
@@ -1615,6 +1618,8 @@ def listings(request):
                 f"No seller selected! Using first seller found: [{seller.name}].",
             )
 
+    listings = listings.filter(seller_location__seller=seller)
+
     # Handle listing activation/deactivation
     if request.method == "POST":
         id = request.POST.get("listing_id")
@@ -1627,10 +1632,6 @@ def listings(request):
                 messages.success(request, "Successfully saved!")
             else:
                 messages.error(request, "Listing not found.")
-
-    listings = SellerProductSellerLocation.objects.filter(
-        seller_location__seller_id=seller.id
-    ).select_related("seller_product__product__main_product", "seller_location")
 
     active = listings.get_active()
     needs_attention = listings.get_needs_attention()

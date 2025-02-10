@@ -1,5 +1,6 @@
 from collections import defaultdict
 from decimal import Decimal
+from itertools import chain
 from typing import Iterable, Union, TypedDict
 import logging
 from django.conf import settings
@@ -778,6 +779,8 @@ class CartUtils:
                         {
                             "main_product": MainProduct,
                             "order": Order,
+                            "is_bundled": bool,
+                            "can_bundle": bool,
                             "subtotal": Decimal,
                             "rpp": Decimal,
                             "tax": Decimal,
@@ -788,6 +791,8 @@ class CartUtils:
                     "total": Decimal,
                     "count": int,
                     "show_quote": bool,
+                    "show_bundle_button": bool,
+                    "bundled_count": int,
                 },
                 ...
             ],
@@ -797,6 +802,7 @@ class CartUtils:
         """
 
         def append_to_cart(cart_data, address_buckets, order):
+            """Helper function to append an order to the cart data."""
             customer_price = order.customer_price()
             customer_price_with_tax = order.customer_price_with_tax()
             uaid = order.order_group.user_address_id
@@ -860,14 +866,23 @@ class CartUtils:
             .select_related(
                 "order_group__seller_product_seller_location__seller_product__seller",
                 "order_group__seller_product_seller_location__seller_location",
-                "order_group__user_address",
-                "order_group__user",
+                "order_group__user_address__user_group",
+                "order_group__user_address__user",
                 "order_group__seller_product_seller_location__seller_product__product__main_product",
+                "order_group__created_by",
             )
-            .prefetch_related("order_line_items", "order_group__related_bookings")
+            .prefetch_related(
+                "order_line_items",
+                "order_group__related_bookings",
+                "order_group__attachments",
+                "order_group__seller_product_seller_location__seller_product__product__main_product__images",
+            )
         )
         parent_orders = orders.filter(
             order_group__parent_booking__isnull=True,
+        )
+        parent_bookings_list = list(
+            parent_orders.values_list("order_group__id", flat=True)
         )
         related_orders = orders.exclude(
             order_group__parent_booking__isnull=True,
@@ -911,11 +926,13 @@ class CartUtils:
         )
 
         # Process each order
-        for order in parent_orders:
-            if order.order_group.parent_booking:
-                # Skip orders with related bookings
-                continue
-
+        for order in chain(
+            parent_orders,
+            # Treat individual related orders as parent orders
+            related_orders.exclude(
+                order_group__parent_booking__in=parent_bookings_list
+            ),
+        ):
             append_to_cart(cart_data, address_buckets, order)
 
             for related_order in related_orders.filter(
@@ -924,17 +941,17 @@ class CartUtils:
                 append_to_cart(cart_data, address_buckets, related_order)
 
         # Convert address_buckets to the required format for CartSerializer
-        for uaid, bucket in address_buckets.items():
-            cart_data["cart"].append(
-                {
-                    "address": bucket["address"],
-                    "items": bucket["items"],
-                    "total": bucket["total"],
-                    "count": bucket["count"],
-                    "show_quote": bucket.get("show_quote", False),
-                    "show_bundle_button": bucket.get("show_bundle_button", False),
-                    "bundled_count": bucket["bundled_count"],
-                }
-            )
+        cart_data["cart"] = [
+            {
+                "address": bucket["address"],
+                "items": bucket["items"],
+                "total": bucket["total"],
+                "count": bucket["count"],
+                "show_quote": bucket.get("show_quote", False),
+                "show_bundle_button": bucket.get("show_bundle_button", False),
+                "bundled_count": bucket["bundled_count"],
+            }
+            for bucket in address_buckets.values()
+        ]
 
         return cart_data
