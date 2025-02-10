@@ -3157,9 +3157,8 @@ def order_groups(request):
                         "order_group": order_group,
                         "related": [],
                     }
-                elif (
-                    not order_group.parent_booking
-                    or order_group.parent_booking_id not in bucket["r0"].keys()
+                elif not order_group.parent_booking or not bucket["r0"].get(
+                    order_group.parent_booking_id
                 ):
                     # Booking is not related to any other booking in this list.
                     bucket["nr"].append(order_group)
@@ -3180,21 +3179,27 @@ def order_groups(request):
             page_number = int(page_number)
 
         query_params["p"] = 1
-        context["page_start_link"] = f"/customer/bookings/?{query_params.urlencode()}"
+        context["page_start_link"] = (
+            f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
+        )
         query_params["p"] = page_number
-        context["page_current_link"] = f"/customer/bookings/?{query_params.urlencode()}"
+        context["page_current_link"] = (
+            f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
+        )
         if page_obj.has_previous():
             query_params["p"] = page_obj.previous_page_number()
             context["page_prev_link"] = (
-                f"/customer/bookings/?{query_params.urlencode()}"
+                f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
             )
         if page_obj.has_next():
             query_params["p"] = page_obj.next_page_number()
             context["page_next_link"] = (
-                f"/customer/bookings/?{query_params.urlencode()}"
+                f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
             )
         query_params["p"] = paginator.num_pages
-        context["page_end_link"] = f"/customer/bookings/?{query_params.urlencode()}"
+        context["page_end_link"] = (
+            f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
+        )
 
         return render(
             request, "customer_dashboard/snippets/order_groups_list.html", context
@@ -3206,7 +3211,7 @@ def order_groups(request):
             if query_params.get("my_accounts") is None:
                 query_params["my_accounts"] = "on"
         context["active_orders_link"] = (
-            f"/customer/bookings/?{query_params.urlencode()}"
+            f"{reverse('customer_order_groups')}?{query_params.urlencode()}"
         )
         return render(request, "customer_dashboard/order_groups.html", context)
 

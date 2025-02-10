@@ -56,21 +56,21 @@
                 {% if is_active %}
                     {% if order_type != 'ONE_TIME' %}
                     <div class="col px-2">
-                        <a class="btn btn-danger btn-sm w-100" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_removal' order_group_id=order_group.id %}">Request Removal <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
+                        <a class="btn btn-danger btn-sm w-100 h-100" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_removal' order_group_id=order_group.id %}">Request Removal <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
                     </div>
                         {% endif %}
                     {% if main_product.main_product_category.name == 'Roll Off Dumpsters' %}
                     <div class="col px-2">
-                        <a class="btn btn-primary btn-sm w-100" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_swap' order_group_id=order_group.id %}">Request Swap <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
+                        <a class="btn btn-primary btn-sm w-100 h-100" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_swap' order_group_id=order_group.id %}">Request Swap <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
                     </div>
                         {% endif %}
                     {% if type == "parent"%}
                     <div class="col px-2">
-                        <button class="btn btn-primary btn-sm w-100 disabled" style="pointer-events: none;" type="button" title="This feature is not available yet." disabled>Add Linked Products <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+                        <button class="btn btn-primary btn-sm w-100 h-100 disabled" style="pointer-events: none;" type="button" title="This feature is not available yet." disabled>Add Linked Products <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
                     </div>
                     {% elif type == "not_related" and order_group.parent_booking %}
                     <div class="col px-2">
-                            <a href="{% url 'customer_order_group_detail' order_group.parent_booking_id %}" class="btn btn-light btn-sm w-100" title="Click to view parent booking details.">View Related Booking</a>
+                            <a href="{% url 'customer_order_group_detail' order_group.parent_booking_id %}" class="btn btn-light btn-sm w-100 h-100" title="Click to view parent booking details.">View Related Booking</a>
                         </div>
                     {% endif %}
                 {% endif %}
