@@ -82,13 +82,26 @@ Buttons
     transition: background-color 0.3s, color 0.3s;
 }
 
+/* 
+Cards
+*/
 .card .color-card-header[data-bs-toggle=collapse]::after {
     color: inherit !important;
+}
+
+.card.content {
+    background-color: #F7F8F8;
 }
 
 /* 
 Forms
 */
+.downstream-form-control {
+    border-color: var(--bs-border-dark-subtle);
+    --bs-text-opacity: 1;
+    color:rgba(var(--bs-dark-rgb), var(--bs-text-opacity)) !important
+}
+
 .form-control::placeholder {
     opacity: .7;
 }
@@ -613,4 +626,11 @@ input.downstream-number {
 }
 .hover-float:hover {
     transform: translateY(-5px);
+}
+#back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 100px;
+    display: none;
+    z-index: 1000;
 }

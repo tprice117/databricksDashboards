@@ -136,6 +136,38 @@
         behavior: 'smooth'
       })
     }
+    
+    // Carousels w/ Multiple Items
+    const carouselNext = document.querySelectorAll('.carousel-control-next')
+    const carouselPrev = document.querySelectorAll('.carousel-control-prev')
+    
+    carouselNext.forEach((next) => {
+      next.addEventListener('click', function () {
+        const carouselId = next.getAttribute('href')
+        const carousel = document.querySelector(carouselId)
+        const carouselInner = carousel.querySelector('.carousel-inner')
+        const carouselWidth = carouselInner.scrollWidth
+        if (carouselInner.scrollLeft + carouselInner.clientWidth < carouselWidth) {
+          carouselInner.scrollBy({
+            left: carouselInner.clientWidth,
+            behavior: 'smooth'
+          })
+        }
+      })
+    })
+    carouselPrev.forEach((prev) => {
+      prev.addEventListener('click', function () {
+        const carouselId = prev.getAttribute('href')
+        const carousel = document.querySelector(carouselId)
+        const carouselInner = carousel.querySelector('.carousel-inner')
+        if (carouselInner.scrollLeft > 0) {
+          carouselInner.scrollBy({
+            left: -carouselInner.clientWidth,
+            behavior: 'smooth'
+          })
+        }
+      })
+    })
   </script>
 {% endblock %}
 {% block stylesheet %}
