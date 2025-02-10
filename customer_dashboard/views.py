@@ -1536,7 +1536,7 @@ def customer_cart_date_edit(request, order_id):
 @catch_errors()
 @require_http_methods(["GET", "POST"])
 @require_htmx(redirect_url_name="customer_cart")
-def customer_cart_po(request, order_group_id):
+def customer_order_group_po(request, order_group_id):
     """Returns a snippet with the project id for an order group. POST to update the project id."""
     context = {}
     order_group = OrderGroup.objects.get(id=order_group_id)
@@ -1564,16 +1564,14 @@ def customer_cart_po(request, order_group_id):
 
     context["order_group"] = order_group
 
-    return render(
-        request, "customer_dashboard/snippets/cart_order_item_po.html", context
-    )
+    return render(request, "customer_dashboard/snippets/order_group_po.html", context)
 
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
 @require_GET
 @require_htmx(redirect_url_name="customer_cart")
-def customer_cart_po_edit(request, order_group_id):
+def customer_order_group_po_edit(request, order_group_id):
     """Returns a snippet with a form to edit the project id of an order group."""
     context = {}
     order_group = OrderGroup.objects.get(id=order_group_id)
@@ -1595,7 +1593,7 @@ def customer_cart_po_edit(request, order_group_id):
 
     context["order_group"] = order_group
     return render(
-        request, "customer_dashboard/snippets/cart_order_item_po_edit.html", context
+        request, "customer_dashboard/snippets/order_group_po_edit.html", context
     )
 
 
@@ -3229,7 +3227,7 @@ def order_group_detail(request, order_group_id):
     order_group = order_group.select_related(
         "seller_product_seller_location__seller_product__seller",
         "seller_product_seller_location__seller_product__product__main_product",
-        "user_address",
+        "user_address__user_group__account_owner",
     )
     order_group = order_group.prefetch_related("orders")
     order_group = order_group.first()

@@ -23,6 +23,7 @@ urlpatterns = [
         views.credit_application,
         name="customer_credit_application",
     ),
+    ## Order Groups/Bookings ##
     path("customer/bookings/", views.order_groups, name="customer_order_groups"),
     path(
         "customer/booking/<uuid:order_group_id>/",
@@ -40,6 +41,29 @@ urlpatterns = [
         {"is_removal": True},
         name="customer_order_group_removal",
     ),
+    path(
+        "customer/booking/<uuid:order_group_id>/attachments/edit/",
+        views.edit_attachments,
+        name="customer_order_group_edit_attachments",
+    ),
+    # GET/POST
+    path(
+        "customer/booking/<uuid:order_group_id>/po/",
+        views.customer_order_group_po,
+        name="customer_cart_po",
+    ),
+    # GET
+    path(
+        "customer/booking/<uuid:order_group_id>/po/edit/",
+        views.customer_order_group_po_edit,
+        name="customer_cart_po_edit",
+    ),
+    path(
+        "customer/bookings/page/settings/",
+        views.bookings_page_settings,
+        name="customer_bookings_page_settings",
+    ),
+    ## Orders ##
     path(
         "customer/order/<uuid:order_id>/",
         views.order_detail,
@@ -60,6 +84,7 @@ urlpatterns = [
         views.company_last_order,
         name="customer_company_last_order",
     ),
+    ## Locations ##
     path("customer/locations/", views.locations, name="customer_locations"),
     path(
         "customer/location/<uuid:location_id>/",
@@ -77,6 +102,7 @@ urlpatterns = [
         name="customer_location_user_remove",
     ),
     path("customer/location/new/", views.new_location, name="customer_new_location"),
+    ## Users ##
     path("customer/users/", views.users, name="customer_users"),
     path(
         "customer/user/<uuid:user_id>/associated_locations/",
@@ -183,18 +209,6 @@ urlpatterns = [
         views.customer_cart_date_edit,
         name="customer_cart_date_edit",
     ),
-    # GET/POST
-    path(
-        "customer/cart/<uuid:order_group_id>/po/",
-        views.customer_cart_po,
-        name="customer_cart_po",
-    ),
-    # GET
-    path(
-        "customer/cart/<uuid:order_group_id>/po/edit/",
-        views.customer_cart_po_edit,
-        name="customer_cart_po_edit",
-    ),
     path(
         "customer/cart/<uuid:order_group_id>/remove/",
         views.new_order_6,
@@ -209,11 +223,6 @@ urlpatterns = [
         "customer/checkout/<uuid:user_address_id>/",
         views.checkout,
         name="customer_checkout",
-    ),
-    path(
-        "customer/order_group/<uuid:order_group_id>/attachments/edit/",
-        views.edit_attachments,
-        name="customer_order_group_edit_attachments",
     ),
     path(
         "customer/cart/quote/",
@@ -241,16 +250,13 @@ urlpatterns = [
         name="customer_new_payment",
     ),
     path(
-        "customer/bookings/page/settings/",
-        views.bookings_page_settings,
-        name="customer_bookings_page_settings",
-    ),
-    path(
         "customer/reports/",
         views.reports,
         name="customer_reports",
     ),
+    ## REVIEWS ##
     path("customer/reviews/", views.reviews, name="customer_reviews"),
+    ## LEADS ##
     path("customer/leads/", views.leads, name="customer_leads"),
     path(
         "customer/leads/board/",

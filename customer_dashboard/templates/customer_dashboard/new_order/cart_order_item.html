@@ -5,7 +5,7 @@
 {% with order=item.order %}
 <div class="row cart-item mb-2">
     <div class="col">
-        <div class="card {% if order.order_group.parent_booking or order.order_group.related_bookings.exists %}border-primary rounded{% endif %}" style="background: var(--bs-card-cap-bg);">
+        <div class="card content {% if order.order_group.parent_booking or order.order_group.related_bookings.exists %}border-primary rounded{% endif %}">
             <div class="card-body">
                 <div class="row">
                     <div class="col cart-body">
@@ -81,7 +81,7 @@
                                         {% endif %}
                                         </div>
                                         <p class="mb-1 order-descriptor">Order type: <span class="fw-light">{{ order.order_type }}</span></p>
-                                        {% include 'customer_dashboard/snippets/cart_order_item_po.html' with order_group=order.order_group %}
+                                        {% include 'customer_dashboard/snippets/order_group_po.html' with order_group=order.order_group %}
                                         {% if request.user.is_staff %}
                                         <p class="mb-1 order-descriptor text-truncate">Created by: <span class="fw-light">{% if order.created_by %}{{ order.created_by.full_name }}{% else %}N/A{% endif%} on {{ order.created_on|timezone:"America/Chicago" }} (CT)</span></p>
                                         {% endif %}

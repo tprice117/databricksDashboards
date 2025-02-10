@@ -4,7 +4,7 @@
 {% load sales_stream_tags %}
 {% with order_group=item %}
   <!-- prettier-ignore -->
-  <div class="card lead-card {% if order_group.parent_booking or order_group.related_bookings.exists %}border-primary rounded{% else %}border-0{% endif %}" style="background-color: var(--bs-card-cap-bg);" onmouseover="this.style.backgroundColor='#f0f0f0';" onmouseout="this.style.backgroundColor='var(--bs-card-cap-bg)';">
+  <div class="card content lead-card {% if order_group.parent_booking or order_group.related_bookings.exists %}border-primary rounded{% else %}border-0{% endif %}" onmouseover="this.style.backgroundColor='#f0f0f0';" onmouseout="this.style.backgroundColor='';">
     <!-- Card Overlay -->
     <a href="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top"></a>
     <!-- Card Content -->
@@ -63,7 +63,7 @@
                     <div class="col px-2">
                         <a class="btn btn-primary btn-sm w-100 h-100" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_swap' order_group_id=order_group.id %}">Request Swap <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
                     </div>
-                        {% endif %}
+                    {% endif %}
                     {% if type == "parent"%}
                     <div class="col px-2">
                         <button class="btn btn-primary btn-sm w-100 h-100 disabled" style="pointer-events: none;" type="button" title="This feature is not available yet." disabled>Add Linked Products <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
