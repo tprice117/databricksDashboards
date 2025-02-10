@@ -565,7 +565,7 @@
                   var removalCostPerItem = parseFloat(removalCost / numberChecked * (1+takeRate / 100)).toFixed(2)
                   // $ cost / item count = seller price + take rate = customer price per item
                   deliveryCostText.text("$"+deliveryCost+" / "+numberChecked+" items = $"+sellerDeliveryCostPerItem+" * "+takeRate+"% take rate = $"+deliveryCostPerItem)
-                  removalCostText.text("$"+removalCost+" / "+numberChecked+" items = $"+sellerDeliveryCostPerItem+" * "+takeRate+"% take rate = $"+removalCostPerItem)
+                  removalCostText.text("$"+removalCost+" / "+numberChecked+" items = $"+sellerRemovalCostPerItem+" * "+takeRate+"% take rate = $"+removalCostPerItem)
               })
               var emptyBundlesWarning = jQuery(`#empty-bundle-info-${bundleId}`)
               emptyBundlesWarning.hide();
