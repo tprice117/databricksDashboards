@@ -21,11 +21,7 @@
       })
     }
     
-    function addCarouselListeners() {
-      // Carousels w/ Multiple Items
-      const carouselNext = document.querySelectorAll('.carousel-control-next')
-      const carouselPrev = document.querySelectorAll('.carousel-control-prev')
-    
+    function addCarouselListeners(carouselNext, carouselPrev) {
       carouselNext.forEach((next) => {
         next.addEventListener('click', function () {
           const carouselId = next.getAttribute('href')
@@ -66,11 +62,12 @@
           document.activeElement.blur()
         }
       })
-      // Load images
-      addImageLoadEventListeners()
     
       // Add carousel listeners
-      addCarouselListeners()
+      // Carousels w/ Multiple Items
+      const carouselNext = document.querySelectorAll('.carousel-control-next')
+      const carouselPrev = document.querySelectorAll('.carousel-control-prev')
+      addCarouselListeners(carouselNext, carouselPrev)
     
       // Get URL params
       const urlParams = new URLSearchParams(window.location.search)
@@ -110,6 +107,9 @@
           checkbox.checked = true
         }
       })
+    
+      // Load images
+      addImageLoadEventListeners()
     })
     
     // Debounce Timeout search filter (unused)
@@ -155,7 +155,11 @@
     }
     
     document.addEventListener('htmx:afterSwap', addImageLoadEventListeners)
-    document.addEventListener('htmx:afterSwap', addCarouselListeners)
+    htmx.onLoad(function (content) {
+      const carouselNext = content.querySelectorAll('.carousel-control-next')
+      const carouselPrev = content.querySelectorAll('.carousel-control-prev')
+      addCarouselListeners(carouselNext, carouselPrev)
+    })
     
     // Show or hide the back-to-top button based on scroll position
     window.addEventListener('scroll', function () {
