@@ -29,7 +29,7 @@
                 </div>
                 <div class="col pt-2 px-1">
                     <h3 class="subtitle mb-1">{{ main_product.name }}</h3>
-                    <p class="mb-1 order-descriptor">Nearest Service Date: <span class="fw-light">{{ nearest_order.end_date }}</span></p>
+                    <p class="mb-1 order-descriptor">Nearest Service Date: <span class="fw-light">{{ nearest_order.end_date|default_if_none:'On-site' }}</span></p>
                     <p class="mb-1 order-descriptor">Nearest Order Type: <span class="fw-light">{{ order_type }}</span></p>
                     {% comment %} Uncomment when Bundled Qty is implemented {% endcomment %}
                     {% comment %} <p class="mb-1 order-descriptor">Qty: <span class="fw-light">1</span></p> {% endcomment %}
