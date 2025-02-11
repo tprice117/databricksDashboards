@@ -175,7 +175,13 @@
                       {% endif %}" />
                   </div>
                   <div class="col text-truncate" id="product-details">
-                    <h3 class="subtitle mb-3 text-wrap"><a href="#" class="btn btn-link p-0 text-decoration-none text-start">{{ seller_location.name }}</a></h3>
+                    <h3 class="subtitle mb-3 text-wrap">
+                      {% if request.user.is_staff %}
+                        <a href="{% url 'supplier_location_detail' seller_location.id %}" class="btn btn-link p-0 text-decoration-none text-start">{{ seller_location.name }}</a>
+                      {% else %}
+                        {{ seller_location.name }}
+                      {% endif %}
+                    </h3>
                     <p class="mb-1 order-descriptor">
                       Start Date: <span class="fw-light">{{ order_group.start_date }}</span>
                     </p>
