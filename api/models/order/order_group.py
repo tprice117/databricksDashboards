@@ -778,6 +778,7 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
         ):
             OrderGroupServiceTimesPerWeek.objects.create(
                 order_group=instance,
+                one_every_other_week=seller_product_seller_location.service_times_per_week.one_every_other_week,
                 one_time_per_week=seller_product_seller_location.service_times_per_week.one_time_per_week,
                 two_times_per_week=seller_product_seller_location.service_times_per_week.two_times_per_week,
                 three_times_per_week=seller_product_seller_location.service_times_per_week.three_times_per_week,

@@ -26,7 +26,7 @@ class PricingEngine:
         end_date: datetime.date,
         waste_type: Optional[WasteType],
         shift_count: Optional[int],
-        times_per_week: float = None,
+        times_per_week: Decimal = None,
         discount: Optional[Decimal] = None,
     ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
         return PricingEngine.get_price_by_lat_long(
@@ -50,7 +50,7 @@ class PricingEngine:
         end_date: Optional[datetime.date],
         waste_type: Optional[WasteType],
         shift_count: Optional[int],
-        times_per_week: Optional[float] = None,
+        times_per_week: Optional[Decimal] = None,
         discount: Optional[Decimal] = None,
     ) -> List[Tuple[PricingLineItemGroup, List[PricingLineItem]]]:
         """

@@ -13,7 +13,7 @@ class ServicePrice:
         latitude: Decimal,
         longitude: Decimal,
         seller_product_seller_location: SellerProductSellerLocation,
-        times_per_week: Optional[int] = None,
+        times_per_week: Optional[Decimal] = None,
     ) -> Optional[Union[Tuple[PricingLineItemGroup, list[PricingLineItem]], None]]:
         """
         This method computes the service price based on customer location,

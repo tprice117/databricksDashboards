@@ -2,6 +2,7 @@ from django.db import models
 
 from common.models import BaseModel
 from pricing_engine.models.pricing_line_item import PricingLineItem
+from decimal import Decimal
 
 
 class PricingServiceTimesPerWeek(BaseModel):
@@ -71,7 +72,7 @@ class PricingServiceTimesPerWeek(BaseModel):
 
     def get_price(
         self,
-        times_per_week: float,
+        times_per_week: Decimal,
     ) -> PricingLineItem:
         if times_per_week < 0:
             raise Exception("The times_per_week must be positive.")
