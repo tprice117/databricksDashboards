@@ -8,7 +8,7 @@
         <small class="ms-2 text-muted fw-light">{{ results }} product{{ results|pluralize }}</small>
       {% endwith %}
     </h5>
-    <div id="carousel-{{ forloop.counter }}" class="carousel slide g-4 flex-nowrap mb-4" style="padding: 0 60px;" id="category-results">
+    <div id="carousel-{{ row.main_product_category.id }}" class="carousel slide g-4 flex-nowrap mb-4" style="padding: 0 60px;" id="category-results">
       <div class="carousel-inner d-flex align-items-stretch">
         {% for main_product in row.main_products %}
           {% comment %}Delete style attr once css loaded. Don't want min-content, want to use width from cols.{% endcomment %}
@@ -52,11 +52,11 @@
           </div>
         {% endfor %}
       </div>
-      <button class="carousel-control-prev text-primary" style="background-color: rgba(var(--bs-primary-rgb), 0.2); width: 50px; height: 50px; border-radius: 25%; top: 50%;" type="button" href="#carousel-{{ forloop.counter }}" data-bs-target="#carousel-{{ forloop.counter }}" data-bs-slide="prev">
+      <button class="carousel-control-prev text-primary" style="background-color: rgba(var(--bs-primary-rgb), 0.2); width: 50px; height: 50px; border-radius: 25%; top: 50%;" type="button" href="#carousel-{{ row.main_product_category.id }}" data-bs-target="#carousel-{{ row.main_product_category.id }}" data-bs-slide="prev">
         <i class="far fa-arrow-left"></i>
         <span class="visually-hidden">Previous</span>
       </button>
-      <button class="carousel-control-next text-primary" style="background-color: rgba(var(--bs-primary-rgb), 0.2); width: 50px; height: 50px; border-radius: 25%; top: 50%;" type="button" href="#carousel-{{ forloop.counter }}" data-bs-target="#carousel-{{ forloop.counter }}" data-bs-slide="next">
+      <button class="carousel-control-next text-primary" style="background-color: rgba(var(--bs-primary-rgb), 0.2); width: 50px; height: 50px; border-radius: 25%; top: 50%;" type="button" href="#carousel-{{ row.main_product_category.id }}" data-bs-target="#carousel-{{ row.main_product_category.id }}" data-bs-slide="next">
         <i class="far fa-arrow-right"></i>
         <span class="visually-hidden">Next</span>
       </button>
