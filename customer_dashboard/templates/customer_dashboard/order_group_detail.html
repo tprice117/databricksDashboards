@@ -41,26 +41,46 @@
     
       formsetDiv.insertAdjacentHTML('beforeend', newFormHtml)
       totalForms.value = newFormCount
+    
+      // Update the counter
+      const counter = formsetDiv.lastElementChild.querySelector('.attachment-number')
+      counter.textContent = newFormCount
+    
+      // Update Carousel
+      const carouselInner = document.querySelector('.carousel-inner')
+      const activeItem = carouselInner.querySelector('.carousel-item.active')
+      if (!activeItem) {
+        const newForm = carouselInner.lastElementChild
+        newForm.classList.add('active')
+      } else {
+        const carouselItemsCount = carouselInner.querySelectorAll('.carousel-item').length
+        // Scroll to the new form
+        const carouselInstance = bootstrap.Carousel.getInstance(document.querySelector('#attachments-carousel'))
+        carouselInstance.to(carouselItemsCount - 1)
+      }
     })
     formsetDiv.addEventListener('click', function (event) {
       if (event.target.classList.contains('remove-location')) {
         const formToRemove = event.target.closest('.attachment-form')
-        formToRemove.style.display = 'none'
         formToRemove.querySelector('input[type="hidden"][name$="-DELETE"]').value = 'on'
+        // Hide from carousel
+        const carouselInstance = bootstrap.Carousel.getInstance(document.querySelector('#attachments-carousel'))
+        carouselInstance.next()
+        formToRemove.classList.remove('carousel-item')
+        formToRemove.classList.add('d-none')
       }
     })
-    document.body.addEventListener('htmx:afterRequest', function (evt) {
-      if (evt.detail.target.id.startsWith('rating')) {
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
+      if (evt.target.id === 'order-review-modal') {
         // This should only occur after the rating request is successful
         const { xhr, successful, requestConfig } = evt.detail
         if (!successful) {
           console.error(evt)
           return
         }
-        // Get the order ID from the request params
-        const orderId = requestConfig.parameters.order_id
+        console.log('showing')
         // Show the feedback modal
-        $(`#${orderId}-modal`).modal('show')
+        $(`#order-review-modal`).modal('show')
       }
     })
   </script>
@@ -74,20 +94,20 @@
       </div>
       <div class="col">
         <div class="flex-row d-flex justify-content-between">
-          {% if request.user.is_staff %}
-            {% with account_owner=user_address.user_group.account_owner %}
-              {% if account_owner %}
-                <h6 class="text-dark text-center mb-0 d-flex align-items-center text-nowrap">
+          <h6 class="text-dark text-center mb-0 d-flex align-items-center text-nowrap">
+            {% if request.user.is_staff %}
+              {% with account_owner=user_address.user_group.account_owner %}
+                {% if account_owner %}
                   <strong class="me-2">Account Owner:</strong>
                   {% if account_owner.photo %}
                     <img class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem;" src="{{ account_owner.photo.url }}" />
                   {% else %}
                     <span class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem; display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
                   {% endif %}&nbsp;{{ account_owner.full_name }}
-                </h6>
-              {% endif %}
-            {% endwith %}
-          {% endif %}
+                {% endif %}
+              {% endwith %}
+            {% endif %}
+          </h6>
           <button class="btn btn-sm px-3 btn-outline-primary disabled text-nowrap" type="button" disabled><b>Transfer Asset</b></button>
         </div>
       </div>
@@ -186,7 +206,7 @@
                     </div>
                   {% elif order_group.parent_booking %}
                     <div class="col px-2">
-                      <a href="{% url 'customer_order_group_detail' order_group.parent_booking_id %}" class="btn btn-light btn-sm w-100 h-100" title="Click to view parent booking details.">View Related Booking</a>
+                      <a href="{% url 'customer_order_group_detail' order_group.parent_booking_id %}" class="btn btn-sm btn-outline-primary h-100 w-100" style="--bs-btn-bg: #fff;" title="Click to view parent booking details.">View Related Booking</a>
                     </div>
                   {% endif %}
                 {% endif %}
@@ -206,6 +226,7 @@
         {% endif %}
       </div>
     </div>
+    <!-- Access Details Form -->
     <div class="row mb-3">
       <div class="col-md-6">
         <div class="card content border-0 mb-3">
@@ -236,6 +257,7 @@
           </div>
         </div>
       </div>
+      <!-- Attachments -->
       <div class="col-md-6">
         <div class="card content border-0">
           <div class="card-body text-dark">
@@ -250,40 +272,119 @@
                   <small class="text-danger">{{ error }}</small>
                 {% endfor %}
               {% endif %}
-              <hr />
               {{ attachments_formset.management_form }}
               <!-- Hidden template for new forms -->
-              <div id="empty-form-template" style="display: none;">
-                <div class="attachment-form">
-                  {{ attachments_formset.empty_form }}
-                  <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
-                  <hr />
+              <div id="empty-form-template" class="d-none">
+                <div class="attachment-form carousel-item w-100" style="height: 200px;">
+                  <div class="mb-3">
+                    <p class="mb-0 text-dark">
+                      Attachment #<span class="attachment-number">X</span>
+                    </p>
+                    {{ attachments_formset.empty_form }}
+                  </div>
+                  <div class="d-flex flex-row-reverse w-100">
+                    <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
+                  </div>
                 </div>
               </div>
-              <div id="Attachments-formset">
-                {% for inline in attachments_formset %}
-                  <div class="attachment-form">
-                    {{ inline }}
-                    <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
-                    <hr />
-                  </div>
-                {% endfor %}
+              {% comment %}Needs more work to display files cleanly and multiple at once like explore page.{% endcomment %}
+              <div id="attachments-carousel" class="carousel slide" data-bs-ride="carousel">
+                <div id="Attachments-formset" class="carousel-inner d-flex align-items-stretch" style="padding: 0 40px;">
+                  {% for inline in attachments_formset %}
+                    <div class="attachment-form carousel-item w-100 {% if forloop.first %}active{% endif %}" style="height: 200px;">
+                      <div class="mb-3">
+                        <p class="mb-0 text-dark">
+                          Attachment #<span class="attachment-number">{{ forloop.counter }}</span>
+                        </p>
+                        {{ inline }}
+                      </div>
+                      <div class="d-flex flex-row-reverse w-100">
+                        <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+                <button class="carousel-control-prev text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel" data-bs-slide="prev">
+                  <i class="far fa-arrow-left"></i>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel" data-bs-slide="next">
+                  <i class="far fa-arrow-right"></i>
+                  <span class="visually-hidden">Next</span>
+                </button>
               </div>
               <div class="d-flex flex-row-reverse">
-                <button class="btn btn-primary btn-sm w-100" type="submit" name="placement_details_button" style="margin-top: 12px;">Save</button>
+                <button class="btn btn-primary btn-sm w-100 mt-2" type="submit" name="attachments_button">Save</button>
               </div>
             </form>
           </div>
         </div>
       </div>
     </div>
+    <!-- Related Bookings Table -->
+    {% if related_bookings %}
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card border-0">
+            <div class="card-body">
+              <h5 class="text-dark mb-3"><strong>Linked Products</strong></h5>
+              <div class="table-responsive small">
+                <table class="table table-hover table-sm text-nowrap fw-light">
+                  <thead>
+                    <tr>
+                      <th>Booking #</th>
+                      <th>Product</th>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                      <th>PO ID</th>
+                      <th>Created By</th>
+                      <th>Created On</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for related in related_bookings %}
+                      <tr>
+                        <td>
+                          <a href="{% url 'customer_order_group_detail' related.id %}" class="text-decoration-none">{{ related.code }}</a>
+                        </td>
+                        <td>{{ related.seller_product_seller_location.seller_product.product.main_product.name }}</td>
+                        <td>{{ related.start_date|date }}</td>
+                        <td>{{ related.end_date|default_if_none:'On-site' }}</td>
+                        <td>{{ related.project_id|default:'N/A' }}</td>
+                        <td>
+                          {% if related.created_by %}
+                            {% if request.user.is_staff %}
+                              <a href="{% url 'customer_user_detail' related.created_by_id %}" class="text-decoration-none">{{ related.created_by.full_name }}</a>
+                            {% else %}
+                              {{ related.created_by.full_name }}
+                            {% endif %}
+                          {% endif %}
+                        </td>
+                        <td>{{ related.created_on|date }}</td>
+                        <td>
+                          {% if related.is_active and related.order_type != 'ONE_TIME' %}
+                            <a class="btn btn-danger btn-sm w-100 h-100 p-0" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_removal' order_group_id=order_group.id %}">Request Removal <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    <!-- Transactions Table -->
     <div class="row">
       <div class="col-md-12">
         <div class="card border-0">
           <div class="card-body">
             <h5 class="text-dark mb-3"><strong>Transactions</strong></h5>
-            <div class="table-responsive" style="margin-bottom: 16px;">
-              <table class="table table-hover table-sm text-nowrap">
+            <div class="table-responsive small">
+              <table class="table table-hover table-sm text-nowrap fw-light">
                 <thead>
                   <tr>
                     <th>Transaction #</th>
@@ -299,8 +400,10 @@
                 </thead>
                 <tbody>
                   {% for order in orders %}
-                    <tr class="clickable-row" onclick="window.location.href='{% url 'customer_order_detail' order_id=order.id %}'">
-                      <td>{{ order.code }}</td>
+                    <tr>
+                      <td>
+                        <a href="{% url 'customer_order_detail' order_id=order.id %}" class="text-decoration-none">{{ order.code }}</a>
+                      </td>
                       <td>{{ order.start_date|date }}</td>
                       <td>{{ order.end_date|date }}</td>
                       <td>{{ order.order_type }}</td>
@@ -317,36 +420,7 @@
                       <td>{{ order.created_on|date }}</td>
                       <td>{{ order.full_price|currency }}</td>
                       <td>
-                        <!-- Show buttons as disabled after 10 minutes -->
-                        {% if not order.time_since_review or order.time_since_review.total_seconds < 600 %}
-                          <form method="post" hx-post="{% url 'customer_order_review_swap' %}" hx-target="#rating-{{ forloop.counter }}">
-                            {% csrf_token %}
-                            <input type="hidden" name="order_id" value="{{ order.id }}" />
-                            <div id="rating-{{ forloop.counter }}">
-                              {% if order.review.rating == 1 %}
-                                <button class="btn btn-success" type="submit" name="rating" value="1"><i class="fas fa-thumbs-up fa-sm text-white"></i></button>
-                              {% else %}
-                                <button class="btn btn-light" type="submit" name="rating" value="1"><i class="fas fa-thumbs-up fa-sm"></i></button>
-                              {% endif %}
-                              {% if order.review.rating == 0 %}
-                                <button class="btn btn-danger" type="submit" name="rating" value="0"><i class="fas fa-thumbs-down fa-sm text-white"></i></button>
-                              {% else %}
-                                <button class="btn btn-light" type="submit" name="rating" value="0"><i class="fas fa-thumbs-down fa-sm"></i></button>
-                              {% endif %}
-                            </div>
-                          </form>
-                        {% else %}
-                          {% if order.review.rating == 1 %}
-                            <button class="btn btn-success disabled" type="submit" name="rating" value="1"><i class="fas fa-thumbs-up fa-sm text-white"></i></button>
-                          {% else %}
-                            <button class="btn btn-light disabled" type="submit" name="rating" value="1"><i class="fas fa-thumbs-up fa-sm"></i></button>
-                          {% endif %}
-                          {% if order.review.rating == 0 %}
-                            <button class="btn btn-danger disabled" type="submit" name="rating" value="0"><i class="fas fa-thumbs-down fa-sm text-white"></i></button>
-                          {% else %}
-                            <button class="btn btn-light disabled" type="submit" name="rating" value="0"><i class="fas fa-thumbs-down fa-sm"></i></button>
-                          {% endif %}
-                        {% endif %}
+                        {% include 'customer_dashboard/snippets/order_review_buttons.html' %}
                       </td>
                     </tr>
                   {% endfor %}
@@ -356,6 +430,13 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+{% endblock %}
+{% block modals %}
+  <div id="order-review-modal" class="modal fade" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content"></div>
     </div>
   </div>
 {% endblock %}

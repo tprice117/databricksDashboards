@@ -70,7 +70,7 @@
                     </div>
                     {% elif type == "not_related" and order_group.parent_booking %}
                     <div class="col px-2">
-                            <a href="{% url 'customer_order_group_detail' order_group.parent_booking_id %}" class="btn btn-light btn-sm w-100 h-100" title="Click to view parent booking details.">View Related Booking</a>
+                            <a href="{% url 'customer_order_group_detail' order_group.parent_booking_id %}" class="btn btn-sm btn-outline-primary h-100 w-100" style="--bs-btn-bg: #fff;" title="Click to view parent booking details.">View Related Booking</a>
                         </div>
                     {% endif %}
                 {% endif %}
