@@ -1617,7 +1617,7 @@ def cart(request):
         waste_type_id = request.POST.get("waste_type")
         schedule_window = request.POST.get("schedule_window", "Morning (7am-11am)")
         times_per_week = (
-            int(request.POST.get("times_per_week"))
+            float(request.POST.get("times_per_week"))
             if request.POST.get("times_per_week")
             else None
         )

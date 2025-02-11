@@ -175,7 +175,9 @@ class OrderGroup(BaseModel):
     estimated_end_date = models.DateField(blank=True, null=True)
     take_rate = models.DecimalField(max_digits=18, decimal_places=2, default=30)
     tonnage_quantity = models.IntegerField(blank=True, null=True)
-    times_per_week = models.SmallIntegerField(
+    times_per_week = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
         blank=True,
         null=True,
         help_text="Service times times per week for MainProducts that have "
