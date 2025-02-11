@@ -2117,16 +2117,25 @@ def new_bundle(request):
                             # messages.error(request, f"Item {order.id} is already in a bundle.")
                             # return HttpResponseRedirect(reverse("customer_cart"))
 
+                    try:
+                        deliveryCost = Decimal(bundle["deliveryCost"])
+                    except:
+                        deliveryCost = 0
+                    try:
+                        removalCost = Decimal(bundle["removalCost"])
+                    except:
+                        removalCost = 0
+
                     new_bundle = FreightBundle(
                         name="bundle",
-                        delivery_fee=bundle["deliveryCost"],
-                        removal_fee=bundle["removalCost"],
+                        delivery_fee=deliveryCost,
+                        removal_fee=removalCost,
                     )
                     new_bundle.save()
                     # divide the delivery and removal cost among the items
                     # also add the costs to the order_group
-                    dividedDeliveryCost = bundle["deliveryCost"] / len(bundle["items"])
-                    dividedRemovalCost = bundle["removalCost"] / len(bundle["items"])
+                    dividedDeliveryCost = deliveryCost / len(bundle["items"])
+                    dividedRemovalCost = removalCost / len(bundle["items"])
                     for orderId in bundle["items"]:
                         order = Order.objects.get(id=orderId)
                         order.order_line_items.all().delete()

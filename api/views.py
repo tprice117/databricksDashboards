@@ -210,7 +210,7 @@ class UserAddressViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Using queryset defined in api/managers/user_address.py
-        return self.queryset.for_user(self.request.user)
+        return self.queryset.for_user(self.request.user, allow_all=False)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -224,12 +224,7 @@ class UserViewSet(viewsets.ModelViewSet):
         self.queryset = self.queryset.select_related(
             "user_group__seller", "user_group__legal"
         )
-        is_superuser = self.request.user == "ALL"
-
-        if is_superuser:
-            return self.queryset
-        else:
-            return self.queryset.filter(id=self.request.user.id)
+        return self.queryset.filter(id=self.request.user.id)
 
 
 class UserGroupViewSet(viewsets.ModelViewSet):
@@ -246,15 +241,7 @@ class UserGroupViewSet(viewsets.ModelViewSet):
         elif user_group_id:
             return self.queryset.filter(id=user_group_id)
         else:
-            is_superuser = self.request.user == "ALL" or (
-                self.request.user.user_group.is_superuser
-                if self.request.user and self.request.user.user_group
-                else False
-            )
-            if is_superuser:
-                return self.queryset
-            else:
-                return self.queryset.filter(id=self.request.user.user_group.id)
+            return self.queryset.filter(id=self.request.user.user_group.id)
 
 
 class UserGroupBillingViewSet(viewsets.ModelViewSet):
@@ -262,15 +249,7 @@ class UserGroupBillingViewSet(viewsets.ModelViewSet):
     serializer_class = UserGroupBillingSerializer
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (
-            self.request.user.user_group.is_superuser
-            if self.request.user and self.request.user.user_group
-            else False
-        )
-        if is_superuser:
-            return self.queryset
-        else:
-            return self.queryset.filter(user_group=self.request.user.user_group)
+        return self.queryset.filter(user_group=self.request.user.user_group)
 
 
 class UserGroupLegalViewSet(viewsets.ModelViewSet):
@@ -278,15 +257,7 @@ class UserGroupLegalViewSet(viewsets.ModelViewSet):
     serializer_class = UserGroupLegalSerializer
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (
-            self.request.user.user_group.is_superuser
-            if self.request.user and self.request.user.user_group
-            else False
-        )
-        if is_superuser:
-            return self.queryset
-        else:
-            return self.queryset.filter(user_group=self.request.user.user_group)
+        return self.queryset.filter(user_group=self.request.user.user_group)
 
 
 class UserGroupCreditApplicationViewSet(viewsets.ModelViewSet):
@@ -294,15 +265,7 @@ class UserGroupCreditApplicationViewSet(viewsets.ModelViewSet):
     serializer_class = UserGroupCreditApplicationSerializer
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (
-            self.request.user.user_group.is_superuser
-            if self.request.user and self.request.user.user_group
-            else False
-        )
-        if is_superuser:
-            return self.queryset
-        else:
-            return self.queryset.filter(user_group=self.request.user.user_group)
+        return self.queryset.filter(user_group=self.request.user.user_group)
 
 
 class UserUserAddressViewSet(viewsets.ModelViewSet):
@@ -311,14 +274,7 @@ class UserUserAddressViewSet(viewsets.ModelViewSet):
     filterset_fields = ["id", "user", "user_address"]
 
     def get_queryset(self):
-        is_superuser = self.request.user == "ALL" or (
-            self.request.user.user_group.is_superuser
-            if self.request.user and self.request.user.user_group
-            else False
-        )
-        if is_superuser:
-            return self.queryset
-        elif self.request.user.type == UserType.ADMIN:
+        if self.request.user.user_group and self.request.user.type == UserType.ADMIN:
             users = User.objects.filter(user_group=self.request.user.user_group)
             return self.queryset.filter(user__in=users)
         else:
@@ -532,7 +488,7 @@ class OrderGroupViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Using queryset defined in api/managers/order_group.py
         return (
-            self.queryset.for_user(self.request.user)
+            self.queryset.for_user(self.request.user, allow_all=False)
             .prefetch_related(
                 "orders",
                 "user__user_group__users",
@@ -565,9 +521,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         self.queryset = self.queryset.select_related(
             "order_group__subscription",
         )
-        if self.request.user == "ALL":
-            return self.queryset
-        elif self.request.user.type == UserType.ADMIN:
+        if self.request.user.user_group and self.request.user.type == UserType.ADMIN:
             return self.queryset.filter(
                 order_group__user__user_group=self.request.user.user_group
             )
@@ -677,17 +631,14 @@ class SellerProductSellerLocationServiceViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ["seller_product_seller_location"]
 
     def get_queryset(self):
-        if self.request.user == "ALL":
-            return self.queryset
-        else:
-            seller = (
-                self.request.user.user_group.seller
-                if self.request.user.user_group
-                else None
-            )
-            return self.queryset.filter(
-                seller_product_seller_location__seller_product__seller=seller
-            )
+        seller = (
+            self.request.user.user_group.seller
+            if self.request.user.user_group
+            else None
+        )
+        return self.queryset.filter(
+            seller_product_seller_location__seller_product__seller=seller
+        )
 
 
 class SellerInvoicePayableViewSet(viewsets.ReadOnlyModelViewSet):
@@ -718,17 +669,14 @@ class SellerProductSellerLocationServiceRecurringFrequencyViewSet(
     serializer_class = SellerProductSellerLocationServiceRecurringFrequencySerializer
 
     def get_queryset(self):
-        if self.request.user == "ALL":
-            return self.queryset
-        else:
-            seller = (
-                self.request.user.user_group.seller
-                if self.request.user.user_group
-                else None
-            )
-            return self.queryset.filter(
-                seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=seller
-            )
+        seller = (
+            self.request.user.user_group.seller
+            if self.request.user.user_group
+            else None
+        )
+        return self.queryset.filter(
+            seller_product_seller_location_service__seller_product_seller_location__seller_product__seller=seller
+        )
 
 
 class SellerProductSellerLocationRentalViewSet(viewsets.ReadOnlyModelViewSet):
@@ -737,17 +685,14 @@ class SellerProductSellerLocationRentalViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ["seller_product_seller_location"]
 
     def get_queryset(self):
-        if self.request.user == "ALL":
-            return self.queryset
-        else:
-            seller = (
-                self.request.user.user_group.seller
-                if self.request.user.user_group
-                else None
-            )
-            return self.queryset.filter(
-                seller_product_seller_location__seller_product__seller=seller
-            )
+        seller = (
+            self.request.user.user_group.seller
+            if self.request.user.user_group
+            else None
+        )
+        return self.queryset.filter(
+            seller_product_seller_location__seller_product__seller=seller
+        )
 
 
 class SellerProductSellerLocationMaterialViewSet(viewsets.ReadOnlyModelViewSet):
@@ -756,17 +701,14 @@ class SellerProductSellerLocationMaterialViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ["seller_product_seller_location"]
 
     def get_queryset(self):
-        if self.request.user == "ALL":
-            return self.queryset
-        else:
-            seller = (
-                self.request.user.user_group.seller
-                if self.request.user.user_group
-                else None
-            )
-            return self.queryset.filter(
-                seller_product_seller_location__seller_product__seller=seller
-            )
+        seller = (
+            self.request.user.user_group.seller
+            if self.request.user.user_group
+            else None
+        )
+        return self.queryset.filter(
+            seller_product_seller_location__seller_product__seller=seller
+        )
 
 
 class SellerProductSellerLocationMaterialWasteTypeViewSet(
@@ -780,17 +722,14 @@ class SellerProductSellerLocationMaterialWasteTypeViewSet(
     ]
 
     def get_queryset(self):
-        if self.request.user == "ALL":
-            return self.queryset
-        else:
-            seller = (
-                self.request.user.user_group.seller
-                if self.request.user.user_group
-                else None
-            )
-            return self.queryset.filter(
-                seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=seller
-            )
+        seller = (
+            self.request.user.user_group.seller
+            if self.request.user.user_group
+            else None
+        )
+        return self.queryset.filter(
+            seller_product_seller_location_material__seller_product_seller_location__seller_product__seller=seller
+        )
 
 
 @authentication_classes([])

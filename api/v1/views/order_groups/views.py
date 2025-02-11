@@ -35,7 +35,7 @@ class OrderGroupViewSet(
 
     def get_queryset(self):
         # Using queryset defined in api/managers/order_group.py
-        return self.queryset.for_user(self.request.user)
+        return self.queryset.for_user(self.request.user, allow_all=False)
 
     def get_serializer_class(self):
         if self.action == "list":

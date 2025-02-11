@@ -156,8 +156,19 @@ else:
             "PASSWORD": env("DB_DEV_PASSWORD"),
             "HOST": "db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com",
             "PORT": "25061",
+            # With connection pooling https://docs.djangoproject.com/en/4.2/ref/databases/#transaction-pooling-server-side-cursors
+            "DISABLE_SERVER_SIDE_CURSORS": True,
         }
     }
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("UPSTASH_REDIS_URL"),
+    }
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -365,6 +376,7 @@ REST_FRAMEWORK = {
     "COERCE_DECIMAL_TO_STRING": False,
     # "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+    "DEFAULT_PAGINATION_CLASS": "common.utils.pagination.CustomLimitOffsetPagination",
 }
 
 if ENVIRONMENT == "TEST":

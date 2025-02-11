@@ -5,18 +5,35 @@ from django.db.models import Q
 from api.models import OrderGroup, Order
 
 
+class ListFilter(filters.Filter):
+    def filter(self, qs, value):
+        if not value:
+            return qs
+
+        self.lookup_expr = "in"
+        values = value.split(",")
+        return super(ListFilter, self).filter(qs, values)
+
+
 class OrderGroupFilterset(filters.FilterSet):
     """Filter for Bookings by
+    - id
+    - user
+    - user_address
     - active
     - code
+    - status
+    - search
     """
 
-    active = filters.BooleanFilter(field_name="active", method="get_active")
-    code = filters.CharFilter(field_name="code", method="get_code")
-    status = filters.MultipleChoiceFilter(
-        field_name="orders__status", method="get_status", choices=Order.Status.choices
+    active = filters.BooleanFilter(
+        field_name="active", method="get_active", help_text="Filter active bookings"
     )
-    user = filters.CharFilter(field_name="user", lookup_expr="exact")
+    code = filters.CharFilter(field_name="code", method="get_code")
+    status = ListFilter(
+        field_name="orders__status",
+        help_text="Get bookings that have order status. Comma separated list of statuses.",
+    )
     search = filters.CharFilter(
         field_name="search",
         method="get_search",
@@ -60,16 +77,15 @@ class OrderGroupFilterset(filters.FilterSet):
             Q(end_date=None) | Q(end_date__gt=datetime.datetime.now())
         )
 
-    def get_status(self, queryset, name, values):
-        # Get all order_groups where latest order has a specific status
-        if values:
-            return queryset.filter(orders__status__in=values)
-        else:
-            return queryset.all()
-
     class Meta:
         model = OrderGroup
-        fields = ["id", "user_address", "active", "code"]
+        fields = {
+            "id": ["exact"],
+            "user": ["in"],
+            "user_address": ["exact"],
+            # The order status filter could be added like this, but the docs don't show the enum values
+            # "orders__status": ["in"],
+        }
 
 
 class OrderFilterset(filters.FilterSet):
