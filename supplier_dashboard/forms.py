@@ -841,6 +841,7 @@ class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
     class Meta:
         model = SellerProductSellerLocationServiceTimesPerWeek
         fields = [
+            "one_every_other_week",
             "one_time_per_week",
             "two_times_per_week",
             "three_times_per_week",
@@ -848,6 +849,14 @@ class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
             "five_times_per_week",
         ]
         widgets = {
+            "one_every_other_week": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "$0.00 per month",
+                    "min": 0.0,
+                    "step": 0.01,
+                }
+            ),
             "one_time_per_week": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -890,6 +899,7 @@ class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
             ),
         }
         labels = {
+            "one_every_other_week": "1 Service/2 Weeks",
             "one_time_per_week": "1 Service/Week",
             "two_times_per_week": "2 Services/Week",
             "three_times_per_week": "3 Services/Week",
@@ -897,6 +907,7 @@ class SellerProductSellerLocationServiceTimesPerWeekForm(forms.ModelForm):
             "five_times_per_week": "5 Services/Week",
         }
         help_texts = {
+            "one_every_other_week": "Monthly Rate",
             "one_time_per_week": "Monthly Rate",
             "two_times_per_week": "Monthly Rate",
             "three_times_per_week": "Monthly Rate",

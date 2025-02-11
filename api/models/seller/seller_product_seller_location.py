@@ -118,7 +118,7 @@ class SellerProductSellerLocation(BaseModel):
                 else None
             ),
             times_per_week=(
-                1
+                0.5
                 if self.seller_product.product.main_product.has_service_times_per_week
                 else None
             ),
@@ -131,7 +131,7 @@ class SellerProductSellerLocation(BaseModel):
         return data["total"] if pricing else None
 
     def __str__(self):
-        return f'{self.seller_location.name if self.seller_location and self.seller_location.name else ""} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ""}'
+        return f"{self.seller_location.name if self.seller_location and self.seller_location.name else ''} - {self.seller_product.product.main_product.name if self.seller_product and self.seller_product.product and self.seller_product.product.main_product and self.seller_product.product.main_product.name else ''}"
 
     def _is_complete(self):
         # Rental.

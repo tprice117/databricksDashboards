@@ -1192,7 +1192,7 @@ def new_order_4(request):
         context["schedule_window"] = request.GET.get("schedule_window", "")
         context["times_per_week"] = request.GET.get("times_per_week", "")
         if context["times_per_week"]:
-            context["times_per_week"] = int(context["times_per_week"])
+            context["times_per_week"] = float(context["times_per_week"])
         context["shift_count"] = request.GET.get("shift_count", "")
         if context["shift_count"]:
             context["shift_count"] = int(context["shift_count"])

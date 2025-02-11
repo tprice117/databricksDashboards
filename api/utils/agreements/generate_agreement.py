@@ -117,9 +117,7 @@ def _core_agreement(order_group):
     seller_location_name = (
         order_group.seller_product_seller_location.seller_location.name
     )
-    seller_product_name = (
-        order_group.seller_product_seller_location.seller_product.product.main_product.name
-    )
+    seller_product_name = order_group.seller_product_seller_location.seller_product.product.main_product.name
 
     items = []
     items.append(
@@ -240,6 +238,7 @@ def _core_agreement(order_group):
                 _get_agreement_table(
                     [
                         [
+                            "1x per 2 weeks",
                             "1x per week",
                             "2x per week",
                             "3x per week",
@@ -247,6 +246,11 @@ def _core_agreement(order_group):
                             "5x per week",
                         ],
                         [
+                            (
+                                f"${order_group.service_times_per_week.one_every_other_week}"
+                                if order_group.service_times_per_week.one_every_other_week
+                                else "N/A"
+                            ),
                             (
                                 f"${order_group.service_times_per_week.one_time_per_week}"
                                 if order_group.service_times_per_week.one_time_per_week
@@ -730,6 +734,7 @@ def _get_terms():
             "environmental compliance issues.",
         ),
     ]
+
 
 def _get_general():
     return [

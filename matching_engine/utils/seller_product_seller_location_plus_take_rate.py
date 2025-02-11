@@ -19,9 +19,7 @@ def seller_product_seller_location_plus_take_rate(
     if take_rate:
         default_take_rate = take_rate
     else:
-        default_take_rate = (
-            seller_product_seller_location.seller_product.product.main_product.default_take_rate
-        )
+        default_take_rate = seller_product_seller_location.seller_product.product.main_product.default_take_rate
 
     # Delivery.
     if "delivery_fee" in data and data["delivery_fee"]:
@@ -49,6 +47,7 @@ def seller_product_seller_location_plus_take_rate(
         data=data,
         parent_key="service_times_per_week",
         child_keys=[
+            "one_every_other_week",
             "one_time_per_week",
             "two_times_per_week",
             "three_times_per_week",
