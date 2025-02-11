@@ -156,6 +156,8 @@ else:
             "PASSWORD": env("DB_DEV_PASSWORD"),
             "HOST": "db-postgresql-nyc1-22939-do-user-13480306-0.b.db.ondigitalocean.com",
             "PORT": "25061",
+            # With connection pooling https://docs.djangoproject.com/en/4.2/ref/databases/#transaction-pooling-server-side-cursors
+            "DISABLE_SERVER_SIDE_CURSORS": True,
         }
     }
 
