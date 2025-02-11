@@ -796,7 +796,7 @@ def explore(request):
     main_products = (
         MainProduct.objects.all()
         .prefetch_related("images")
-        .select_related("main_product_category")
+        .select_related("main_product_category", "main_product_category__group")
         .with_likes()
         .with_listings()
     )
