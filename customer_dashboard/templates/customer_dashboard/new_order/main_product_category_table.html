@@ -32,7 +32,8 @@
                       {{ row.main_product_category.icon.url }}
                     {% else %}
                       {% static 'customer_dashboard/img/logo.png' %}
-                    {% endif %}" />
+                    {% endif %}"
+                    loading="lazy" />
                   {% if row.main_product_category.group %}
                     <div class="position-absolute bottom-0 start-50 translate-middle-x bg-white border border-primary badge rounded-pill text-truncate" style="width: 85%; bottom: 15px !important;">
                       <span class="text-primary"><b>{{ row.main_product_category.group.name }}</b></span>
