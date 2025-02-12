@@ -84,7 +84,7 @@ class PricingServiceTimesPerWeek(BaseModel):
                 )
             return PricingLineItem(
                 description="One every other Week",
-                unit_price=self.one_time_per_week,
+                unit_price=self.one_every_other_week,
             )
         if times_per_week == 1:
             if self.one_time_per_week is None:
