@@ -441,7 +441,7 @@ class OrderGroupForm(forms.Form):
     times_per_week = forms.ChoiceField(
         label="Service Times Per Week",
         choices=[
-            (0.5, "0.5"),
+            # (0.5, "0.5"), # this will be special request
             (1, "1"),
             (2, "2"),
             (3, "3"),
