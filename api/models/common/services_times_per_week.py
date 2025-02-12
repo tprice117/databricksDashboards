@@ -2,6 +2,7 @@ from django.db import models
 
 from common.models import BaseModel
 from pricing_engine.models.pricing_line_item import PricingLineItem
+from decimal import Decimal
 
 
 class PricingServiceTimesPerWeek(BaseModel):
@@ -14,6 +15,12 @@ class PricingServiceTimesPerWeek(BaseModel):
     100 for a portable toilet service that is serviced once per week for up to a month.
     """
 
+    one_every_other_week = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        blank=True,
+        null=True,
+    )
     one_time_per_week = models.DecimalField(
         max_digits=18,
         decimal_places=2,
@@ -50,7 +57,8 @@ class PricingServiceTimesPerWeek(BaseModel):
 
     def _is_complete(self):
         return (
-            self.one_time_per_week is not None
+            self.one_every_other_week is not None
+            or self.one_time_per_week is not None
             or self.two_times_per_week is not None
             or self.three_times_per_week is not None
             or self.four_times_per_week is not None
@@ -64,11 +72,20 @@ class PricingServiceTimesPerWeek(BaseModel):
 
     def get_price(
         self,
-        times_per_week: int,
+        times_per_week: Decimal,
     ) -> PricingLineItem:
         if times_per_week < 0:
             raise Exception("The times_per_week must be positive.")
 
+        if times_per_week == 0.5:
+            if self.one_every_other_week is None:
+                raise Exception(
+                    f"The one_every_other_week must be set on PricingServiceTimesPerWeek {self.id}."
+                )
+            return PricingLineItem(
+                description="One every other Week",
+                unit_price=self.one_every_other_week,
+            )
         if times_per_week == 1:
             if self.one_time_per_week is None:
                 raise Exception(
@@ -115,4 +132,4 @@ class PricingServiceTimesPerWeek(BaseModel):
                 unit_price=self.five_times_per_week,
             )
         else:
-            raise Exception("The times_per_week must be between 1 and 5.")
+            raise Exception("The times_per_week must be between 0.5 and 5.")

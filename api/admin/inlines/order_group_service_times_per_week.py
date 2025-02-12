@@ -6,6 +6,7 @@ from api.models import OrderGroupServiceTimesPerWeek
 class OrderGroupServiceTimesPerWeekInline(admin.TabularInline):
     model = OrderGroupServiceTimesPerWeek
     fields = (
+        "one_every_other_week",
         "one_time_per_week",
         "two_times_per_week",
         "three_times_per_week",
