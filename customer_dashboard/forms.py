@@ -899,6 +899,7 @@ class LeadDetailForm(forms.ModelForm):
                     self.fields["status"].choices.append(choice)
                     break
 
+        # There is some kind of bug in this queryset which is calling the database for each user to get the usergroup. Investigate later.
         self.fields["owner"].queryset = User.sales_team_users.all()
         self.fields["owner"].label_from_instance = (
             lambda obj: f"{obj.full_name or obj.email}"

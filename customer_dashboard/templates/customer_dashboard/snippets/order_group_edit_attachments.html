@@ -43,10 +43,10 @@
 {% comment %}For booking details page{% endcomment %}
 <div id="attachments-carousel-inner" hx-swap-oob="true" class="carousel-inner d-flex align-items-stretch pt-3" style="padding: 0 40px; height: 142px;">
   {% for attachment in order_group.attachments.all %}
-    <div class="carousel-item d-block mx-0 px-1 {% if forloop.first %}active{% endif %}" style="min-width: 150px;">
-      <div class="card lead-card border-0 w-100 rounded-4 hover-float">
+    <div class="carousel-item d-block mx-0 px-1 {% if forloop.first %}active{% endif %}" style="min-width: 126px;">
+      <div class="card lead-card border-0 w-100 h-100 rounded-4 hover-float">
         <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ attachment.file_name }}"></a>
-        <div class="inner card-img-top object-fit-cover d-flex justify-content-center p-2">{{ attachment.file|render_file|safe }}</div>
+        <div class="inner card-img-top d-flex justify-content-center w-100">{{ attachment.file|render_file|safe }}</div>
       </div>
     </div>
   {% endfor %}

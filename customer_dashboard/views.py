@@ -5442,7 +5442,12 @@ def lead_detail(request, lead_id):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("customer_home"))
 
-    lead = Lead.objects.prefetch_related("notes").filter(id=lead_id).first()
+    lead = (
+        Lead.objects.prefetch_related("notes")
+        .select_related("user__user_group", "user_address")
+        .filter(id=lead_id)
+        .first()
+    )
     if not lead:
         messages.error(request, "Lead not found.")
         return HttpResponseRedirect(reverse("customer_leads"))
