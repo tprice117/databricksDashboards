@@ -106,6 +106,11 @@ class UserInviteForm(forms.Form):
         widget=forms.TextInput(attrs={"class": "form-control"}),
         required=True,
     )
+    phone = forms.CharField(
+        max_length=40,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        required=False,
+    )
     type = forms.ChoiceField(
         choices=UserType.choices,
         widget=forms.Select(attrs={"class": "form-select"}),
