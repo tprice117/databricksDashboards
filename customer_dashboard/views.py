@@ -2203,7 +2203,7 @@ def edit_attachments(request, order_group_id):
 
     return render(
         request,
-        "customer_dashboard/new_order/cart_order_edit_attachments.html",
+        "customer_dashboard/snippets/order_group_edit_attachments.html",
         context,
     )
 
@@ -3228,6 +3228,7 @@ def order_group_detail(request, order_group_id):
     order_group = order_group.prefetch_related(
         "orders__order_line_items",
         "related_bookings",
+        "attachments",
     )
     order_group = order_group.first()
     context["order_group"] = order_group
@@ -3241,15 +3242,6 @@ def order_group_detail(request, order_group_id):
     )
     user_address = order_group.user_address
     context["user_address"] = user_address
-
-    OrderGroupAttachmentsFormSet = inlineformset_factory(
-        OrderGroup,
-        OrderGroupAttachment,
-        form=OrderGroupAttachmentsForm,
-        formset=HiddenDeleteFormSet,
-        can_delete=True,
-        extra=0,
-    )
 
     # Get the time since the order was reviewed to prevent old reviews from being changed
     current_time = timezone.now()
@@ -3286,37 +3278,6 @@ def order_group_detail(request, order_group_id):
                     messages.success(request, "Successfully saved!")
                 else:
                     messages.info(request, "No changes detected.")
-            elif "attachments_button" in request.POST:
-                context["access_form"] = AccessDetailsForm(
-                    initial={
-                        "access_details": user_address.access_details,
-                        "delivered_to_street": order_group.delivered_to_street,
-                    }
-                )
-                attachments_formset = OrderGroupAttachmentsFormSet(
-                    request.POST, request.FILES, instance=order_group
-                )
-                if attachments_formset.is_valid():
-                    if attachments_formset.has_changed():
-                        attachments_formset.instance = order_group
-                        attachments_formset.save()
-                        messages.success(request, "Successfully saved!")
-                    else:
-                        messages.info(request, "No changes detected.")
-                else:
-                    for attachment_form in attachments_formset.forms:
-                        if attachment_form.errors:
-                            raise InvalidFormError(
-                                attachment_form, "Invalid AttachmentForm"
-                            )
-
-            # Reload formset with saved data.
-            context["attachments_formset"] = OrderGroupAttachmentsFormSet(
-                instance=order_group
-            )
-            return render(
-                request, "customer_dashboard/order_group_detail.html", context
-            )
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
@@ -3325,14 +3286,13 @@ def order_group_detail(request, order_group_id):
                 else:
                     e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
-            # messages.error(request, e.msg)
+
     else:
         context["access_form"] = AccessDetailsForm(
             initial={"access_details": user_address.access_details}
         )
-        context["attachments_formset"] = OrderGroupAttachmentsFormSet(
-            instance=order_group
-        )
+
+    context["attachments"] = order_group.attachments.all()
 
     return render(request, "customer_dashboard/order_group_detail.html", context)
 

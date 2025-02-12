@@ -156,7 +156,7 @@
                                 <button class="btn btn-sm btn-light cart-item-placement-button ms-5 rounded-3"
                                 onclick="showPlacementDetailsModal('{{  order.order_group.id }}', '{{  order.order_group.placement_details|default_if_none:"" }}');"><i class="fas fa-map-marker-alt" style="color: #020F1699"></i></button>
                                 <button class="btn btn-sm btn-light cart-item-placement-button rounded-3 text-nowrap" style="color: #020F1699" data-order-group-id="{{ order.order_group.id }}" hx-indicator=".htmx-indicator-card" hx-trigger="click" hx-get="{% url 'customer_order_group_edit_attachments' order.order_group.id %}" hx-target="#edit-attachments-modal" hx-swap="innerHTML" data-bs-toggle="modal" data-bs-target="#edit-attachments-modal" title="Edit Attachments">
-                                    <i class="fas fa-paperclip"></i><span id="cart-attachments-{{order.order_group.id}}">&nbsp;Attached ({{ order.order_group.attachments.count }})</span>
+                                    <i class="fas fa-paperclip"></i>&nbsp;Attached (<span id="cart-attachments-{{order.order_group.id}}">{{ order.order_group.attachments.count }}</span>)
                                 </button>
                             </div>
                         </div>

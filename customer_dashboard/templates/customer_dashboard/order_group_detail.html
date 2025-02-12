@@ -10,68 +10,88 @@
 {% endblock %}
 {% block javascript %}
   <script>
-    const addAttachmentButton = document.getElementById('add-attachments')
-    const formsetDiv = document.getElementById('Attachments-formset')
-    const totalForms = document.getElementById('id_attachments-TOTAL_FORMS')
-    const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML
-    const attachmentForms = document.querySelectorAll('.attachment-form')
-    attachmentForms.forEach(function (form) {
-      const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]')
-      if (deleteInput && deleteInput.value === 'on') {
-        form.style.display = 'none'
-      }
-      const link = form.querySelector('[href]')
-      try {
-        if (link) {
-          // add an image with the link 30 x 30
-          const image = document.createElement('img')
-          image.src = link.href
-          image.style.width = '50px'
-          image.style.height = '50px'
-          // add the image at the end of this form just after the href
-          const nextSibling = link.nextSibling
-          form.insertBefore(image, nextSibling)
+    function addCarouselListeners() {
+      // Carousels w/ Multiple Items
+      const carouselNext = document.querySelectorAll('.carousel-control-next')
+      const carouselPrev = document.querySelectorAll('.carousel-control-prev')
+    
+      carouselNext.forEach((next) => {
+        next.addEventListener('click', function () {
+          const carouselId = next.getAttribute('href')
+          const carousel = document.querySelector(carouselId)
+          const carouselInner = carousel.querySelector('.carousel-inner')
+          const carouselWidth = carouselInner.scrollWidth
+          if (carouselInner.scrollLeft + carouselInner.clientWidth < carouselWidth) {
+            carouselInner.scrollBy({
+              left: carouselInner.clientWidth,
+              behavior: 'smooth'
+            })
+          }
+        })
+      })
+      carouselPrev.forEach((prev) => {
+        prev.addEventListener('click', function () {
+          const carouselId = prev.getAttribute('href')
+          const carousel = document.querySelector(carouselId)
+          const carouselInner = carousel.querySelector('.carousel-inner')
+          if (carouselInner.scrollLeft > 0) {
+            carouselInner.scrollBy({
+              left: -carouselInner.clientWidth,
+              behavior: 'smooth'
+            })
+          }
+        })
+      })
+    }
+    
+    function loadAttachmentsFormset() {
+      let addAttachmentButton = document.getElementById('add-attachments')
+      let attachmentForms = document.querySelectorAll('.attachments-form')
+      attachmentForms.forEach(function (form) {
+        const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]')
+        if (deleteInput && deleteInput.value === 'on') {
+          form.style.display = 'none'
         }
-      } catch (error) {}
-    })
-    addAttachmentButton.addEventListener('click', function () {
-      const currentFormCount = parseInt(totalForms.value)
-      const newFormCount = currentFormCount + 1
-      const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount)
+      })
     
-      formsetDiv.insertAdjacentHTML('beforeend', newFormHtml)
-      totalForms.value = newFormCount
+      addAttachmentButton.addEventListener('click', function () {
+        let formsetDiv = document.getElementById('attachments-formset')
+        let totalForms = document.getElementById('id_attachments-TOTAL_FORMS')
+        let emptyFormTemplate = document.getElementById('attachments-empty').innerHTML
+        if (!formsetDiv) {
+          console.error('Formset div not found')
+          return
+        } else if (!totalForms) {
+          console.error('Total forms input not found')
+          return
+        } else if (!emptyFormTemplate) {
+          console.error('Empty form template not found')
+          return
+        }
+        const currentFormCount = parseInt(totalForms.value)
+        const newFormCount = currentFormCount + 1
+        const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount)
     
-      // Update the counter
-      const counter = formsetDiv.lastElementChild.querySelector('.attachment-number')
-      counter.textContent = newFormCount
+        // Insert the empty row at the end of the #attachments-formset > tbody
+        let formsetTbody = formsetDiv.querySelector('tbody')
+        if (formsetTbody) {
+          formsetTbody.insertAdjacentHTML('beforeend', newFormHtml)
+        } else {
+          console.warn('Formset tbody not found')
+          formsetDiv.insertAdjacentHTML('beforeend', newFormHtml)
+        }
+        totalForms.value = newFormCount
+        const emptyText = document.querySelectorAll('.empty-text')
+        emptyText.forEach(function (text) {
+          text.style.display = 'none'
+        })
+      })
+    }
     
-      // Update Carousel
-      const carouselInner = document.querySelector('.carousel-inner')
-      const activeItem = carouselInner.querySelector('.carousel-item.active')
-      if (!activeItem) {
-        const newForm = carouselInner.lastElementChild
-        newForm.classList.add('active')
-      } else {
-        const carouselItemsCount = carouselInner.querySelectorAll('.carousel-item').length
-        // Scroll to the new form
-        const carouselInstance = bootstrap.Carousel.getInstance(document.querySelector('#attachments-carousel'))
-        carouselInstance.to(carouselItemsCount - 1)
-      }
-    })
-    formsetDiv.addEventListener('click', function (event) {
-      if (event.target.classList.contains('remove-location')) {
-        const formToRemove = event.target.closest('.attachment-form')
-        formToRemove.querySelector('input[type="hidden"][name$="-DELETE"]').value = 'on'
-        // Hide from carousel
-        const carouselInstance = bootstrap.Carousel.getInstance(document.querySelector('#attachments-carousel'))
-        carouselInstance.next()
-        formToRemove.classList.remove('carousel-item')
-        formToRemove.classList.add('d-none')
-      }
-    })
     document.body.addEventListener('htmx:afterSwap', function (evt) {
-      if (evt.target.id === 'order-review-modal') {
+      if (evt.target.id === 'edit-attachments-modal') {
+        loadAttachmentsFormset()
+      } else if (evt.target.id === 'order-review-modal') {
         // This should only occur after the rating request is successful
         const { xhr, successful, requestConfig } = evt.detail
         if (!successful) {
@@ -82,6 +102,9 @@
         // Show the feedback modal
         $(`#order-review-modal`).modal('show')
       }
+    })
+    document.addEventListener('DOMContentLoaded', function () {
+      addCarouselListeners()
     })
   </script>
 {% endblock %}
@@ -267,62 +290,36 @@
       <div class="col-md-6">
         <div class="card content border-0">
           <div class="card-body text-dark">
-            <p class="mb-3 text-dark flex-row d-flex justify-content-between">
-              <strong>Attachments</strong>
-              <button type="button" class="btn btn-primary btn-sm" id="add-attachments">Add</button>
-            </p>
-            <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post" enctype="multipart/form-data">
-              {% csrf_token %}
-              {% if attachments_formset.non_form_errors %}
-                {% for error in attachments_formset.non_form_errors %}
-                  <small class="text-danger">{{ error }}</small>
-                {% endfor %}
-              {% endif %}
-              {{ attachments_formset.management_form }}
-              <!-- Hidden template for new forms -->
-              <div id="empty-form-template" class="d-none">
-                <div class="attachment-form carousel-item w-100" style="height: 200px;">
-                  <div class="mb-3">
-                    <p class="mb-0 text-dark">
-                      Attachment #<span class="attachment-number">X</span>
-                    </p>
-                    {{ attachments_formset.empty_form }}
-                  </div>
-                  <div class="d-flex flex-row-reverse w-100">
-                    <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
-                  </div>
-                </div>
-              </div>
-              {% comment %}Needs more work to display files cleanly and multiple at once like explore page.{% endcomment %}
-              <div id="attachments-carousel" class="carousel slide" data-bs-ride="carousel">
-                <div id="Attachments-formset" class="carousel-inner d-flex align-items-stretch" style="padding: 0 40px;">
-                  {% for inline in attachments_formset %}
-                    <div class="attachment-form carousel-item w-100 {% if forloop.first %}active{% endif %}" style="height: 200px;">
-                      <div class="mb-3">
-                        <p class="mb-0 text-dark">
-                          Attachment #<span class="attachment-number">{{ forloop.counter }}</span>
-                        </p>
-                        {{ inline }}
-                      </div>
-                      <div class="d-flex flex-row-reverse w-100">
-                        <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
-                      </div>
+            <div class="flex-row d-flex justify-content-between">
+              <p class="text-dark mb-0">
+                <strong class="me-1">Attachments</strong>
+                {% with filecount=attachments.count %}
+                  <small class="text-subtle fw-light">(<span id="cart-attachments-{{ order_group.id }}">{{ filecount }}</span>)</small>
+                {% endwith %}
+              </p>
+              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#edit-attachments-modal">Edit</button>
+            </div>
+            {% comment %}Needs more work to display files cleanly and multiple at once like explore page.{% endcomment %}
+            <div id="attachments-carousel" class="carousel slide flex-nowrap">
+              <div id="attachments-carousel-inner" class="carousel-inner d-flex align-items-stretch pt-3" style="padding: 0 40px; height: 142px;">
+                {% for attachment in attachments %}
+                  <div class="carousel-item d-block mx-0 px-1 {% if forloop.first %}active{% endif %}" style="min-width: 150px;">
+                    <div class="card lead-card border-0 w-100 rounded-4 hover-float">
+                      <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ attachment.file_name }}"></a>
+                      <div class="inner card-img-top object-fit-cover d-flex justify-content-center p-2">{{ attachment.file|render_file|safe }}</div>
                     </div>
-                  {% endfor %}
-                </div>
-                <button class="carousel-control-prev text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel" data-bs-slide="prev">
-                  <i class="far fa-arrow-left"></i>
-                  <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel" data-bs-slide="next">
-                  <i class="far fa-arrow-right"></i>
-                  <span class="visually-hidden">Next</span>
-                </button>
+                  </div>
+                {% endfor %}
               </div>
-              <div class="d-flex flex-row-reverse">
-                <button class="btn btn-primary btn-sm w-100 mt-2" type="submit" name="attachments_button">Save</button>
-              </div>
-            </form>
+              <button class="carousel-control-prev text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
+                <i class="far fa-arrow-left"></i>
+                <span class="visually-hidden">Previous</span>
+              </button>
+              <button class="carousel-control-next text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
+                <i class="far fa-arrow-right"></i>
+                <span class="visually-hidden">Next</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -445,4 +442,6 @@
       <div class="modal-content"></div>
     </div>
   </div>
+  <!-- Attachments Form Modal -->
+  <div id="edit-attachments-modal" class="modal fade" role="dialog" tabindex="-1" hx-swap="innerHTML" hx-get="{% url 'customer_order_group_edit_attachments' order_group.id %}" hx-trigger="load"></div>
 {% endblock %}
