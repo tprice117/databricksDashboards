@@ -1129,6 +1129,7 @@ def new_order_3(request, main_product):
             form = OrderGroupForm(
                 request.POST,
                 request.FILES,
+                user=request.user,
                 user_addresses=context["user_addresses"],
                 main_product=context["main_product"],
                 product_waste_types=context["product_waste_types"],
@@ -1158,6 +1159,7 @@ def new_order_3(request, main_product):
             )
     else:
         context["form"] = OrderGroupForm(
+            user=request.user,
             user_addresses=context["user_addresses"],
             main_product=context["main_product"],
             product_waste_types=context["product_waste_types"],

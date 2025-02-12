@@ -492,6 +492,7 @@ class OrderGroupForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
         user_addresses = kwargs.pop("user_addresses", None)
         product_waste_types = kwargs.pop("product_waste_types", None)
         product_add_ons = kwargs.pop("product_add_ons", None)
@@ -521,6 +522,10 @@ class OrderGroupForm(forms.Form):
             self.fields["times_per_week"].initial = None
             self.fields["times_per_week"].required = False
 
+        if user and user.is_staff:
+            choices = list(self.fields["times_per_week"].choices)
+            choices.insert(0, (0.5, "0.5"))
+            self.fields["times_per_week"].choices = tuple(choices)
         # If the product does not have rental_multi_step, show the shift
         # count field.
         if not self.main_product.has_rental_multi_step:
