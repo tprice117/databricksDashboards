@@ -23,6 +23,8 @@ class PricingEngineRequestSerializer(serializers.Serializer):
         allow_null=False,
     )
     times_per_week = serializers.DecimalField(
+        max_digits=8,
+        decimal_places=2,
         required=False,
         write_only=True,
         allow_null=True,
