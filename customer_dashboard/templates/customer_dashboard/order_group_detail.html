@@ -437,6 +437,7 @@
   </div>
 {% endblock %}
 {% block modals %}
+  <!-- Order Review Modal -->
   <div id="order-review-modal" class="modal fade" role="dialog" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content"></div>
@@ -444,4 +445,14 @@
   </div>
   <!-- Attachments Form Modal -->
   <div id="edit-attachments-modal" class="modal fade" role="dialog" tabindex="-1" hx-swap="innerHTML" hx-get="{% url 'customer_order_group_edit_attachments' order_group.id %}" hx-trigger="load"></div>
+  <!-- Order Swap Modal -->
+  <div id="order-swap-modal" class="modal modal-blur fade" style="display: none" role="dialog" aria-hidden="false" tabindex="-1" hx-disabled-elt="button">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div id="htmx-indicator-loading-card" class="modal-content htmx-indicator-card" style="min-height: 300px;">
+        <div class="modal-body d-flex justify-content-center align-items-center p-3">
+          <div class="spinner-border text-primary m-3" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
