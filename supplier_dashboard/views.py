@@ -1238,6 +1238,7 @@ def new_user(request):
             if form.is_valid():
                 first_name = form.cleaned_data.get("first_name")
                 last_name = form.cleaned_data.get("last_name")
+                phone = form.cleaned_data.get("phone")
                 email = form.cleaned_data.get("email")
                 user_type = form.cleaned_data.get("type")
                 # Check if email is already in use.
@@ -1248,6 +1249,7 @@ def new_user(request):
                         user_group_id=user_group_id,
                         first_name=first_name,
                         last_name=last_name,
+                        phone=phone,
                         email=email,
                         type=user_type,
                         redirect_url="/supplier/",
