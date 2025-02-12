@@ -208,13 +208,13 @@
                                                             {% endif %}
                                                         {% endfor %}
                                                     </div>
-                                                    <div class="row" style="width: 150px">
-                                                        <label for="currency">Delivery Rate:</label>
+                                                    <div class="row" style="width: 200px">
+                                                        <label for="currency">Delivery (supplier rate):</label>
                                                         <span style="padding: 0; position: relative; left: 15px; font-size: 18px; display: flex; align-items: center; color: black;" class="col-auto">$</span>
                                                         <input class="downstream-number" type="number" id="delivery-rate-{{forloop.counter}}" style="padding-left: 20px;" name="delivery-rate" step="0.01" min="0" placeholder="0.00" value={% if seller_address.delivery_fee %}"{{seller_address.delivery_fee}}"{% endif %} required>
                                                     </div>
-                                                    <div class="row" style="width: 150px">
-                                                        <label for="currency">Removal Rate:</label> 
+                                                    <div class="row" style="width: 200px">
+                                                        <label for="currency">Removal (supplier rate):</label> 
                                                         <span style="padding: 0; position: relative; left: 15px; font-size: 18px; display: flex; align-items: center; color: black;" class="col-auto">$</span>
                                                         <input class="downstream-number" type="number" id="removal-rate-{{forloop.counter}}" style="padding-left: 20px;" name="removal-rate" step="0.01" min="0" placeholder="0.00" value={% if seller_address.removal_fee %}"{{seller_address.removal_fee}}"{% endif %} required>
                                                     </div>
