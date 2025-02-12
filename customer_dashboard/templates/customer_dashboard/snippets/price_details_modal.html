@@ -218,6 +218,9 @@
                                         <tbody>
                                             <tr>
                                                 <td>
+                                                    <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.one_every_other_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.one_every_other_week|add_markup:default_markup|currency }}</span>
+                                                </td>
+                                                <td>
                                                     <span class="price-item" data-price="{{ item.seller_product_seller_location.service_times_per_week.one_time_per_week|add_markup:default_markup }}">{{ item.seller_product_seller_location.service_times_per_week.one_time_per_week|add_markup:default_markup|currency }}</span>
                                                 </td>
                                                 <td>
