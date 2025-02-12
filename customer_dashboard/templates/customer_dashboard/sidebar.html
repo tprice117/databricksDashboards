@@ -46,12 +46,17 @@
       <li class="nav-item">
         <a class="nav-link{% if request.resolver_match.url_name == 'customer_home' %} active{% endif %}" href="{% url 'customer_home' %}"><i class="far fa-globe-americas"></i><span>Explore</span></a>
       </li>
+      {% if request.user.is_staff %}
+        <li class="nav-item">
+          <a class="nav-link{% if request.resolver_match.url_name == 'customer_leads' %} active{% endif %}" href="{% url 'customer_leads' %}"><i class="far fa-magic"></i><span>Leads</span></a>
+        </li>
+      {% endif %}
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_cart' %} active{% endif %}" href="{% url 'customer_cart' %}"><i class="fas fa-shopping-cart"></i><span>Cart</span></a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_cart' %} active{% endif %}" href="{% url 'customer_cart' %}"><i class="far fa-shopping-cart"></i><span>Cart</span></a>
       </li>
       <li class="nav-item"></li>
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_order_groups' %} active{% endif %}" href="{% url 'customer_order_groups' %}"><i class="fas fa-truck"></i><span>Bookings</span></a>
+        <a class="nav-link{% if 'booking' in request.path %} active{% endif %}" href="{% url 'customer_order_groups' %}"><i class="far fa-calendar-check"></i><span>Bookings</span></a>
       </li>
       <li class="nav-item">
         <a class="nav-link{% if request.resolver_match.url_name == 'customer_locations' %} active{% endif %}" href="{% url 'customer_locations' %}"><i class="far fa-map"></i><span>Locations</span></a>
@@ -74,9 +79,6 @@
         </li>
         <li class="nav-item">
           <a class="nav-link{% if request.resolver_match.url_name == 'customer_reviews' %} active{% endif %}" href="{% url 'customer_reviews' %}"><i class="far fa-star"></i><span>Reviews</span></a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link{% if request.resolver_match.url_name == 'customer_leads' %} active{% endif %}" href="{% url 'customer_leads' %}"><i class="fas fa-address-book"></i><span>Leads</span></a>
         </li>
       {% endif %}
     </ul>

@@ -1538,7 +1538,7 @@ def customer_cart_date_edit(request, order_id):
 @catch_errors()
 @require_http_methods(["GET", "POST"])
 @require_htmx(redirect_url_name="customer_cart")
-def customer_cart_po(request, order_group_id):
+def customer_order_group_po(request, order_group_id):
     """Returns a snippet with the project id for an order group. POST to update the project id."""
     context = {}
     order_group = OrderGroup.objects.get(id=order_group_id)
@@ -1566,16 +1566,14 @@ def customer_cart_po(request, order_group_id):
 
     context["order_group"] = order_group
 
-    return render(
-        request, "customer_dashboard/snippets/cart_order_item_po.html", context
-    )
+    return render(request, "customer_dashboard/snippets/order_group_po.html", context)
 
 
 @login_required(login_url="/admin/login/")
 @catch_errors()
 @require_GET
 @require_htmx(redirect_url_name="customer_cart")
-def customer_cart_po_edit(request, order_group_id):
+def customer_order_group_po_edit(request, order_group_id):
     """Returns a snippet with a form to edit the project id of an order group."""
     context = {}
     order_group = OrderGroup.objects.get(id=order_group_id)
@@ -1597,7 +1595,7 @@ def customer_cart_po_edit(request, order_group_id):
 
     context["order_group"] = order_group
     return render(
-        request, "customer_dashboard/snippets/cart_order_item_po_edit.html", context
+        request, "customer_dashboard/snippets/order_group_po_edit.html", context
     )
 
 
@@ -2206,12 +2204,8 @@ def edit_attachments(request, order_group_id):
             else:
                 messages.error(
                     request,
-                    f"Error saving lead {attachments_formset.non_field_errors().as_text()}",
+                    f"Error saving {attachments_formset.non_field_errors().as_text()}",
                 )
-                # lead.refresh_from_db()
-
-            # Reinitialize Form
-            # lead_form = LeadDetailForm(instance=lead)
     else:
         attachments_formset = OrderGroupAttachmentsFormSet(instance=order_group)
 
@@ -2220,7 +2214,7 @@ def edit_attachments(request, order_group_id):
 
     return render(
         request,
-        "customer_dashboard/new_order/cart_order_edit_attachments.html",
+        "customer_dashboard/snippets/order_group_edit_attachments.html",
         context,
     )
 
@@ -2940,10 +2934,10 @@ def order_review_swap(request):
     if not hasattr(order, "review"):
         review = OrderReview(order=order, rating=rating)
         review.save()
-    elif (timezone.now() - order.review.created_on).total_seconds() > 60 * 10:
-        # Prevent review from updating if it has been more than 10 minutes.
+    elif (timezone.now() - order.review.created_on).total_seconds() > 60 * 15:
+        # Prevent review from updating if it has been more than 15 minutes.
         return HttpResponse(
-            content={"error": "Review cannot be updated after 10 minutes."}, status=400
+            content={"error": "Review cannot be updated after 15 minutes."}, status=400
         )
     elif order.review.rating != rating:
         order.review.rating = rating
@@ -2982,9 +2976,9 @@ def order_review_form(request):
         request.POST, instance=order, initial={"rating": rating}
     )
 
-    if (timezone.now() - order.review.created_on).total_seconds() > 60 * 10:
-        # Prevent review from updating if it has been more than 10 minutes.
-        messages.error("Review cannot be updated after 10 minutes.")
+    if (timezone.now() - order.review.created_on).total_seconds() > 60 * 15:
+        # Prevent review from updating if it has been more than 15 minutes.
+        messages.error("Review cannot be updated after 15 minutes.")
     elif formset.is_valid():
         # Check if any changes to form were made
         if formset.has_changed():
@@ -3240,22 +3234,25 @@ def order_group_detail(request, order_group_id):
     order_group = order_group.select_related(
         "seller_product_seller_location__seller_product__seller",
         "seller_product_seller_location__seller_product__product__main_product",
-        "user_address",
+        "user_address__user_group__account_owner",
     )
-    order_group = order_group.prefetch_related("orders")
+    order_group = order_group.prefetch_related(
+        "orders__order_line_items",
+        "related_bookings",
+        "attachments",
+    )
     order_group = order_group.first()
     context["order_group"] = order_group
+    context["related_bookings"] = (
+        order_group.related_bookings.all().select_related(
+            "seller_product_seller_location__seller_product__product__main_product",
+            "created_by",
+        )
+        if order_group.related_bookings.exists()
+        else None
+    )
     user_address = order_group.user_address
     context["user_address"] = user_address
-
-    OrderGroupAttachmentsFormSet = inlineformset_factory(
-        OrderGroup,
-        OrderGroupAttachment,
-        form=OrderGroupAttachmentsForm,
-        formset=HiddenDeleteFormSet,
-        can_delete=True,
-        extra=0,
-    )
 
     # Get the time since the order was reviewed to prevent old reviews from being changed
     current_time = timezone.now()
@@ -3273,12 +3270,6 @@ def order_group_detail(request, order_group_id):
         try:
             save_model = None
             if "access_details_button" in request.POST:
-                context["placement_form"] = PlacementDetailsForm(
-                    initial={
-                        "placement_details": order_group.placement_details,
-                        "delivered_to_street": order_group.delivered_to_street,
-                    }
-                )
                 form = AccessDetailsForm(request.POST)
                 context["access_form"] = form
                 if form.is_valid():
@@ -3292,55 +3283,12 @@ def order_group_detail(request, order_group_id):
                         save_model = user_address
                 else:
                     raise InvalidFormError(form, "Invalid AccessDetailsForm")
-            elif "placement_details_button" in request.POST:
-                context["access_form"] = AccessDetailsForm(
-                    initial={
-                        "access_details": user_address.access_details,
-                        "delivered_to_street": order_group.delivered_to_street,
-                    }
-                )
-                form = PlacementDetailsForm(request.POST)
-                context["placement_form"] = form
-                attachments_formset = OrderGroupAttachmentsFormSet(
-                    request.POST, request.FILES, instance=order_group
-                )
-                if attachments_formset.is_valid():
-                    if attachments_formset.has_changed():
-                        attachments_formset.instance = order_group
-                        attachments_formset.save()
-                        save_model = order_group
-                if form.is_valid():
-                    if (
-                        form.cleaned_data.get("placement_details")
-                        != order_group.placement_details
-                    ):
-                        order_group.placement_details = form.cleaned_data.get(
-                            "placement_details"
-                        )
-                        save_model = order_group
-                    if (
-                        form.cleaned_data.get("delivered_to_street")
-                        != order_group.delivered_to_street
-                    ):
-                        order_group.delivered_to_street = form.cleaned_data.get(
-                            "delivered_to_street"
-                        )
-                        save_model = order_group
+
+                if save_model:
+                    save_model.save()
+                    messages.success(request, "Successfully saved!")
                 else:
-                    for formy in attachments_formset.forms:
-                        print(formy.errors)
-                    raise InvalidFormError(form, "Invalid PlacementDetailsForm")
-            if save_model:
-                save_model.save()
-                messages.success(request, "Successfully saved!")
-            else:
-                messages.info(request, "No changes detected.")
-            context["attachments_formset"] = OrderGroupAttachmentsFormSet(
-                instance=order_group
-            )
-            return render(
-                request, "customer_dashboard/order_group_detail.html", context
-            )
+                    messages.info(request, "No changes detected.")
         except InvalidFormError as e:
             # This will let bootstrap know to highlight the fields with errors.
             for field in e.form.errors:
@@ -3349,20 +3297,13 @@ def order_group_detail(request, order_group_id):
                 else:
                     e.form.fields[field].widget.attrs["class"] += " is-invalid"
             # messages.error(request, "Error saving, please contact us if this continues.")
-            # messages.error(request, e.msg)
+
     else:
         context["access_form"] = AccessDetailsForm(
             initial={"access_details": user_address.access_details}
         )
-        context["placement_form"] = PlacementDetailsForm(
-            initial={
-                "placement_details": order_group.placement_details,
-                "delivered_to_street": order_group.delivered_to_street,
-            }
-        )
-        context["attachments_formset"] = OrderGroupAttachmentsFormSet(
-            instance=order_group
-        )
+
+    context["attachments"] = order_group.attachments.all()
 
     return render(request, "customer_dashboard/order_group_detail.html", context)
 

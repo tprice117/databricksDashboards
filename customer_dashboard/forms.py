@@ -162,7 +162,7 @@ class AccessDetailsForm(forms.Form):
     access_details = forms.CharField(
         widget=forms.Textarea(
             attrs={
-                "class": "form-control",
+                "class": "form-control downstream-form-control",
                 "placeholder": "Access details for delivery",
                 "rows": 3,
             }
@@ -172,11 +172,12 @@ class AccessDetailsForm(forms.Form):
 
 class PlacementDetailsForm(forms.Form):
     placement_details = forms.CharField(
-        label="instructions",
+        label="Instructions",
         widget=forms.Textarea(
             attrs={
-                "class": "form-control",
+                "class": "form-control downstream-form-control",
                 "rows": 3,
+                "placeholder": "Instructions for placement",
             }
         ),
     )
@@ -193,7 +194,9 @@ class OrderGroupAttachmentsForm(forms.ModelForm):
         model = OrderGroupAttachment
         fields = ["file"]
         widgets = {
-            "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
+            "file": forms.ClearableFileInput(
+                attrs={"class": "form-control downstream-form-control"}
+            ),
         }
 
 

@@ -38,7 +38,7 @@ def get_dict_value(dictionary, key):
     return dictionary.get(key, None)
 
 
-@register.filter
+@register.filter(is_safe=True)
 def downstream_naturaltime(value):
     """
     Return a humanized string representing time difference between now and the input value.
@@ -55,3 +55,13 @@ def downstream_naturaltime(value):
         else:
             return naturaltime(value) + " (CT)"
     return value
+
+
+@register.filter(is_safe=True)
+def render_file(file, width=100, height=100):
+    """Render an image file"""
+    image_extensions = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".bmp", ".webp"]
+    if any(file.name.lower().endswith(ext) for ext in image_extensions):
+        return f'<img src="{file.url}" alt="{file.name}" style="width: {width}px; height: {height}px; object-fit: contain;">'
+    else:
+        return f'<i class="fas fa-clipboard" style="font-size: {width}px; height: {height}px;"></i>'

@@ -1,0 +1,30 @@
+<!-- Show buttons as disabled after 15 minutes -->
+{% if not order.time_since_review or order.time_since_review.total_seconds < 900 %}
+  <form method="post" hx-post="{% url 'customer_order_review_swap' %}" hx-swap="outerHTML">
+    {% csrf_token %}
+    <input type="hidden" name="order_id" value="{{ order.id }}" />
+    <div id="rating-{{ forloop.counter }}">
+      {% if order.review.rating == 1 %}
+        <button class="btn text-primary border-0 p-1 me-1" type="submit" name="rating" value="1"><i class="far fa-thumbs-up"></i></button>
+      {% else %}
+        <button class="btn text-dark border-0 p-1 me-1" type="submit" name="rating" value="1"><i class="far fa-thumbs-up"></i></button>
+      {% endif %}
+      {% if order.review.rating == 0 %}
+        <button class="btn text-danger border-0 p-1" type="submit" name="rating" value="0"><i class="far fa-thumbs-down"></i></button>
+      {% else %}
+        <button class="btn text-dark border-0 p-1" type="submit" name="rating" value="0"><i class="far fa-thumbs-down"></i></button>
+      {% endif %}
+    </div>
+  </form>
+{% else %}
+  {% if order.review.rating == 1 %}
+    <button class="btn text-primary border-0 p-1 me-1 disabled" type="submit" name="rating" value="1" disabled><i class="far fa-thumbs-up"></i></button>
+  {% else %}
+    <button class="btn text-dark border-0 p-1 me-1 disabled" type="submit" name="rating" value="1" disabled><i class="far fa-thumbs-up"></i></button>
+  {% endif %}
+  {% if order.review.rating == 0 %}
+    <button class="btn text-danger border-0 p-1 disabled" type="submit" name="rating" value="0" disabled><i class="far fa-thumbs-down"></i></button>
+  {% else %}
+    <button class="btn text-dark border-0 p-1 disabled" type="submit" name="rating" value="0" disabled><i class="far fa-thumbs-down"></i></button>
+  {% endif %}
+{% endif %}
