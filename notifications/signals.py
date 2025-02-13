@@ -194,8 +194,9 @@ def on_user_group_post_save(sender, instance: UserGroup, created, *args, **kwarg
                 f"on_user_group_post_save:{event_name}: [{instance.id}]-[No user to send company to]"
             )
 
-    p = threading.Thread(target=_send_event)
-    p.start()
+    if settings.ENVIRONMENT == "TEST":
+        p = threading.Thread(target=_send_event)
+        p.start()
 
 
 @receiver(post_save, sender=User)
@@ -232,8 +233,9 @@ def on_user_post_save(sender, instance: User, created, **kwargs):
         }
         update_person(instance.email, event_data)
 
-    p = threading.Thread(target=_send_event)
-    p.start()
+    if settings.ENVIRONMENT == "TEST":
+        p = threading.Thread(target=_send_event)
+        p.start()
 
 
 @receiver(post_save, sender=UserAddress)
@@ -252,6 +254,7 @@ def on_user_address_post_save(sender, instance: UserAddress, created, **kwargs):
             "user": str(instance.user_id),
             "user_group": str(instance.user_group_id),
             "name": instance.name,
+            "address": instance.formatted_address(),
             "project_id": instance.project_id,
             "street": instance.street,
             "street2": instance.street2,
@@ -275,30 +278,50 @@ def on_user_address_post_save(sender, instance: UserAddress, created, **kwargs):
         }
         send_event(instance.user.email, event_name, event_data)
 
-    p = threading.Thread(target=_send_event)
-    p.start()
+    if settings.ENVIRONMENT == "TEST":
+        p = threading.Thread(target=_send_event)
+        p.start()
 
 
 @receiver(post_save, sender=Order)
 def on_order_post_save2(sender, instance: Order, created, **kwargs):
     """Sends an event when an Order is created, specifically for tracking user-related events."""
 
-    user_booking_count = OrderGroup.objects.filter(
-        user_id=instance.order_group.user_id
-    ).count()
-    booking_count = None
-    if instance.order_group.user.user_group:
-        booking_count = OrderGroup.objects.filter(
-            user_group_id=instance.order_group.user.user_group_id
-        ).count()
-
     if created:
-        event_name = "user_address_created"
+        event_name = "order_created"
     else:
-        event_name = "user_address_updated"
+        event_name = "order_updated"
 
     def _send_event():
         # Add user attributes to CustomerIO
+        user_cart_count = (
+            OrderGroup.objects.filter(user_id=instance.order_group.user_id)
+            .filter(orders__submitted_on__isnull=True)
+            .count()
+        )
+        user_booking_count = (
+            OrderGroup.objects.filter(user_id=instance.order_group.user_id)
+            .exclude(orders__submitted_on__isnull=True)
+            .count()
+        )
+        cart_count = None
+        booking_count = None
+        if instance.order_group.user.user_group:
+            booking_count = (
+                OrderGroup.objects.filter(
+                    user_address__user_group_id=instance.order_group.user.user_group_id
+                )
+                .exclude(orders__submitted_on__isnull=True)
+                .count()
+            )
+            cart_count = (
+                OrderGroup.objects.filter(
+                    user_address__user_group_id=instance.order_group.user.user_group_id
+                )
+                .filter(orders__submitted_on__isnull=True)
+                .count()
+            )
+
         line_items = []
         order_line_items = instance.order_line_items.all().select_related(
             "order_line_item_type"
@@ -345,7 +368,6 @@ def on_order_post_save2(sender, instance: Order, created, **kwargs):
         event_data = {
             "id": str(instance.id),
             "user": str(instance.order_group.user_id),
-            "user_group": str(instance.order_group.user_group_id),
             "submitted_on": instance.submitted_on.isoformat()
             if instance.submitted_on
             else None,
@@ -378,14 +400,18 @@ def on_order_post_save2(sender, instance: Order, created, **kwargs):
                 instance.order_group.user.user_group.billing.formatted_address
             )
 
-        send_event(instance.user.email, event_name, event_data)
-        update_person(instance.user.email, {"booking_count": booking_count})
+        send_event(instance.order_group.user.email, event_name, event_data)
+        update_person(
+            instance.order_group.user.email,
+            {"booking_count": user_booking_count, "cart_count": user_cart_count},
+        )
         if instance.order_group.user.user_group:
             update_company(
-                instance.user.email,
+                instance.order_group.user.email,
                 str(instance.order_group.user.user_group_id),
-                {"booking_count": user_booking_count},
+                {"booking_count": booking_count, "cart_count": cart_count},
             )
 
-    p = threading.Thread(target=_send_event)
-    p.start()
+    if settings.ENVIRONMENT == "TEST":
+        p = threading.Thread(target=_send_event)
+        p.start()
