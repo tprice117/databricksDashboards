@@ -40,12 +40,12 @@ from django.db.models import (
 )
 from django.db.models.functions import Concat, Round, Coalesce
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET, require_http_methods
 from django.forms import inlineformset_factory
-from common.forms import HiddenDeleteFormSet, MultiTabularFormSet
+from common.forms import HiddenDeleteFormSet, MultiTabularFormSet, BaseNoteFormset
 
 from admin_approvals.models import UserGroupAdminApprovalUserInvite
 from api.models import (
@@ -60,6 +60,7 @@ from api.models import (
     OrderLineItem,
     OrderGroup,
     OrderGroupAttachment,
+    OrderGroupNote,
     OrderReview,
     Product,
     ProductAddOnChoice,
@@ -105,9 +106,9 @@ from .forms import (
     NewLeadForm,
     LeadDetailForm,
     LeadNoteForm,
-    BaseLeadNoteFormset,
     OrderGroupForm,
     OrderGroupSwapForm,
+    OrderGroupNoteForm,
     OrderReviewFormSet,
     PlacementDetailsForm,
     OrderGroupAttachmentsForm,
@@ -2905,6 +2906,21 @@ def order_group_swap(request, order_group_id, is_removal=False):
 
 
 @login_required(login_url="/admin/login/")
+def order_group_notes(request, order_group_id):
+    return notes_swap(
+        request,
+        OrderGroup,
+        OrderGroupNote,
+        OrderGroupNoteForm,
+        order_group_id,
+        reverse(
+            "customer_order_group_notes", kwargs={"order_group_id": order_group_id}
+        ),
+        related_name="order_group",
+    )
+
+
+@login_required(login_url="/admin/login/")
 @catch_errors()
 @require_POST
 def order_review_swap(request):
@@ -5454,19 +5470,6 @@ def lead_detail(request, lead_id):
 
     lead_statuses = Lead.Status.get_ordered_choices()
     lead_form = LeadDetailForm(instance=lead)
-    lead_note_queryset = lead.notes.order_by("created_on")
-
-    LeadNoteFormset = inlineformset_factory(
-        Lead,
-        LeadNote,
-        form=LeadNoteForm,
-        formset=BaseLeadNoteFormset,
-        extra=1,
-    )
-    lead_note_formset = LeadNoteFormset(
-        instance=lead,
-        queryset=lead_note_queryset,
-    )
 
     if request.method == "POST":
         # Edit Details
@@ -5491,70 +5494,6 @@ def lead_detail(request, lead_id):
             # Reinitialize Form
             lead_form = LeadDetailForm(instance=lead)
 
-        # Note Formset
-        elif "note-formset" in request.POST:
-            lead_note_formset = LeadNoteFormset(
-                request.POST,
-                instance=lead,
-                queryset=lead_note_queryset,
-            )
-            action = request.POST.get("action", "create")
-
-            if action == "create":
-                # Handle creation
-                for form in lead_note_formset.extra_forms:
-                    if form.is_valid():
-                        form.save()
-                        messages.success(request, "Note added successfully.")
-                        break
-                    else:
-                        messages.error(
-                            request,
-                            f"Error adding note: {form.non_field_errors().as_text()}",
-                        )
-                        break
-            elif not (form_id := request.POST.get("form_id")) or not form_id.isdigit():
-                messages.error(request, "Invalid form submission.")
-            else:
-                form_id = int(form_id)
-                form = lead_note_formset.forms[form_id]
-                if form.instance.created_by != request.user:
-                    # Prevent other users from editing notes
-                    messages.error(request, "Invalid form submission.")
-                elif action == "edit":
-                    # Handle editing
-                    if form.has_changed():
-                        if form.is_valid():
-                            form.save()
-                            messages.success(request, "Notes saved successfully.")
-                        else:
-                            messages.error(
-                                request,
-                                "Error saving notes. Please contact us if this continues.",
-                            )
-                    else:
-                        messages.info(request, "No changes detected.")
-                elif action == "delete":
-                    # Handle deletion
-                    if lead_note := LeadNote.objects.filter(
-                        id=form.instance.id
-                    ).first():
-                        lead_note.delete()
-                        messages.success(request, "Notes saved successfully.")
-                    else:
-                        messages.error(
-                            request,
-                            "Error saving notes. Please contact us if this continues.",
-                        )
-                else:
-                    messages.error(request, "Invalid action.")
-
-            # Reload formset
-            lead_note_formset = LeadNoteFormset(
-                instance=lead,
-                queryset=lead_note_queryset,
-            )
-
         # Mark as Junk
         elif "update_status" in request.POST:
             status = request.POST.get("status")
@@ -5578,7 +5517,6 @@ def lead_detail(request, lead_id):
         {
             "lead": lead,
             "lead_form": lead_form,
-            "lead_note_formset": lead_note_formset,
             "lead_statuses": lead_statuses,
             "lead_status_index": [status for (status, _) in lead_statuses].index(
                 lead.status
@@ -5590,6 +5528,123 @@ def lead_detail(request, lead_id):
     )
 
     return render(request, "customer_dashboard/leads/lead_detail.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def lead_notes(request, lead_id):
+    return notes_swap(
+        request,
+        Lead,
+        LeadNote,
+        LeadNoteForm,
+        lead_id,
+        reverse("customer_lead_notes", kwargs={"lead_id": lead_id}),
+    )
+
+
+@login_required(login_url="/admin/login/")
+def notes_swap(
+    request, model, note_model, form_class, instance_id, hx_url, related_name=None
+):
+    context = {}
+
+    if not request.user.is_staff:
+        return HttpResponseRedirect(reverse("customer_home"))
+
+    if "hx-request" not in request.headers:
+        return HttpResponse("Not found", status=404)
+
+    instance = get_object_or_404(model, id=instance_id)
+    related_name = related_name or model._meta.model_name
+    queryset = note_model.objects.filter(**{related_name: instance}).order_by(
+        "created_on"
+    )
+
+    NoteFormset = inlineformset_factory(
+        model,
+        note_model,
+        form=form_class,
+        formset=BaseNoteFormset,
+        extra=1,
+    )
+    formset = NoteFormset(
+        instance=instance,
+        queryset=queryset,
+    )
+
+    # Note Formset
+    if request.method == "POST":
+        formset = NoteFormset(
+            request.POST,
+            instance=instance,
+            queryset=queryset,
+        )
+        action = request.POST.get("action", "create")
+
+        if "add_note" in request.POST:
+            # Handle creation
+            for form in formset.extra_forms:
+                if form.is_valid() and form.cleaned_data:
+                    form.save()
+                    messages.success(request, "Note added successfully.")
+                    break
+                else:
+                    messages.error(
+                        request,
+                        f"Error adding note. {form.non_field_errors().as_text()}",
+                    )
+                    break
+        elif not (form_id := request.POST.get("form_id")) or not form_id.isdigit():
+            messages.error(request, "Invalid form submission.")
+        else:
+            form_id = int(form_id)
+            form = formset.forms[form_id]
+            if form.instance.created_by != request.user:
+                # Prevent other users from editing notes
+                messages.error(request, "Invalid form submission.")
+            elif action == "edit":
+                # Handle editing
+                if form.has_changed():
+                    if form.is_valid():
+                        form.save()
+                        messages.success(request, "Notes updated successfully.")
+                    else:
+                        messages.error(
+                            request,
+                            f"Error updating note. {form.non_field_errors().as_text()}",
+                        )
+                else:
+                    messages.info(request, "No changes detected.")
+            elif action == "delete":
+                # Handle deletion
+                if lead_note := LeadNote.objects.filter(id=form.instance.id).first():
+                    lead_note.delete()
+                    messages.success(request, "Notes deleted successfully.")
+                else:
+                    messages.error(
+                        request,
+                        f"Error deleting note. {form.non_field_errors().as_text()}",
+                    )
+            else:
+                messages.error(request, "Invalid action.")
+
+        # Reload formset
+        formset = NoteFormset(
+            instance=instance,
+            queryset=queryset,
+        )
+
+    context.update(
+        {
+            "hx_url": hx_url,
+            "formset": formset,
+        }
+    )
+    return render(
+        request,
+        "customer_dashboard/snippets/note_formset.html",
+        context,
+    )
 
 
 def error_404(request, exception):

@@ -13,10 +13,11 @@ from api.models import (
     Order,
     OrderGroup,
     OrderGroupAttachment,
+    OrderGroupNote,
     OrderReview,
 )
 from common.utils.state_sales_tax import STATE_CHOICES
-from common.forms import HiddenDeleteFormSet
+from common.forms import HiddenDeleteFormSet, NoteForm
 from common.models.choices.user_type import UserType
 from crm.models import Lead, LeadNote, UserSelectableLeadStatus
 
@@ -900,7 +901,10 @@ class LeadDetailForm(forms.ModelForm):
                     break
 
         # There is some kind of bug in this queryset which is calling the database for each user to get the usergroup. Investigate later.
-        self.fields["owner"].queryset = User.sales_team_users.all()
+        self.fields["user"].queryset = User.objects.all().select_related("user_group")
+        self.fields["owner"].queryset = User.sales_team_users.all().select_related(
+            "user_group"
+        )
         self.fields["owner"].label_from_instance = (
             lambda obj: f"{obj.full_name or obj.email}"
         )
@@ -909,29 +913,11 @@ class LeadDetailForm(forms.ModelForm):
         )
 
 
-class LeadNoteForm(forms.ModelForm):
-    class Meta:
+class LeadNoteForm(NoteForm):
+    class Meta(NoteForm.Meta):
         model = LeadNote
-        fields = ["text"]
-        widgets = {
-            "text": forms.Textarea(
-                attrs={
-                    "cols": 30,
-                    "rows": 2,
-                    "class": "form-control",
-                    "placeholder": "Add a note...",
-                    "required": "true",
-                }
-            ),
-        }
 
 
-class BaseLeadNoteFormset(HiddenDeleteFormSet):
-    """Formset to reverse the order of the forms (extra form first)."""
-
-    def __iter__(self):
-        return reversed(list(super(BaseLeadNoteFormset, self).__iter__()))
-
-    def __getitem__(self, index):
-        items = list(super(BaseLeadNoteFormset, self).__iter__())
-        return items[-(index + 1)]
+class OrderGroupNoteForm(NoteForm):
+    class Meta(NoteForm.Meta):
+        model = OrderGroupNote

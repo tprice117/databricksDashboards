@@ -43,40 +43,6 @@
         }
       })
     }
-    function toggleEdit(index) {
-      var editDiv = document.getElementById('text-edit-' + index)
-      var textDiv = document.getElementById('text-' + index)
-    
-      if (editDiv.classList.contains('d-none')) {
-        editDiv.classList.remove('d-none')
-        textDiv.classList.add('d-none')
-      } else {
-        editDiv.classList.add('d-none')
-        textDiv.classList.remove('d-none')
-      }
-    }
-    function editNote(formID) {
-      document.getElementById('note-formset-form').value = formID
-      document.getElementById('note-formset-action').value = 'edit'
-      console.log(document.getElementById('note-formset-form').value)
-      document.getElementById('note-formset').submit()
-    }
-    function deleteNote(formId, deleteFieldId) {
-      Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          document.getElementById(deleteFieldId).value = 'true'
-          document.getElementById('note-formset-form').value = formId
-          document.getElementById('note-formset-action').value = 'delete'
-          document.getElementById('note-formset').submit()
-        }
-      })
-    }
     
     // Lead Detail Form START
     // Removes the dropdown results from an element
@@ -156,9 +122,10 @@
 {% endblock %}
 {% block content %}
   <div class="container-fluid">
+    <h4 class="text-dark mb-3"><strong>Lead Details</strong></h4>
     <!-- Lead Header -->
-    <div class="card shadow mb-3">
-      <div class="card-header">
+    <div class="card border-0 content mb-3">
+      <div class="card-header border-0 bg-white">
         <div class="row align-items-center px-2">
           {% if lead.user.photo %}
             <img class="border rounded-circle img-profile object-fit-cover p-0" style="height: 4rem; width: 4rem;" src="{{ lead.user.photo.url }}" />
@@ -166,21 +133,20 @@
             <span class="border rounded-circle img-profile d-flex justify-content-center align-items-center" style="height: 4rem; width: 4rem;"><i class="fas fa-user fa-2x"></i></span>
           {% endif %}
           <div class="col">
-            <h6 class="mb-1">Lead</h6>
             <h5 class="text-primary mb-1"><strong>{{ lead.user.full_name|default_if_none:lead.user.email }}</strong></h5>
             {% if lead.user_address %}
-              <h5 class="text-dark mb-1">{{ lead.user_address }}</h5>
+              <h5 class="text-dark mb-1"><a href="{% url 'customer_location_detail' lead.user_address_id %}" class="text-decoration-none">{{ lead.user_address }}</a></h5>
             {% else %}
               <h6 class="text-muted mb-1">----</h6>
             {% endif %}
           </div>
         </div>
       </div>
-      <div class="card-body p-3">
+      <div class="card-body p-3 text-dark">
         <div class="row">
           <div class="col me-3">
-            <h6 class="mb-1">Lead Owner</h6>
-            <h6 class="text-muted mb-1">
+            <h6 class="mb-1"><strong>Lead Owner</strong></h6>
+            <h6 class="mb-1">
               {% if lead.owner %}
                 {{ lead.owner.full_name|default:lead.owner.email }}
               {% else %}
@@ -189,22 +155,22 @@
             </h6>
           </div>
           <div class="col me-3">
-            <h6 class="mb-1">Phone</h6>
-            <h6 class="text-muted mb-1">{{ lead.user.phone|default:'-----' }}</h6>
+            <h6 class="mb-1"><strong>Phone</strong></h6>
+            <h6 class="mb-1">{{ lead.user.phone|default:'-----' }}</h6>
           </div>
           <div class="col me-3">
-            <h6 class="mb-1">Email</h6>
-            <h6 class="text-muted mb-1">{{ lead.user.email }}</h6>
+            <h6 class="mb-1"><strong>Email</strong></h6>
+            <h6 class="mb-1">{{ lead.user.email }}</h6>
           </div>
           <div class="col me-3">
-            <h6 class="mb-1">Lead Type</h6>
-            <h6 class="text-muted mb-1">{{ lead.get_type_display }}</h6>
+            <h6 class="mb-1"><strong>Lead Type</strong></h6>
+            <h6 class="mb-1">{{ lead.get_type_display }}</h6>
           </div>
         </div>
       </div>
     </div>
     <!-- Lead Status -->
-    <div class="card shadow mb-3">
+    <div class="card content border-0 mb-3">
       <div class="card-body">
         <div class="row">
           <div class="col-md-10 mb-md-0 mb-1">
@@ -224,7 +190,7 @@
             </div>
             {% else %}
             <div 
-            class="progress-bar p-3 text-truncate {% if status == lead.status %}bg-secondary{% elif forloop.counter0 < lead_status_index %}bg-success {% else %} bg-light text-dark{% endif %}" 
+            class="progress-bar p-3 text-truncate {% if status == lead.status %}bg-primary{% elif forloop.counter0 < lead_status_index %}bg-secondary {% else %} bg-light text-dark{% endif %}" 
             role="progressbar" 
             style="width: {% widthratio 1 status_count 100 %}%" 
             aria-valuenow="{{ forloop.counter }}" 
@@ -260,15 +226,15 @@
     <!-- Lead Information -->
     <div class="row">
       <!-- Details -->
-      <div class="col-md-8">
-        <div class="card shadow mb-3">
+      <div class="col-xl-8 col-md-6">
+        <div class="card content border-0 mb-3">
           <div class="card-body">
             <ul class="nav nav-tabs" id="leadTab" role="tablist">
               <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">Details</button>
+                <button class="nav-link active" style="background-color: inherit;" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">Details</button>
               </li>
               <li class="nav-item" role="presentation">
-                <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab" aria-controls="activity" aria-selected="false">Activity</button>
+                <button class="nav-link" style="background-color: inherit;" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab" aria-controls="activity" aria-selected="false">Activity</button>
               </li>
             </ul>
             <div class="tab-content p-3" id="leadTabContent">
@@ -285,40 +251,54 @@
                 {% endif %}
                 <!-- Lead Details Display -->
                 <div id="text-details">
-                  <div class="d-flex flex-row-reverse">
-                    <button class="btn btn-light btn-sm" onclick="toggleEdit('details'); return false;" title="Edit Details"><i class="fas fa-edit me-2"></i>Edit</button>
+                  <div class="d-flex flex-row-reverse mb-2">
+                    <button class="btn btn-primary btn-sm px-3 py-0 rounded-3" onclick="toggleEdit('details'); return false;" title="Edit Details">Edit</button>
                   </div>
                   <div class="row">
                     <div class="col">
                       {% with user=lead.user %}
-                        <table class="table small">
+                        <table class="table small" style="--bs-table-bg: inherit;">
                           <tbody>
                             <tr>
-                              <td class="text-muted">Name</td>
+                              <td>
+                                <b>Name</b>
+                              </td>
                               <td>{{ user.full_name|default:'' }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Email</td>
+                              <td>
+                                <b>Email</b>
+                              </td>
                               <td>{{ user.email }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Address</td>
+                              <td>
+                                <b>Address</b>
+                              </td>
                               <td>{{ lead.user_address|default:'' }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Company</td>
+                              <td>
+                                <b>Company</b>
+                              </td>
                               <td>{{ user.user_group|default:'' }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Phone</td>
+                              <td>
+                                <b>Phone</b>
+                              </td>
                               <td>{{ user.phone|default:'' }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Estimated Conversion Date</td>
+                              <td>
+                                <b>Estimated Conversion Date</b>
+                              </td>
                               <td>{{ lead.est_conversion_date }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Estimated Value</td>
+                              <td>
+                                <b>Estimated Value</b>
+                              </td>
                               <td>{{ lead.est_value|currency }}</td>
                             </tr>
                           </tbody>
@@ -326,18 +306,24 @@
                       {% endwith %}
                     </div>
                     <div class="col">
-                      <table class="table small">
+                      <table class="table small" style="--bs-table-bg: inherit;">
                         <tbody>
                           <tr>
-                            <td class="text-muted">Lead Number</td>
+                            <td>
+                              <b>Lead Number</b>
+                            </td>
                             <td>{{ lead.id }}</td>
                           </tr>
                           <tr>
-                            <td class="text-muted">Lead Status</td>
+                            <td>
+                              <b>Lead Status</b>
+                            </td>
                             <td>{{ lead.get_status_display }}</td>
                           </tr>
                           <tr>
-                            <td class="text-muted">Lead Owner</td>
+                            <td>
+                              <b>Lead Owner</b>
+                            </td>
                             <td>
                               {% if lead.owner %}
                                 {{ lead.owner.full_name|default:lead.owner.email }}
@@ -345,7 +331,9 @@
                             </td>
                           </tr>
                           <tr>
-                            <td class="text-muted">Lead Type</td>
+                            <td>
+                              <b>Lead Type</b>
+                            </td>
                             <td>{{ lead.get_type_display }}</td>
                           </tr>
                         </tbody>
@@ -367,15 +355,17 @@
                     <div class="row">
                       <div class="col">
                         {% with user=lead.user %}
-                          <table class="table small">
+                          <table class="table small" style="--bs-table-bg: inherit;">
                             <tbody>
                               <tr>
-                                <td class="text-muted">User</td>
+                                <td>
+                                  <b>User</b>
+                                </td>
                                 <td>{{ lead_form.user }}</td>
                               </tr>
                               <tr>
-                                <td class="text-muted">
-                                  Address
+                                <td>
+                                  <b>Address</b>
                                   <span class="htmx-indicator" id="htmx-indicator-loading"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                                 </td>
                                 <td>
@@ -388,11 +378,15 @@
                                 </td>
                               </tr>
                               <tr>
-                                <td class="text-muted">Estimated Conversion Date</td>
+                                <td>
+                                  <b>Estimated Conversion Date</b>
+                                </td>
                                 <td>{{ lead_form.est_conversion_date }}</td>
                               </tr>
                               <tr>
-                                <td class="text-muted">Estimated Value</td>
+                                <td>
+                                  <b>Estimated Value</b>
+                                </td>
                                 <td>{{ lead_form.est_value }}</td>
                               </tr>
                             </tbody>
@@ -400,22 +394,30 @@
                         {% endwith %}
                       </div>
                       <div class="col">
-                        <table class="table small">
+                        <table class="table small" style="--bs-table-bg: inherit;">
                           <tbody>
                             <tr>
-                              <td class="text-muted">Lead Number</td>
+                              <td>
+                                <b>Lead Number</b>
+                              </td>
                               <td>{{ lead.id }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Lead Status</td>
+                              <td>
+                                <b>Lead Status</b>
+                              </td>
                               <td>{{ lead_form.status }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Lead Owner</td>
+                              <td>
+                                <b>Lead Owner</b>
+                              </td>
                               <td>{{ lead_form.owner }}</td>
                             </tr>
                             <tr>
-                              <td class="text-muted">Lead Type</td>
+                              <td>
+                                <b>Lead Type</b>
+                              </td>
                               <td>{{ lead_form.type }}</td>
                             </tr>
                           </tbody>
@@ -433,86 +435,14 @@
         </div>
       </div>
       <!-- Notes -->
-      <div class="col-md-4">
-        <div class="card shadow mb-3">
+      <div class="col-xl-4 col-md-6">
+        <div class="card content border-0 mb-3">
           <div class="card-body">
-            <h5 class="card-title mb-3"><i class="fas fa-comments me-3"></i>Lead Notes</h5>
-            <div class="card-text">
-              <form id="note-formset" method="post" onsubmit="disableSubmitButton(this);">
-                {% csrf_token %}
-                {{ lead_note_formset.management_form }}
-                <input type="hidden" name="note-formset" />
-                <input type="hidden" id="note-formset-form" name="form_id" value="" />
-                <input type="hidden" id="note-formset-action" name="action" value="create" />
-
-                {% comment %}Render Notes{% endcomment %}
-                {% for form in lead_note_formset %}
-                  {% if forloop.first %}
-                    <div class="form-group mt-3">
-                      {% for hidden in form.hidden_fields %}
-                        {{ hidden }}
-                      {% endfor %}
-                      <label for="{{ form.text.label_for_id }}">Add a Note:</label>
-                      <div class="input-group mb-3">
-                        {{ form.text }}
-                        <button class="btn btn-primary" type="submit" name="add_note"><i class="fas fa-paper-plane"></i></button>
-                      </div>
-                    </div>
-                  {% else %}
-                    {% with note=form.instance %}
-                      {% with user=note.created_by %}
-                        {% if user %}
-                          <div class="d-flex mb-3 small">
-                            <div class="me-2">
-                              {% if user.photo %}
-                                <img class="border rounded-circle img-profile object-fit-cover p-0" style="height: 2rem; width: 2rem;" src="{{ user.photo.url }}" />
-                              {% else %}
-                                <span class="border rounded-circle img-profile d-flex justify-content-center align-items-center" style="height: 2rem; width: 2rem;"><i class="fas fa-user"></i></span>
-                              {% endif %}
-                            </div>
-                            <div class="col">
-                              <div class="d-flex justify-content-between">
-                                <small class="me-1">{{ user.full_name|default:user.email }}</small>
-                                <small class="text-end">
-                                  {{ note.created_on|naturaltime }}
-                                  {% comment %}Check for difference in Create/Update time, down to second.{% endcomment %}
-                                  {% if note.created_on|date:'Y-m-d H:i:s' != note.updated_on|date:'Y-m-d H:i:s' %} (Edited){% endif %}
-                                </small>
-                              </div>
-                              {% if user == request.user %}
-                                {% for hidden in form.hidden_fields %}
-                                  {{ hidden }}
-                                {% endfor %}
-                                {% comment %}Form prefix is "notes-X" where X is the id number of the form. We need to extract the number from the prefix to use it in the javascript functions and view, to save the correct form.{% endcomment %}
-                                {% with form_number=form.prefix|slice:'6:' %}
-                                  <div id="text-edit-{{ form_number }}" class="d-none">
-                                    {{ form.text }}
-                                    <small class="d-inline">
-                                      <button class="btn btn-sm p-0 me-1 text-muted" onclick="toggleEdit({{ form_number }}); return false;">Cancel</button>
-                                      <button class="btn btn-sm btn-primary py-0 px-1" onclick="editNote({{ form_number }}); return false;">Save</button>
-                                    </small>
-                                  </div>
-                                  <div id="text-{{ form_number }}">
-                                    <p class="mb-2">{{ note.text }}</p>
-                                    <small class="d-inline">
-                                      <button class="btn btn-sm p-0 me-1 text-primary" onclick="toggleEdit({{ form_number }}); return false;">Edit</button>
-                                      <button class="btn btn-sm p-0 text-danger" onclick="deleteNote({{ form_number }}, '{{ form.DELETE.auto_id }}'); return false;">Delete</button>
-                                    </small>
-                                  </div>
-                                {% endwith %}
-                              {% else %}
-                                <p class="mb-2">{{ note.text }}</p>
-                              {% endif %}
-                            </div>
-                          </div>
-                        {% endif %}
-                      {% endwith %}
-                    {% endwith %}
-                  {% endif %}
-                {% empty %}
-                  <p>No notes have been added to this lead.</p>
-                {% endfor %}
-              </form>
+            <h5 class="card-title mb-3 text-dark"><i class="fas fa-comments me-3"></i><strong>Lead Notes</strong></h5>
+            <div id="lead-notes-formset" hx-push-url="false" hx-swap="innerHTML" hx-get="{% url 'customer_lead_notes' lead.id %}" hx-trigger="load" class="card-text" hx-indicator="#htmx-notes-initial">
+              <div id="htmx-notes-initial" class="d-flex w-100 justify-content-center">
+                <div class="spinner-border text-primary m-3" role="status"></div>
+              </div>
             </div>
           </div>
         </div>
