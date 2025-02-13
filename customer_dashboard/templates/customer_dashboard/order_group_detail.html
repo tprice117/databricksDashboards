@@ -1,396 +1,462 @@
 {% extends 'customer_dashboard/base.html' %}
 {% load static %}
 {% load humanize %}
+{% load sales_stream_tags %}
 {% block title %}
-    Booking Details
+  Booking Details
 {% endblock %}
 {% block stylesheet %}
-    <style>
-        /* 
-        CSS for 5-star rating scale 
-        Assumes font-awesome is available and that the list goes from Best to Worst
-        */
-        .star-rating {
-            direction: rtl;
-            display: inline-flex;
-        }
-        .star-rating input[type="radio"] {
-            display: none;
-        }
-        .star-rating label {
-            font-size: 2rem;
-            color: #ddd;
-            cursor: pointer;
-        }
-        .star-rating input[type="radio"]:checked ~ label {
-            color: #f5c518;
-        }
-        .star-rating label:hover,
-        .star-rating label:hover ~ label {
-            color: #f5c518;
-        }
-</style>
+  <style></style>
 {% endblock %}
 {% block javascript %}
-    <script>
-        const addAttachmentButton = document.getElementById('add-attachments')
-        const formsetDiv = document.getElementById('Attachments-formset')
-        const totalForms = document.getElementById('id_attachments-TOTAL_FORMS')
-        const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML
-        const attachmentForms = document.querySelectorAll('.attachment-form')
-        attachmentForms.forEach(function (form) {
-            const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]')
-            if (deleteInput && deleteInput.value === 'on') {
-                form.style.display = 'none'
-            }
-            const link = form.querySelector('[href]');
-            try {
-                if (link) {
-                    // add an image with the link 30 x 30
-                    const image = document.createElement('img')
-                    image.src = link.href
-                    image.style.width = '50px'
-                    image.style.height = '50px'
-                    // add the image at the end of this form just after the href
-                    const nextSibling = link.nextSibling
-                    form.insertBefore(image, nextSibling)
-                }
-            } catch (error) {
-            }   
+  <script>
+    function addCarouselListeners() {
+      // Carousels w/ Multiple Items
+      const carouselNext = document.querySelectorAll('.carousel-control-next')
+      const carouselPrev = document.querySelectorAll('.carousel-control-prev')
+    
+      carouselNext.forEach((next) => {
+        next.addEventListener('click', function () {
+          const carouselId = next.getAttribute('href')
+          const carousel = document.querySelector(carouselId)
+          const carouselInner = carousel.querySelector('.carousel-inner')
+          const carouselWidth = carouselInner.scrollWidth
+          if (carouselInner.scrollLeft + carouselInner.clientWidth < carouselWidth) {
+            carouselInner.scrollBy({
+              left: carouselInner.clientWidth,
+              behavior: 'smooth'
+            })
+          }
         })
-        addAttachmentButton.addEventListener('click', function () {
-            const currentFormCount = parseInt(totalForms.value)
-            const newFormCount = currentFormCount + 1
-            const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount)
-        
-            formsetDiv.insertAdjacentHTML('beforeend', newFormHtml)
-            totalForms.value = newFormCount
+      })
+      carouselPrev.forEach((prev) => {
+        prev.addEventListener('click', function () {
+          const carouselId = prev.getAttribute('href')
+          const carousel = document.querySelector(carouselId)
+          const carouselInner = carousel.querySelector('.carousel-inner')
+          if (carouselInner.scrollLeft > 0) {
+            carouselInner.scrollBy({
+              left: -carouselInner.clientWidth,
+              behavior: 'smooth'
+            })
+          }
         })
-        formsetDiv.addEventListener('click', function (event) {
-            if (event.target.classList.contains('remove-location')) {
-                const formToRemove = event.target.closest('.attachment-form')
-                formToRemove.style.display = 'none'
-                formToRemove.querySelector('input[type="hidden"][name$="-DELETE"]').value = 'on'
-            }
+      })
+    }
+    
+    function loadAttachmentsFormset() {
+      let addAttachmentButton = document.getElementById('add-attachments')
+      let attachmentForms = document.querySelectorAll('.attachments-form')
+      attachmentForms.forEach(function (form) {
+        const deleteInput = form.querySelector('input[type="hidden"][id$="-DELETE"]')
+        if (deleteInput && deleteInput.value === 'on') {
+          form.style.display = 'none'
+        }
+      })
+    
+      addAttachmentButton.addEventListener('click', function () {
+        let formsetDiv = document.getElementById('attachments-formset')
+        let totalForms = document.getElementById('id_attachments-TOTAL_FORMS')
+        let emptyFormTemplate = document.getElementById('attachments-empty').innerHTML
+        if (!formsetDiv) {
+          console.error('Formset div not found')
+          return
+        } else if (!totalForms) {
+          console.error('Total forms input not found')
+          return
+        } else if (!emptyFormTemplate) {
+          console.error('Empty form template not found')
+          return
+        }
+        const currentFormCount = parseInt(totalForms.value)
+        const newFormCount = currentFormCount + 1
+        const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount)
+    
+        // Insert the empty row at the end of the #attachments-formset > tbody
+        let formsetTbody = formsetDiv.querySelector('tbody')
+        if (formsetTbody) {
+          formsetTbody.insertAdjacentHTML('beforeend', newFormHtml)
+        } else {
+          console.warn('Formset tbody not found')
+          formsetDiv.insertAdjacentHTML('beforeend', newFormHtml)
+        }
+        totalForms.value = newFormCount
+        const emptyText = document.querySelectorAll('.empty-text')
+        emptyText.forEach(function (text) {
+          text.style.display = 'none'
         })
-        document.body.addEventListener('htmx:afterRequest', function(evt) {
-            if (evt.detail.target.id.startsWith("rating")) {
-                // This should only occur after the rating request is successful
-                const { xhr, successful, requestConfig } = evt.detail;
-                if (!successful) {
-                console.error(evt);
-                return;
-                }
-                // Get the order ID from the request params
-                const orderId = requestConfig.parameters.order_id;
-                // Show the feedback modal
-                $(`#${orderId}-modal`).modal('show');
-            }
-        });
-    </script>
+      })
+    }
+    
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
+      if (evt.target.id === 'edit-attachments-modal') {
+        loadAttachmentsFormset()
+      } else if (evt.target.id === 'order-review-modal') {
+        // This should only occur after the rating request is successful
+        const { xhr, successful, requestConfig } = evt.detail
+        if (!successful) {
+          console.error(evt)
+          return
+        }
+        console.log('showing')
+        // Show the feedback modal
+        $(`#order-review-modal`).modal('show')
+      }
+    })
+    document.addEventListener('DOMContentLoaded', function () {
+      addCarouselListeners()
+    })
+    function onChatClick(event) {
+      // open intercom chat. https://developers.intercom.com/installing-intercom/web/methods
+      window.Intercom('showNewMessage')
+    }
+  </script>
 {% endblock %}
 {% block content %}
-    <div class="container-fluid">
-        <h3 class="text-dark mb-1">Booking Detail</h3>
-    </div>
-    <div class="container">
-        <div class="row" style="padding-bottom: 24px;">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">{{ order_group.seller_product_seller_location.seller_product.product.main_product.name }}</h4>
-                        <a class="btn btn-link" role="button" href="{% url 'customer_location_detail' location_id=user_address.id %}">{{ order_group.user_address.formatted_address }}</a>
-                        <p style="margin-bottom: 0px;padding-top: 16px;">
-                            <strong>Supplier</strong>
-                        </p>
-                        <p>{{ order_group.seller_product_seller_location.seller_location.name }}</p>
-                        <p style="margin-bottom: 0px;">
-                            <strong>Order ID</strong>
-                        </p>
-                        <p>{{ order_group.id }}</p>
-                        {% if order_group.project_id or order_group.user_address.project_id %}
-                            <p style="margin-bottom: 0px;">
-                                <strong>PO ID</strong>
-                            </p>
-                            <p>
-                                {% if order_group.project_id %}
-                                    {{ order_group.project_id }}
-                                {% else %}
-                                    {{ order_group.user_address.project_id }}
-                                {% endif %}
-                            </p>
-                        {% endif %}
-                        {% if order_group.agreement %}
-                            <p style="margin-bottom: 0px;padding-top: 16px;">
-                                <strong>Rental Terms of Service</strong>
-                            </p>
-                            <p>
-                                <a class="btn btn-sm btn-info float-end me-2 ms-2" href="{{ order_group.agreement.url }}" target="_blank" download><i class="far fa-file-pdf"></i>&nbsp;Download</a>
-                            </p>
-                        {% endif %}
-                        <p class="card-text"></p><a class="card-link" href="#"></a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                {% if order_group.user_address.latitude and order_group.user_address.longitude %}
-                    <gmp-map center="{{ order_group.user_address.latitude }},{{ order_group.user_address.longitude }}" zoom="14" map-id="DEMO_MAP_ID">
-                        <gmp-advanced-marker position="{{ order_group.user_address.latitude }},{{ order_group.user_address.longitude }}" title="{{ order_group.user_address.name }}"></gmp-advanced-marker>
-                    </gmp-map>
-                {% else %}
-                    <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row justify-content-between align-items-center">
+      <div class="col-auto" style="margin-inline-end: 100px;">
+        <h4 class="text-dark mb-0 text-nowrap"><strong>Booking Details</strong></h4>
+      </div>
+      <div class="col">
+        <div class="flex-row d-flex justify-content-between">
+          <h6 class="text-dark text-center mb-0 d-flex align-items-center text-nowrap">
+            {% if request.user.is_staff %}
+              {% with account_owner=user_address.user_group.account_owner %}
+                {% if account_owner %}
+                  <strong class="me-2">Account Owner:</strong>
+                  {% if account_owner.photo %}
+                    <img class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem;" src="{{ account_owner.photo.url }}" />
+                  {% else %}
+                    <span class="border rounded-circle img-profile" style="height: 1.5rem; width: 1.5rem; display:flex; justify-content:center; align-items:center;"><i class="fas fa-user"></i></span>
+                  {% endif %}&nbsp;{{ account_owner.full_name }}
                 {% endif %}
-            </div>
+              {% endwith %}
+            {% endif %}
+          </h6>
+          <button class="btn btn-sm px-3 btn-outline-primary text-nowrap" type="button" onclick="onChatClick()" title="Chat with a Downstream Representative."><b>Transfer Asset</b></button>
         </div>
+      </div>
     </div>
-    <div class="container">
-        <div class="row" style="padding-bottom: 24px;">
-            <div class="col-md-6">
-                <div class="card" style="margin-bottom: 16px;">
-                    <div class="card-body">
-                        <h4 class="card-title">Schedule Details</h4>
-                        <form>
-                            <div class="row">
-                                <div class="col">
-                                    <p style="margin-bottom: 0px;">
-                                        <strong>Start Date</strong>
-                                    </p>
-                                    <p>{{ order_group.start_date }}</p>
-                                    <p style="margin-bottom: 0px;">
-                                        <strong>End Date</strong>
-                                    </p>
-                                    <p>{{ order_group.end_date }}</p>
-                                    <p style="margin-bottom: 0px;">
-                                        <strong>Preferred&nbsp;Time Slot</strong>
-                                    </p>
-                                    <p>{{ order_group.time_slot }}</p>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+    <br />
+    <!-- Content -->
+    <div class="row mb-3">
+      {% with main_product=order_group.seller_product_seller_location.seller_product.product.main_product %}
+        <!-- Product Details -->
+        <div class="col-md-6">
+          <div class="card content border-0 mb-3">
+            <div class="card-body">
+              <div class="row flex-nowrap mb-2 mb-xl-0">
+                <div class="col-auto">
+                  <img class="img-thumbnail img-container border-0 img-fluid mb-2"
+                    alt="Product image"
+                    width="138"
+                    height="95"
+                    src="{% if main_product.images.first %}
+                      {{ main_product.images.first.image.url }}
+                    {% elif main_product.main_product_category.icon %}
+                      {{ main_product.main_product_category.icon.url }}
+                    {% else %}
+                      {% static 'customer_dashboard/img/logo.png' %}
+                    {% endif %}" />
+                  {% if order_group.agreement %}
+                    <p class="text-center">
+                      <a class="btn btn-sm btn-outline-primary px-3" style="--bs-btn-bg: #fff;" href="{{ order_group.agreement.url }}" target="_blank" download><i class="far fa-file-pdf me-2"></i><b>Agreement</b></a>
+                    </p>
+                  {% endif %}
                 </div>
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Pricing Details</h4>
-                        <div class="row">
-                            <div class="col">
-                                <p style="margin-bottom: 0px;">
-                                    <strong>Initial Delivery Fee (charged at delivery)</strong>
-                                </p>
-                                <p>
-                                    {% if order_group.delivery_fee %}
-                                        ${{ order_group.delivery_fee|floatformat:2|intcomma }}
-                                    {% else %}
-                                        $0.00
-                                    {% endif %}
-                                </p>
-                                <p style="margin-bottom: 0px;">
-                                    <strong>Removal Fee (charged on removal)</strong>
-                                </p>
-                                <p>
-                                    {% if order_group.removal_fee %}
-                                        ${{ order_group.removal_fee|floatformat:2|intcomma }}
-                                    {% else %}
-                                        $0.00
-                                    {% endif %}
-                                </p>
-                                <p style="margin-bottom: 0px;">
-                                    <strong>Included Tonnage Quantity</strong>
-                                </p>
-                                <p>{{ order_group.tonnage_quantity }}</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col text-truncate" id="product-details">
+                  <h3 class="subtitle mb-3">{{ main_product.name }}</h3>
+                  <p class="mb-0 order-descriptor text-wrap">
+                    Company: <a class="btn btn-link btn-sm p-0 text-decoration-none text-start" role="button" href="{% url 'customer_company_detail' user_address.user_group.id %}">{{ user_address.user_group }}</a>
+                  </p>
+                  <p class="mb-0 order-descriptor text-wrap">
+                    Address: <a class="btn btn-link btn-sm p-0 text-decoration-none text-start" role="button" href="{% url 'customer_location_detail' location_id=user_address.id %}">{{ user_address }}</a>
+                  </p>
+                  <p class="mb-1 order-descriptor">
+                    Booking #: <span class="fw-light">{{ order_group.code }}</span>
+                  </p>
+                  <p class="mb-0 order-descriptor">
+                    Qty: <span class="fw-light">1</span>
+                  </p>
+                  {% include 'customer_dashboard/snippets/order_group_po.html' %}
                 </div>
+              </div>
             </div>
-            <div class="col-md-6">
-                <div class="card" style="margin-bottom: 16px;">
-                    <div class="card-body">
-                        <p style="margin-bottom: 0pc;">
-                            <strong>Access Details</strong>
-                        </p>
-                        <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post">
-                            {% csrf_token %}
-                            <!-- Include the hidden fields -->
-                            {% for hidden in access_form.hidden_fields %}
-                                {{ hidden }}
-                            {% endfor %}
-                            <!-- Include the visible fields -->
-                            {% for field in access_form.visible_fields %}
-                                <div class="mb-3">
-                                    {{ field }}
-                                    {% if field.help_text %}
-                                        <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
-                                    {% endif %}
-                                    {% if field.errors %}
-                                        <small class="text-danger">{{ field.errors }}</small>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                            <div class="d-flex flex-row-reverse">
-                                <button class="btn btn-primary btn-sm" type="submit" name="access_details_button" style="margin-top: 12px;">Save</button>
-                            </div>
-                        </form>
+          </div>
+          <!-- Seller Location Details -->
+          <div class="card content border-0 mb-3">
+            <div class="card-body">
+              <div class="row flex-nowrap mb-2 mb-xl-0">
+                {% with seller_location=order_group.seller_product_seller_location.seller_location %}
+                  <div class="col-auto">
+                    <img class="img-thumbnail img-container border-0 img-fluid mb-2"
+                      alt="Seller image"
+                      width="138"
+                      height="95"
+                      src="{% if seller_location.location_logo_image %}
+                        {{ seller_location.location_logo_image.url }}
+                      {% else %}
+                        {% static 'customer_dashboard/img/defualt_logo.png' %}
+                      {% endif %}" />
+                  </div>
+                  <div class="col text-truncate" id="product-details">
+                    <h3 class="subtitle mb-3 text-wrap">
+                      {% if request.user.is_staff %}
+                        <a href="{% url 'supplier_location_detail' seller_location.id %}" class="btn btn-link p-0 text-decoration-none text-start">{{ seller_location.name }}</a>
+                      {% else %}
+                        {{ seller_location.name }}
+                      {% endif %}
+                    </h3>
+                    <p class="mb-1 order-descriptor">
+                      Start Date: <span class="fw-light">{{ order_group.start_date }}</span>
+                    </p>
+                    <p class="mb-1 order-descriptor">
+                      End Date: <span class="fw-light">{{ order_group.end_date|default_if_none:'On-site' }}</span>
+                    </p>
+                    <p class="mb-1 order-descriptor">
+                      Preferred Time Slot: <span class="fw-light">{{ order_group.time_slot }}</span>
+                    </p>
+                  </div>
+                {% endwith %}
+              </div>
+              <div class="row">
+                {% if order_group.is_active %}
+                  {% if order_group.order_type != 'ONE_TIME' %}
+                    <div class="col px-2">
+                      <a class="btn btn-danger btn-sm w-100 h-100" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_removal' order_group_id=order_group.id %}">Request Removal <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
                     </div>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <p style="margin-bottom: 15px;">
-                            <strong>Placement Details</strong>
-                        </p>
-                        <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <!-- Include the hidden fields -->
-                            {% for hidden in placement_form.hidden_fields %}
-                                {{ hidden }}
-                            {% endfor %}
-                            <!-- Include the visible fields -->
-                            {% for field in placement_form.visible_fields %}
-                                {% if field.widget_type == 'checkbox' %}
-                                    <div class="mb-3 form-switch">
-                                        {{ field }}
-                                        <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}{{ field.label_suffix }}</label>
-                                        {% if field.help_text %}
-                                            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
-                                        {% endif %}
-                                        {% if field.errors %}
-                                            <small class="text-danger">{{ field.errors }}</small>
-                                        {% endif %}
-                                    </div>
-                                {% else %}
-                                    <div class="mb-3">
-                                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{{ field.label_suffix }}</label>
-                                        {{ field }}
-                                        {% if field.help_text %}
-                                            <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
-                                        {% endif %}
-                                        {% if field.errors %}
-                                            <small class="text-danger">{{ field.errors }}</small>
-                                        {% endif %}
-                                        {% if field.name == 'street' %}
-                                            <div class="form-text">
-                                                <a class="card-link" href="https://www.google.com/maps/place/{{ user_address.formatted_address|urlencode }}" target="_blank">{{ user_address.formatted_address }}</a>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                            <div class="card-body">
-                                <div class="d-flex align-items-center mb-3">
-                                    <h3 class="text-dark mb-1 me-3">Add Attachments</h3>
-                                    <button type="button" class="btn btn-success" id="add-attachments"><i class="fas fa-plus fa-sm text-white"></i></button>
-                                </div>
-                                {% if attachments_formset.non_form_errors %}
-                                    {% for error in attachments_formset.non_form_errors %}
-                                            <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                {% endif %}
-                                <hr />
-                                {{ attachments_formset.management_form }}
-                                <!-- Hidden template for new forms -->
-                                <div id="empty-form-template" style="display: none;">
-                                    <div class="attachment-form">
-                                            {{ attachments_formset.empty_form }}
-                                                <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
-                                            <hr />
-                                    </div>
-                                </div>
-                                <div id="Attachments-formset">
-                                    {% for inline in attachments_formset %}
-                                        <div class="attachment-form">
-                                            {{ inline }}
-                                                <button type="button" class="remove-location btn btn-outline-danger">Remove</button>
-                                            <hr />
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="d-flex flex-row-reverse">
-                                <button class="btn btn-primary btn-sm" type="submit" name="placement_details_button" style="margin-top: 12px;">Save</button>
-                            </div>
-                        </form>
+                  {% endif %}
+                  {% if main_product.main_product_category.name == 'Roll Off Dumpsters' %}
+                    <div class="col px-2">
+                      <a class="btn btn-primary btn-sm w-100 h-100" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_swap' order_group_id=order_group.id %}">Request Swap <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
                     </div>
-                </div>
+                  {% endif %}
+                  {% if main_product.related_products.exists %}
+                    <div class="col px-2">
+                      <button class="btn btn-primary btn-sm w-100 h-100 disabled" style="pointer-events: none;" type="button" title="This feature is not available yet." disabled>Add Linked Products <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></button>
+                    </div>
+                  {% elif order_group.parent_booking %}
+                    <div class="col px-2">
+                      <a href="{% url 'customer_order_group_detail' order_group.parent_booking_id %}" class="btn btn-sm btn-outline-primary h-100 w-100" style="--bs-btn-bg: #fff;" title="Click to view parent booking details.">View Related Booking</a>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
             </div>
+          </div>
         </div>
+      {% endwith %}
+      <!-- Map -->
+      <div class="col-md-6">
+        {% if user_address.latitude and user_address.longitude %}
+          <gmp-map center="{{ user_address.latitude }},{{ user_address.longitude }}" zoom="14" map-id="DEMO_MAP_ID">
+            <gmp-advanced-marker position="{{ user_address.latitude }},{{ user_address.longitude }}" title="{{ user_address.name }}"></gmp-advanced-marker>
+          </gmp-map>
+        {% else %}
+          <iframe allowfullscreen="" frameborder="0" src="https://cdn.bootstrapstudio.io/placeholders/map.html" width="100%" height="200"></iframe>
+        {% endif %}
+      </div>
     </div>
-    <div class="container">
-        <div class="row" style="padding-bottom: 24px;">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Service History&nbsp;</h4>
-                        <p>Past history of all services related to this Order</p>
-                        <div class="table-responsive" style="margin-bottom: 16px;">
-                            <table class="table">
-                                <thead>
-                                    <tr></tr>
-                                </thead>
-                                <tbody>
-                                    {% for order in orders %}
-                                        <tr>
-                                            <td>{{ order.end_date }}</td>
-                                            <td>{{ order.order_type }}</td>
-                                            <td>{{ order.status }}</td>
-                                            <td>
-                                                <!-- Show buttons as disabled after 10 minutes -->
-                                                {% if not order.time_since_review or order.time_since_review.total_seconds < 600 %}
-                                                <form method="post" hx-post="{% url 'customer_order_review_swap'%}" hx-target="#rating-{{forloop.counter}}">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="order_id" value="{{ order.id }}">
-                                                    <div id="rating-{{forloop.counter}}">
-                                                        {% if order.review.rating == 1 %}
-                                                        <button class="btn btn-success" type="submit" name="rating" value="1">
-                                                            <i class="fas fa-thumbs-up fa-sm text-white"></i>
-                                                        </button>
-                                                        {% else %}
-                                                        <button class="btn btn-light" type="submit" name="rating" value="1">
-                                                            <i class="fas fa-thumbs-up fa-sm"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                        {% if order.review.rating == 0 %}
-                                                        <button class="btn btn-danger" type="submit" name="rating" value="0">
-                                                            <i class="fas fa-thumbs-down fa-sm text-white"></i>
-                                                        </button>
-                                                        {% else %}
-                                                        <button class="btn btn-light" type="submit" name="rating" value="0">
-                                                            <i class="fas fa-thumbs-down fa-sm"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                    </div>
-                                                </form>
-                                                {% else %}
-                                                    {% if order.review.rating == 1 %}
-                                                        <button class="btn btn-success disabled" type="submit" name="rating" value="1">
-                                                            <i class="fas fa-thumbs-up fa-sm text-white"></i>
-                                                        </button>
-                                                        {% else %}
-                                                        <button class="btn btn-light disabled" type="submit" name="rating" value="1">
-                                                            <i class="fas fa-thumbs-up fa-sm"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                        {% if order.review.rating == 0 %}
-                                                        <button class="btn btn-danger disabled" type="submit" name="rating" value="0">
-                                                            <i class="fas fa-thumbs-down fa-sm text-white"></i>
-                                                        </button>
-                                                        {% else %}
-                                                        <button class="btn btn-light disabled" type="submit" name="rating" value="0">
-                                                            <i class="fas fa-thumbs-down fa-sm"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <a class="btn btn-light" role="button" href="{% url 'customer_order_detail' order_id=order.id %}"><i class="far fa-eye"></i></a>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+    <!-- Access Details Form -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <div class="card content border-0 mb-3">
+          <div class="card-body">
+            <p class="mb-3 text-dark">
+              <strong>Access Details</strong>
+            </p>
+            <form action="{% url 'customer_order_group_detail' order_group_id=order_group.id %}" method="post">
+              {% csrf_token %}
+              <!-- Include the hidden fields -->
+              {% for hidden in access_form.hidden_fields %}
+                {{ hidden }}
+              {% endfor %}
+              <!-- Include the visible fields -->
+              {% for field in access_form.visible_fields %}
+                <div class="mb-3">
+                  {{ field }}
+                  {% if field.help_text %}
+                    <small id="{{ field.html_name }}Help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                  {% endif %}
+                  {% if field.errors %}
+                    <small class="text-danger">{{ field.errors }}</small>
+                  {% endif %}
                 </div>
-            </div>
+              {% endfor %}
+              <button class="btn btn-primary btn-sm w-100" type="submit" name="access_details_button">Save</button>
+            </form>
+          </div>
         </div>
+      </div>
+      <!-- Attachments -->
+      <div class="col-md-6">
+        <div class="card content border-0">
+          <div class="card-body text-dark">
+            <div class="flex-row d-flex justify-content-between">
+              <p class="text-dark mb-0">
+                <strong class="me-1">Attachments</strong>
+                {% with filecount=attachments.count %}
+                  <small class="text-subtle fw-light">(<span id="cart-attachments-{{ order_group.id }}">{{ filecount }}</span>)</small>
+                {% endwith %}
+              </p>
+              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#edit-attachments-modal">Edit</button>
+            </div>
+            <!-- Attachments Carousel -->
+            <div id="attachments-carousel" class="carousel slide flex-nowrap">
+              <div id="attachments-carousel-inner" class="carousel-inner d-flex align-items-stretch pt-3" style="padding: 0 40px; height: 142px;">
+                {% for attachment in attachments %}
+                  <div class="carousel-item d-block mx-0 px-1 {% if forloop.first %}active{% endif %}" style="min-width: 126px;">
+                    <div class="card lead-card border-0 w-100 h-100 rounded-4 hover-float">
+                      <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ attachment.file_name }}"></a>
+                      <div class="inner card-img-top d-flex flex-col justify-content-center w-100">{{ attachment.file|render_file|safe }}</div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+              <button class="carousel-control-prev text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
+                <i class="far fa-arrow-left"></i>
+                <span class="visually-hidden">Previous</span>
+              </button>
+              <button class="carousel-control-next text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
+                <i class="far fa-arrow-right"></i>
+                <span class="visually-hidden">Next</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+    <!-- Related Bookings Table -->
+    {% if related_bookings %}
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card border-0">
+            <div class="card-body">
+              <h5 class="text-dark mb-3"><strong>Linked Products</strong></h5>
+              <div class="table-responsive small">
+                <table class="table table-hover table-sm text-nowrap fw-light">
+                  <thead>
+                    <tr>
+                      <th>Booking #</th>
+                      <th>Product</th>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                      <th>PO ID</th>
+                      <th>Created By</th>
+                      <th>Created On</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for related in related_bookings %}
+                      <tr>
+                        <td>
+                          <a href="{% url 'customer_order_group_detail' related.id %}" class="text-decoration-none">{{ related.code }}</a>
+                        </td>
+                        <td>{{ related.seller_product_seller_location.seller_product.product.main_product.name }}</td>
+                        <td>{{ related.start_date|date }}</td>
+                        <td>{{ related.end_date|default_if_none:'On-site' }}</td>
+                        <td>{{ related.project_id|default:'N/A' }}</td>
+                        <td>
+                          {% if related.created_by %}
+                            {% if request.user.is_staff %}
+                              <a href="{% url 'customer_user_detail' related.created_by_id %}" class="text-decoration-none">{{ related.created_by.full_name }}</a>
+                            {% else %}
+                              {{ related.created_by.full_name }}
+                            {% endif %}
+                          {% endif %}
+                        </td>
+                        <td>{{ related.created_on|date }}</td>
+                        <td>
+                          {% if related.is_active and related.order_type != 'ONE_TIME' %}
+                            <a class="btn btn-danger btn-sm w-100 h-100 p-0" type="button" data-bs-target="#order-swap-modal" data-bs-toggle="modal" hx-trigger="click" hx-target="#order-swap-modal" hx-get="{% url 'customer_order_group_removal' order_group_id=order_group.id %}">Request Removal <span class="htmx-indicator" id="htmx-indicator-email"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span></a>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    <!-- Transactions Table -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card border-0">
+          <div class="card-body">
+            <h5 class="text-dark mb-3"><strong>Transactions</strong></h5>
+            <div class="table-responsive small">
+              <table class="table table-hover table-sm text-nowrap fw-light">
+                <thead>
+                  <tr>
+                    <th>Transaction #</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Transaction Type</th>
+                    <th>Status</th>
+                    <th>Created By</th>
+                    <th>Created On</th>
+                    <th>Total</th>
+                    <th>Review</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for order in orders %}
+                    <tr>
+                      <td>
+                        <a href="{% url 'customer_order_detail' order_id=order.id %}" class="text-decoration-none">{{ order.code }}</a>
+                      </td>
+                      <td>{{ order.start_date|date }}</td>
+                      <td>{{ order.end_date|date }}</td>
+                      <td>{{ order.order_type }}</td>
+                      <td>{{ order.status }}</td>
+                      <td>
+                        {% if order.created_by %}
+                          {% if request.user.is_staff %}
+                            <a href="{% url 'customer_user_detail' order.created_by_id %}" class="text-decoration-none">{{ order.created_by.full_name }}</a>
+                          {% else %}
+                            {{ order.created_by.full_name }}
+                          {% endif %}
+                        {% endif %}
+                      </td>
+                      <td>{{ order.created_on|date }}</td>
+                      <td>{{ order.full_price|currency }}</td>
+                      <td>
+                        {% include 'customer_dashboard/snippets/order_review_buttons.html' %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block modals %}
+  <!-- Order Review Modal -->
+  <div id="order-review-modal" class="modal fade" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content"></div>
+    </div>
+  </div>
+  <!-- Attachments Form Modal -->
+  <div id="edit-attachments-modal" class="modal fade" role="dialog" tabindex="-1" hx-swap="innerHTML" hx-get="{% url 'customer_order_group_edit_attachments' order_group.id %}" hx-trigger="load"></div>
+  <!-- Order Swap Modal -->
+  <div id="order-swap-modal" class="modal modal-blur fade" style="display: none" role="dialog" aria-hidden="false" tabindex="-1" hx-disabled-elt="button">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div id="htmx-indicator-loading-card" class="modal-content htmx-indicator-card" style="min-height: 300px;">
+        <div class="modal-body d-flex justify-content-center align-items-center p-3">
+          <div class="spinner-border text-primary m-3" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

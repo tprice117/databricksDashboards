@@ -1,13 +1,14 @@
 {% load static %}
+{% load sales_stream_tags %}
 <div class="modal-dialog modal-dialog-centered" role="document">
-    <div id="htmx-indicator-loading-card" class="htmx-indicator htmx-indicator-card modal-content">
-        <div class="modal-body d-flex justify-content-center align-items-center p-3" style="min-height: 500px;">
-            <div class="spinner-border text-primary m-3" role="status"></div>
-        </div>
+  <div id="htmx-indicator-loading-card" class="htmx-indicator htmx-indicator-card modal-content">
+    <div class="modal-body d-flex justify-content-center align-items-center p-3" style="min-height: 500px;">
+      <div class="spinner-border text-primary m-3" role="status"></div>
     </div>
-    <div class="modal-content htmx-loading-hide">
-        <!-- prettier-ignore -->
-        <form id="form-card-edit" 
+  </div>
+  <div class="modal-content htmx-loading-hide">
+    <!-- prettier-ignore -->
+    <form id="form-card-edit" 
           data-order-group-id="{{ order_group.id|default:'new' }}"
           method="post" enctype="multipart/form-data"
           hx-post="{% url 'customer_order_group_edit_attachments' order_group.id %}" 
@@ -23,7 +24,6 @@
       <div class="modal-body">
         <!-- Form -->
         <div class="overflow-auto">{{ attachments_formset.as_table }}</div>
-        <hr>
         <!--  End Form -->
       </div>
       <div class="modal-footer">
@@ -37,6 +37,17 @@
         </button>
       </div>
     </form>
-    </div>
+  </div>
 </div>
-<span id="cart-attachments-{{ order_group.id }}" hx-swap-oob="true">&nbsp;Attached ({{ order_group.attachments.count }})</span>
+<span id="cart-attachments-{{ order_group.id }}" hx-swap-oob="true">{{ order_group.attachments.count }}</span>
+{% comment %}For booking details page{% endcomment %}
+<div id="attachments-carousel-inner" hx-swap-oob="true" class="carousel-inner d-flex align-items-stretch pt-3" style="padding: 0 40px; height: 142px;">
+  {% for attachment in order_group.attachments.all %}
+    <div class="carousel-item d-block mx-0 px-1 {% if forloop.first %}active{% endif %}" style="min-width: 126px;">
+      <div class="card lead-card border-0 w-100 h-100 rounded-4 hover-float">
+        <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ attachment.file_name }}"></a>
+        <div class="inner card-img-top d-flex justify-content-center w-100">{{ attachment.file|render_file|safe }}</div>
+      </div>
+    </div>
+  {% endfor %}
+</div>

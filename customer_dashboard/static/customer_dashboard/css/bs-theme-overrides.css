@@ -9,6 +9,10 @@
   --bs-secondary-text-emphasis: #021B28;
   --bs-secondary-bg-subtle: #CDD9E0;
   --bs-secondary-border-subtle: #9BB4C1;
+  --bs-link-color: #0583C7;
+  --bs-link-hover-color: #026da3;
+  --bs-link-color-rgb: 5,131,199;
+  --bs-link-hover-color-rgb: 2,109,163;
 }
 
 .btn-primary {
