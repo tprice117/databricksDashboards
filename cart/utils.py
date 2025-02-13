@@ -706,6 +706,7 @@ class CartUtils:
         user: User = None,
         user_group: UserGroup = None,
         is_impersonating: bool = False,
+        allow_all=True,
     ):
         """Returns the orders for the current UserGroup.
 
@@ -720,6 +721,8 @@ class CartUtils:
             user (User): User object. NOTE: May be None.
             user_group (UserGroup): UserGroup object. NOTE: May be None.
             is_impersonating (bool): Pass True if the request is impersonating a user. Default False
+            allow_all (bool): Pass False to only return orders for the user's locations
+                              (This allows for staff to view all cart items). Default True
 
         Returns:
             QuerySet[Order]: The orders queryset.
@@ -735,7 +738,7 @@ class CartUtils:
         current_user_group = user_group or current_user.user_group
 
         if (
-            not request.user.is_staff
+            (not request.user.is_staff and not allow_all)
             and current_user_group
             and current_user.type != UserType.ADMIN
         ):
@@ -744,7 +747,7 @@ class CartUtils:
                 order_group__user_address__useruseraddress__user=current_user
             )
         else:
-            if request.user.is_staff and not is_impersonating:
+            if request.user.is_staff and not is_impersonating and allow_all:
                 # Staff User: Get all orders.
                 orders = Order.objects.all()
             elif current_user_group:
