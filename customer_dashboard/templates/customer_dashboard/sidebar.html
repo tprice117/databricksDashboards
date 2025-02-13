@@ -44,6 +44,9 @@
     <hr class="sidebar-divider my-0" />
     <ul class="navbar-nav text-light" id="accordionSidebar">
       <li class="nav-item">
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_dashboard' %} active{% endif %}" href="{% url 'customer_dashboard' %}"><i class="far fa-tachometer-alt"></i><span>Dashboard</span></a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link{% if request.resolver_match.url_name == 'customer_home' %} active{% endif %}" href="{% url 'customer_home' %}"><i class="far fa-globe-americas"></i><span>Explore</span></a>
       </li>
       {% if request.user.is_staff %}
