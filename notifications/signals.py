@@ -1,11 +1,13 @@
 import logging
+import threading
 
 from django.conf import settings
 from django.db.models.signals import post_save
-from django.template.loader import render_to_string
+from django.dispatch import receiver
 
 from communications.intercom.utils.utils import get_json_safe_value
-from notifications.utils.add_email_to_queue import add_email_to_queue
+from common.utils.customerio import send_event, update_person, update_company
+from api.models import UserAddress, UserGroup, User, Order
 
 logger = logging.getLogger(__name__)
 
@@ -116,3 +118,233 @@ def on_order_post_save(sender, instance, created, **kwargs):
 # TODO: This is being called from api.models.order.order.py pre_save to ensure line items are
 # saved before this is called. This is a temporary solution until a better solution is found.
 # post_save.connect(on_order_post_save, sender=Order)
+
+
+@receiver(post_save, sender=UserGroup)
+def on_user_group_post_save(sender, instance, created, *args, **kwargs):
+    """Sends an event when a UserGroup is created, specifically for tracking user-related events."""
+
+    if created:
+        event_name = "user_group_created"
+    else:
+        event_name = "user_group_updated"
+
+    def _send_event():
+        # Add user attributes to CustomerIO
+        event_data = {
+            "id": str(instance.id),
+            "user": str(instance.user_id),
+            "name": instance.name,
+            "legal_name": instance.legal.name if instance.legal else None,
+            "billing_name": instance.billing.name if instance.billing else None,
+            "type": instance.type,
+            "stripe_connect_id": instance.stripe_connect_id,
+            "marketplace_display_name": instance.marketplace_display_name,
+            "open_days": instance.open_days,
+            "open_time": instance.open_time.isoformat() if instance.open_time else None,
+            "close_time": instance.close_time.isoformat()
+            if instance.close_time
+            else None,
+            "lead_time_hrs": str(instance.lead_time_hrs),
+            "announcement": instance.announcement,
+            "live_menu_is_active": instance.live_menu_is_active,
+            "location_logo_url": instance.location_logo_url,
+            "logo": instance.logo.url if instance.logo else None,
+            "downstream_insurance_requirements_met": instance.downstream_insurance_requirements_met,
+            "badge": instance.badge,
+            "salesforce_seller_id": instance.salesforce_seller_id,
+            "about_us": instance.about_us,
+            "dashboard_url": instance.dashboard_url,
+        }
+        sending_user_email = None
+        if instance.updated_by:
+            sending_user_email = instance.updated_by.email
+        else:
+            first_user = instance.users.first()
+            if first_user:
+                sending_user_email = first_user.email
+
+        if sending_user_email:
+            update_company(sending_user_email, str(instance.id), event_data)
+        else:
+            logger.error(
+                f"on_user_group_post_save:{event_name}: [{instance.id}]-[No user to send company to]"
+            )
+
+    p = threading.Thread(target=_send_event)
+    p.start()
+
+
+@receiver(post_save, sender=User)
+def on_user_post_save(sender, instance, created, **kwargs):
+    """Sends an event when a User is created, specifically for tracking user-related events."""
+
+    def _send_event():
+        # Add user attributes to CustomerIO
+        event_data = {
+            "id": str(instance.id),
+            "email": instance.email,
+            "first_name": instance.first_name,
+            "last_name": instance.last_name,
+            "phone": instance.phone,
+            "photo": instance.photo.url if instance.photo else None,
+            "mailchimp_id": instance.mailchip_id,
+            "user_group": str(instance.user_group.id) if instance.user_group else None,
+            "type": instance.type,
+            "source": instance.source,
+            "is_archived": instance.is_archived,
+            "intercom_id": instance.intercom_id,
+            "salesforce_contact_id": instance.salesforce_contact_id,
+            "salesforce_seller_location_id": instance.salesforce_seller_location_id,
+            "terms_accepted": instance.terms_accepted.isoformat()
+            if instance.terms_accepted
+            else None,
+            "redirect_url": instance.redirect_url,
+            "apollo_user_id": instance.apollo_user_id,
+            "apollo_id": instance.apollo_id,
+            "stage": instance.stage,
+            "last_active": instance.last_active.isoformat()
+            if instance.last_active
+            else None,
+        }
+        update_person(instance.email, event_data)
+
+    p = threading.Thread(target=_send_event)
+    p.start()
+
+
+@receiver(post_save, sender=UserAddress)
+def on_user_address_post_save(sender, instance, created, **kwargs):
+    """Sends an event when a UserAddress is created, specifically for tracking user-related events."""
+
+    if created:
+        event_name = "user_address_created"
+    else:
+        event_name = "user_address_updated"
+
+    def _send_event():
+        # Add user attributes to CustomerIO
+        event_data = {
+            "id": str(instance.id),
+            "user": str(instance.user_id),
+            "user_group": str(instance.user_group_id),
+            "name": instance.name,
+            "project_id": instance.project_id,
+            "street": instance.street,
+            "street2": instance.street2,
+            "city": instance.city,
+            "state": instance.state,
+            "postal_code": instance.postal_code,
+            "country": instance.country,
+            "latitude": str(instance.latitude),
+            "longitude": str(instance.longitude),
+            "access_details": instance.access_details,
+            "autopay": instance.autopay,
+            "is_archived": instance.is_archived,
+            "allow_saturday_delivery": instance.allow_saturday_delivery,
+            "allow_sunday_delivery": instance.allow_sunday_delivery,
+            "tax_exempt_status": instance.tax_exempt_status,
+            "user_address_type": instance.user_address_type.name
+            if instance.user_address_type
+            else None,
+            "default_payment_method": instance.default_payment_method,
+            "should_collect_taxes": instance.should_collect_taxes,
+        }
+        send_event(instance.user.email, event_name, event_data)
+
+    p = threading.Thread(target=_send_event)
+    p.start()
+
+
+@receiver(post_save, sender=Order)
+def on_order_post_save2(sender, instance, created, **kwargs):
+    """Sends an event when an Order is created, specifically for tracking user-related events."""
+
+    if created:
+        event_name = "user_address_created"
+        booking_count = instance.user.order_groups.count()
+    else:
+        event_name = "user_address_updated"
+        booking_count = instance.user.order_groups.count()
+
+    def _send_event():
+        # Add user attributes to CustomerIO
+        line_items = []
+        order_line_items = instance.order_line_items.all().select_related(
+            "order_line_item_type"
+        )
+        for order_line_item in order_line_items:
+            line_items.append(
+                {
+                    "id": str(order_line_item.id),
+                    "type_name": order_line_item.order_line_item_type.name,
+                    "type_units": order_line_item.order_line_item_type.name,
+                    "type_code": order_line_item.order_line_item_type.name,
+                    "stripe_tax_code_id": order_line_item.order_line_item_type.name,
+                    "rate": str(order_line_item.rate),
+                    "quantity": str(order_line_item.quantity),
+                    "platform_fee_percent": str(order_line_item.platform_fee_percent),
+                    "tax": str(order_line_item.tax) if order_line_item.tax else None,
+                    "description": order_line_item.description,
+                    "is_flat_rate": order_line_item.is_flat_rate,
+                    "stripe_invoice_line_item_id": order_line_item.stripe_invoice_line_item_id,
+                    "paid": order_line_item.paid,
+                    "backbill": order_line_item.backbill,
+                    "stripe_description": order_line_item.stripe_description,
+                    "payment_status": order_line_item.payment_status(),
+                    "seller_payout_price": str(order_line_item.seller_payout_price()),
+                    "customer_price_with_tax": str(
+                        order_line_item.customer_price_with_tax()
+                    ),
+                }
+            )
+        adjustments = []
+        for adjustment in instance.order_items:
+            adjustments.append(
+                {
+                    "id": str(adjustment.id),
+                    "name": adjustment.__class__.__name__,
+                    "quantity": str(adjustment.quantity),
+                    "customer_rate": str(adjustment.customer_rate),
+                    "seller_rate": str(adjustment.seller_rate),
+                    "stripe_invoice_line_item_id": adjustment.stripe_invoice_line_item_id,
+                    "description": adjustment.description,
+                }
+            )
+        business_name = None
+        billing_address = None
+        if (
+            instance.order_group.user.user_group
+            and instance.order_group.user.user_group.legal
+        ):
+            business_name = instance.order_group.user.user_group.legal.name
+        if (
+            instance.order_group.user.user_group
+            and instance.order_group.user.user_group.billing
+        ):
+            billing_address = (
+                instance.order_group.user.user_group.billing.formatted_address
+            )
+
+        event_data = {
+            "id": str(instance.id),
+            "user": str(instance.user_id),
+            "user_group": str(instance.user_group_id),
+            "status": instance.status,
+            "customer_price_with_tax": str(instance.customer_price()),
+            "seller_price": str(instance.seller_price()),
+            "take_rate": str(instance.take_rate),
+            "order_line_items": line_items,
+            "adjustments": adjustments,
+            "shipping_address": str(
+                instance.order_group.user_address.formatted_address()
+            ),
+            "customer_name": instance.order_group.user.full_name,
+            "customer_business_name": business_name,
+            "billing_address": billing_address,
+        }
+        send_event(instance.user.email, event_name, event_data)
+        update_person(instance.user.email, {"booking_count": booking_count})
+
+    p = threading.Thread(target=_send_event)
+    p.start()
