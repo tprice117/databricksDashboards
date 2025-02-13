@@ -14,7 +14,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, F, Count
 from django.forms import inlineformset_factory, formset_factory
 from django.db import IntegrityError, transaction
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -108,6 +108,25 @@ class UserAlreadyExistsError(Exception):
     """Exception raised if User already exists."""
 
     pass
+
+
+def only_suppliers(func):
+    """
+    Decorator for views that checks that the user is logged in, redirecting
+    to the log-in page if necessary.
+    """
+
+    def wrapper(*args, **kwargs):
+        if args[0]:
+            if (
+                not args[0].user.type == "BILLING"
+                and not args[0].user.type == "ADMIN"
+                and not args[0].user.is_staff
+            ):
+                raise Http404("Page not found")
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def to_dict(instance):
@@ -467,6 +486,7 @@ def supplier_logout(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def supplier_search(request, is_selection=False):
     context = {}
     if request.method == "POST":
@@ -492,6 +512,7 @@ def supplier_search(request, is_selection=False):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def supplier_impersonation_start(request):
     if request.user.is_staff:
         if request.method == "POST":
@@ -530,6 +551,7 @@ def supplier_impersonation_start(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def supplier_impersonation_stop(request):
     if request.session.get("user_id"):
         del request.session["user_id"]
@@ -541,6 +563,7 @@ def supplier_impersonation_stop(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def index(request):
     context = {}
     context["user"] = get_user(request)
@@ -650,6 +673,7 @@ def index(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def profile(request):
     context = {}
     context["user"] = get_user(request)
@@ -694,6 +718,7 @@ def profile(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def company(request):
     context = {}
     context["user"] = get_user(request)
@@ -847,6 +872,7 @@ def company(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def new_company(request):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("supplier_home"))
@@ -971,6 +997,7 @@ def new_company(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def companies(request):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("supplier_home"))
@@ -1035,6 +1062,7 @@ def companies(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def users(request):
     context = {}
     context["user"] = get_user(request)
@@ -1115,6 +1143,7 @@ def users(request):
     return render(request, "supplier_dashboard/users.html", context)
 
 
+@only_suppliers
 @login_required(login_url="/admin/login/")
 def user_detail(request, user_id):
     context = {}
@@ -1197,6 +1226,7 @@ def user_detail(request, user_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def user_reset_password(request, user_id):
     # context = get_user_context(request)
     if request.method == "POST":
@@ -1213,6 +1243,7 @@ def user_reset_password(request, user_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def new_user(request):
     # TODO: Add a form to select one or more SellerLocations to associate the user with.
     context = {}
@@ -1294,6 +1325,7 @@ def new_user(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def bookings(request):
     link_params = {}
     context = {}
@@ -1492,6 +1524,7 @@ def bookings(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def download_bookings(request):
     link_params = {}
     context = {}
@@ -1591,6 +1624,7 @@ def download_bookings(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def listings(request):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("supplier_home"))
@@ -1653,6 +1687,7 @@ def listings(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def listing_detail(request, listing_id):
     if not request.user.is_staff:
         return HttpResponseRedirect(reverse("supplier_home"))
@@ -1902,6 +1937,7 @@ def listing_detail(request, listing_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def products(request):
     context = {}
     context["main_product_category_groups"] = (
@@ -1937,6 +1973,7 @@ def products(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def products_2(request, category_id):
     context = {}
     main_product_category = MainProductCategory.objects.prefetch_related(
@@ -1951,6 +1988,7 @@ def products_2(request, category_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def products_3(request, main_product_id):
     context = {}
     main_product = MainProduct.objects.get(id=main_product_id)
@@ -1962,6 +2000,7 @@ def products_3(request, main_product_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def products_3_table(request, main_product_id):
     # Don't allow non-htmx GET requests to this view
     if request.method == "GET" and not request.headers.get("HX-Request"):
@@ -2064,6 +2103,7 @@ def products_3_table(request, main_product_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def update_order_status(request, order_id, accept=True, complete=False):
     context = {}
     context["user"] = get_user(request)
@@ -2153,6 +2193,7 @@ def update_order_status(request, order_id, accept=True, complete=False):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def update_booking_status(request, order_id):
     context = {}
     update_status = Order.Status.PENDING
@@ -2203,6 +2244,7 @@ def update_booking_status(request, order_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def booking_detail(request, order_id):
     context = {}
     context["user"] = get_user(request)
@@ -2273,6 +2315,7 @@ def booking_detail(request, order_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def set_intercom_messages_read(request: HttpRequest):
     user = get_user(request)
     # Update User so that Intercom knows they are active.
@@ -2281,6 +2324,7 @@ def set_intercom_messages_read(request: HttpRequest):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def get_intercom_unread_conversations(request: HttpRequest):
     user = get_user(request)
     context = {"user": user}
@@ -2296,6 +2340,7 @@ def get_intercom_unread_conversations(request: HttpRequest):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def chat(request, order_id=None, conversation_id=None, is_customer=False):
     context = {}
     context["user"] = get_user(request)
@@ -2392,6 +2437,7 @@ def chat(request, order_id=None, conversation_id=None, is_customer=False):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def payouts(request):
     context = {}
     pagination_limit = 100
@@ -2476,6 +2522,7 @@ def payouts(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def payouts_metrics(request):
     if request.method == "GET":
         location_id = request.GET.get("location_id", None)
@@ -2524,6 +2571,7 @@ def payouts_metrics(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def payout_invoice(request, payout_id):
     context = {}
     # NOTE: Can add stuff to session if needed to speed up queries.
@@ -2574,6 +2622,7 @@ def payout_invoice(request, payout_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def payout_detail(request, payout_id):
     context = {}
     # NOTE: Can add stuff to session if needed to speed up queries.
@@ -2594,6 +2643,7 @@ def payout_detail(request, payout_id):
 
 # Create view that creates csv from payout data and returns it as a download
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def download_payouts(request):
     context = {}
     if request.method == "GET":
@@ -2681,6 +2731,7 @@ def download_payouts(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def supplier_last_order(request):
     context = {}
     location_id = request.GET.get("location_id", None)
@@ -2705,6 +2756,7 @@ def supplier_last_order(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def locations(request):
     context = {}
     context["user"] = get_user(request)
@@ -2826,6 +2878,7 @@ def locations(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def download_locations(request):
     context = {}
     context["user"] = get_user(request)
@@ -2936,6 +2989,7 @@ def download_locations(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def location_detail(request, location_id):
     context = {}
     context["user"] = get_user(request)
@@ -3210,6 +3264,7 @@ def location_detail(request, location_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def seller_location_user_add(request, seller_location_id, user_id):
     seller_location = SellerLocation.objects.get(id=seller_location_id)
     user = User.objects.get(id=user_id)
@@ -3243,6 +3298,7 @@ def seller_location_user_add(request, seller_location_id, user_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def seller_location_user_remove(request, seller_location_id, user_id):
     seller_location = SellerLocation.objects.get(id=seller_location_id)
     user = User.objects.get(id=user_id)
@@ -3276,6 +3332,7 @@ def seller_location_user_remove(request, seller_location_id, user_id):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def received_invoices(request):
     context = {}
     context["user"] = get_user(request)
@@ -3328,6 +3385,7 @@ def received_invoices(request):
 
 
 @login_required(login_url="/admin/login/")
+@only_suppliers
 def received_invoice_detail(request, invoice_id):
     context = {}
     context["user"] = get_user(request)
