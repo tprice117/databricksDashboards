@@ -7,7 +7,7 @@ from django.dispatch import receiver
 
 from communications.intercom.utils.utils import get_json_safe_value
 from common.utils.customerio import send_event, update_person, update_company
-from api.models import UserAddress, UserGroup, User, Order
+from api.models import UserAddress, UserGroup, User, OrderGroup, Order
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,6 @@ Django Signals help: https://docs.djangoproject.com/en/5.0/topics/signals/
 def on_order_post_save(sender, instance, created, **kwargs):
     """Sends an email on Order database actions, such as Order created, submitted or status changed
     to SCHEDULED."""
-    from api.models import Order
 
     order: Order = instance
     bcc_emails = []
@@ -57,6 +56,7 @@ def on_order_post_save(sender, instance, created, **kwargs):
         try:
             if order.submitted_on is not None:
                 if order.old_value("submitted_on") is None:
+                    # TODO: This should only send if the order is not in CREDIT_APPLICATION_APPROVAL_PENDING
                     order.send_supplier_approval_email()
 
                     # TODO: Switch this to the new template that is similar to the supplier approval email, do not cc dispatch.
@@ -121,7 +121,7 @@ def on_order_post_save(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=UserGroup)
-def on_user_group_post_save(sender, instance, created, *args, **kwargs):
+def on_user_group_post_save(sender, instance: UserGroup, created, *args, **kwargs):
     """Sends an event when a UserGroup is created, specifically for tracking user-related events."""
 
     if created:
@@ -133,29 +133,52 @@ def on_user_group_post_save(sender, instance, created, *args, **kwargs):
         # Add user attributes to CustomerIO
         event_data = {
             "id": str(instance.id),
-            "user": str(instance.user_id),
             "name": instance.name,
-            "legal_name": instance.legal.name if instance.legal else None,
-            "billing_name": instance.billing.name if instance.billing else None,
-            "type": instance.type,
-            "stripe_connect_id": instance.stripe_connect_id,
-            "marketplace_display_name": instance.marketplace_display_name,
-            "open_days": instance.open_days,
-            "open_time": instance.open_time.isoformat() if instance.open_time else None,
-            "close_time": instance.close_time.isoformat()
-            if instance.close_time
+            "pay_later": instance.pay_later,
+            "industry": instance.industry,
+            "autopay": instance.autopay,
+            "net_terms": instance.net_terms,
+            "stripe_id": instance.stripe_id,
+            "credit_line_limit": instance.credit_line_limit,
+            "compliance_status": instance.compliance_status,
+            "tax_exempt_status": instance.tax_exempt_status,
+            "RPP_COI_Exp_Date": instance.RPP_COI_Exp_Date.isoformat()
+            if instance.RPP_COI_Exp_Date
             else None,
-            "lead_time_hrs": str(instance.lead_time_hrs),
-            "announcement": instance.announcement,
-            "live_menu_is_active": instance.live_menu_is_active,
-            "location_logo_url": instance.location_logo_url,
-            "logo": instance.logo.url if instance.logo else None,
-            "downstream_insurance_requirements_met": instance.downstream_insurance_requirements_met,
-            "badge": instance.badge,
-            "salesforce_seller_id": instance.salesforce_seller_id,
-            "about_us": instance.about_us,
-            "dashboard_url": instance.dashboard_url,
+            "account_owner": instance.account_owner,
+            "apollo_id": instance.apollo_id,
+            "stage": instance.stage,
+            "credit_limit_used": instance.credit_limit_used(),
+            "lifetime_spend": instance.lifetime_spend(),
         }
+
+        if hasattr(instance, "legal") and instance.legal:
+            event_data["legal_name"] = instance.legal.name
+            event_data["legal_tax_id"] = instance.legal.tax_id
+            event_data["legal_accepted_net_terms"] = instance.legal.accepted_net_terms
+            event_data["legal_years_in_business"] = instance.legal.years_in_business
+            event_data["legal_doing_business_as"] = instance.legal.doing_business_as
+            event_data["legal_structure"] = instance.legal.structure
+            event_data["legal_industry"] = instance.legal.industry
+            event_data["legal_address"] = instance.legal.formatted_address
+        if hasattr(instance, "billing") and instance.billing:
+            event_data["billing_name"] = instance.billing.name
+            event_data["billing_address"] = instance.billing.formatted_address
+            event_data["billing_tax_id"] = instance.billing.tax_id
+
+        if instance.seller:
+            event_data["seller"] = str(instance.seller.id)
+            event_data["seller_name"] = instance.seller.name
+            event_data["seller_email"] = instance.seller.order_email
+            event_data["seller_phone"] = instance.seller.order_phone
+            event_data["seller_type"] = instance.seller.type
+            event_data["seller_location_type"] = instance.seller.location_type
+            event_data["seller_status"] = instance.seller.status
+            event_data["seller_logo"] = (
+                instance.seller.logo.url if instance.seller.logo else None
+            )
+            event_data["seller_lead_time"] = instance.seller.lead_time
+            event_data["seller_badge"] = instance.seller.badge
         sending_user_email = None
         if instance.updated_by:
             sending_user_email = instance.updated_by.email
@@ -176,7 +199,7 @@ def on_user_group_post_save(sender, instance, created, *args, **kwargs):
 
 
 @receiver(post_save, sender=User)
-def on_user_post_save(sender, instance, created, **kwargs):
+def on_user_post_save(sender, instance: User, created, **kwargs):
     """Sends an event when a User is created, specifically for tracking user-related events."""
 
     def _send_event():
@@ -214,7 +237,7 @@ def on_user_post_save(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=UserAddress)
-def on_user_address_post_save(sender, instance, created, **kwargs):
+def on_user_address_post_save(sender, instance: UserAddress, created, **kwargs):
     """Sends an event when a UserAddress is created, specifically for tracking user-related events."""
 
     if created:
@@ -257,15 +280,22 @@ def on_user_address_post_save(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=Order)
-def on_order_post_save2(sender, instance, created, **kwargs):
+def on_order_post_save2(sender, instance: Order, created, **kwargs):
     """Sends an event when an Order is created, specifically for tracking user-related events."""
+
+    user_booking_count = OrderGroup.objects.filter(
+        user_id=instance.order_group.user_id
+    ).count()
+    booking_count = None
+    if instance.order_group.user.user_group:
+        booking_count = OrderGroup.objects.filter(
+            user_group_id=instance.order_group.user.user_group_id
+        ).count()
 
     if created:
         event_name = "user_address_created"
-        booking_count = instance.user.order_groups.count()
     else:
         event_name = "user_address_updated"
-        booking_count = instance.user.order_groups.count()
 
     def _send_event():
         # Add user attributes to CustomerIO
@@ -311,25 +341,14 @@ def on_order_post_save2(sender, instance, created, **kwargs):
                     "description": adjustment.description,
                 }
             )
-        business_name = None
-        billing_address = None
-        if (
-            instance.order_group.user.user_group
-            and instance.order_group.user.user_group.legal
-        ):
-            business_name = instance.order_group.user.user_group.legal.name
-        if (
-            instance.order_group.user.user_group
-            and instance.order_group.user.user_group.billing
-        ):
-            billing_address = (
-                instance.order_group.user.user_group.billing.formatted_address
-            )
 
         event_data = {
             "id": str(instance.id),
-            "user": str(instance.user_id),
-            "user_group": str(instance.user_group_id),
+            "user": str(instance.order_group.user_id),
+            "user_group": str(instance.order_group.user_group_id),
+            "submitted_on": instance.submitted_on.isoformat()
+            if instance.submitted_on
+            else None,
             "status": instance.status,
             "customer_price_with_tax": str(instance.customer_price()),
             "seller_price": str(instance.seller_price()),
@@ -340,11 +359,33 @@ def on_order_post_save2(sender, instance, created, **kwargs):
                 instance.order_group.user_address.formatted_address()
             ),
             "customer_name": instance.order_group.user.full_name,
-            "customer_business_name": business_name,
-            "billing_address": billing_address,
         }
+        if (
+            instance.order_group.user.user_group
+            and hasattr(instance.order_group.user.user_group, "legal")
+            and instance.order_group.user.user_group.legal
+        ):
+            event_data["customer_business_name"] = (
+                instance.order_group.user.user_group.legal.name
+            )
+
+        if (
+            instance.order_group.user.user_group
+            and hasattr(instance.order_group.user.user_group.billing, "billing")
+            and instance.order_group.user.user_group.billing
+        ):
+            event_data["billing_address"] = (
+                instance.order_group.user.user_group.billing.formatted_address
+            )
+
         send_event(instance.user.email, event_name, event_data)
         update_person(instance.user.email, {"booking_count": booking_count})
+        if instance.order_group.user.user_group:
+            update_company(
+                instance.user.email,
+                str(instance.order_group.user.user_group_id),
+                {"booking_count": user_booking_count},
+            )
 
     p = threading.Thread(target=_send_event)
     p.start()
