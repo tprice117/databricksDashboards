@@ -2193,7 +2193,7 @@ def edit_attachments(request, order_group_id):
             else:
                 messages.error(
                     request,
-                    f"Error saving {attachments_formset.non_field_errors().as_text()}",
+                    f"Error saving attachments. {attachments_formset.non_form_errors().as_text()}",
                 )
     else:
         attachments_formset = OrderGroupAttachmentsFormSet(instance=order_group)
