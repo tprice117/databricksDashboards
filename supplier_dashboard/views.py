@@ -117,13 +117,13 @@ def only_suppliers(func):
     """
 
     def wrapper(*args, **kwargs):
-        if args[0]:
-            if (
-                not args[0].user.type == "BILLING"
-                and not args[0].user.type == "ADMIN"
-                and not args[0].user.is_staff
-            ):
-                raise Http404("Page not found")
+        try:
+            # raise 404 if user is not staff and does not have a seller
+            if not args[0].user.is_staff:
+                if args[0].user.user_group.seller is None:
+                    raise Http404("Page not found")
+        except (IndexError, AttributeError):
+            raise Http404("Page not found")
         return func(*args, **kwargs)
 
     return wrapper
