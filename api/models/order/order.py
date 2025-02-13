@@ -34,7 +34,6 @@ from common.models.choices.user_type import UserType
 from common.utils.generate_code import save_unique_code
 from common.utils.stripe.stripe_utils import StripeUtils
 from communications.intercom.conversation import Conversation as IntercomConversation
-from notifications import signals as notifications_signals
 from notifications.utils.add_email_to_queue import (
     add_email_to_queue,
     add_internal_email_to_queue,
@@ -809,6 +808,9 @@ class Order(BaseModel):
 
     @staticmethod
     def post_save(sender, instance: "Order", created, **kwargs):
+        # Import here to avoid circular import.
+        from notifications import signals as notifications_signals
+
         if instance.code is None:
             instance.generate_code()
 
