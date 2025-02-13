@@ -4,6 +4,7 @@ from django.contrib import admin
 from api.admin.filters import CreatedDateFilter, CartStatusFilter
 from api.admin.inlines import (
     OrderGroupMaterialInline,
+    OrderGroupNoteInline,
     OrderGroupRentalInline,
     OrderGroupRentalMultiStepInline,
     OrderGroupRentalOneStepInline,
@@ -47,6 +48,7 @@ class OrderGroupAdmin(admin.ModelAdmin):
         OrderGroupServiceInline,
         OrderGroupMaterialInline,
         OrderGroupAttachmentInline,
+        OrderGroupNoteInline,
     ]
     search_fields = [
         "id",

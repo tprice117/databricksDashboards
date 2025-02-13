@@ -26,6 +26,7 @@ from .order.order_group import OrderGroup
 from .order.order_group_attachment import OrderGroupAttachment
 from .order.order_group_material import OrderGroupMaterial
 from .order.order_group_material_waste_type import OrderGroupMaterialWasteType
+from .order.order_group_note import OrderGroupNote
 from .order.order_group_rental import OrderGroupRental
 from .order.order_group_rental_multi_step import OrderGroupRentalMultiStep
 from .order.order_group_rental_multi_step_shift import OrderGroupRentalMultiStepShift
