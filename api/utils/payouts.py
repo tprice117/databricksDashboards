@@ -5,12 +5,19 @@ from typing import List, Union
 
 import stripe
 from django.conf import settings
-from django.db.models import DecimalField, F, Func, OuterRef, Q, Subquery, Sum
-from django.db.models.functions import Round
+from django.db.models import DecimalField, F, Func, OuterRef, Q, Subquery, Sum, Value
+from django.db.models.functions import Coalesce, Round
 from django.template.loader import render_to_string
 from stripe import StripeError
 
 from api.models.order.order import Order
+from api.models.order.order_items.fees.order_damage_fee import OrderDamageFee
+from api.models.order.order_items.fees.order_maintenance_fee import OrderMaintenanceFee
+from api.models.order.order_items.fees.order_material_fee import OrderMaterialFee
+from api.models.order.order_items.fees.order_permit_fee import OrderPermitFee
+from api.models.order.order_items.fees.order_transfer_fee import OrderTransferFee
+from api.models.order.order_items.order_adjustment import OrderAdjustment
+from api.models.order.order_items.order_insurance import OrderInsurance
 from api.models.order.order_line_item import OrderLineItem
 from api.models.payout import Payout
 from api.models.seller.seller_invoice_payable_line_item import (
@@ -164,6 +171,139 @@ class PayoutUtils:
                         function="ROUND",
                         output_field=DecimalField(),
                     )
+                )
+                + Coalesce(
+                    Subquery(
+                        OrderDamageFee.objects.filter(order=OuterRef("pk"))
+                        .values("order")
+                        .annotate(
+                            total_damage_fee=Sum(
+                                Func(
+                                    F("quantity") * F("seller_rate"),
+                                    2,
+                                    function="ROUND",
+                                    output_field=DecimalField(),
+                                )
+                            )
+                        )
+                        .values("total_damage_fee")[:1]
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
+                )
+                + Coalesce(
+                    Subquery(
+                        OrderMaintenanceFee.objects.filter(order=OuterRef("pk"))
+                        .values("order")
+                        .annotate(
+                            total_maintenance_fee=Sum(
+                                Func(
+                                    F("quantity") * F("seller_rate"),
+                                    2,
+                                    function="ROUND",
+                                    output_field=DecimalField(),
+                                )
+                            )
+                        )
+                        .values("total_maintenance_fee")[:1]
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
+                )
+                + Coalesce(
+                    Subquery(
+                        OrderMaterialFee.objects.filter(order=OuterRef("pk"))
+                        .values("order")
+                        .annotate(
+                            total_material_fee=Sum(
+                                Func(
+                                    F("quantity") * F("seller_rate"),
+                                    2,
+                                    function="ROUND",
+                                    output_field=DecimalField(),
+                                )
+                            )
+                        )
+                        .values("total_material_fee")[:1]
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
+                )
+                + Coalesce(
+                    Subquery(
+                        OrderPermitFee.objects.filter(order=OuterRef("pk"))
+                        .values("order")
+                        .annotate(
+                            total_permit_fee=Sum(
+                                Func(
+                                    F("quantity") * F("seller_rate"),
+                                    2,
+                                    function="ROUND",
+                                    output_field=DecimalField(),
+                                )
+                            )
+                        )
+                        .values("total_permit_fee")[:1]
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
+                )
+                + Coalesce(
+                    Subquery(
+                        OrderTransferFee.objects.filter(order=OuterRef("pk"))
+                        .values("order")
+                        .annotate(
+                            total_transfer_fee=Sum(
+                                Func(
+                                    F("quantity") * F("seller_rate"),
+                                    2,
+                                    function="ROUND",
+                                    output_field=DecimalField(),
+                                )
+                            )
+                        )
+                        .values("total_transfer_fee")[:1]
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
+                )
+                + Coalesce(
+                    Subquery(
+                        OrderAdjustment.objects.filter(order=OuterRef("pk"))
+                        .values("order")
+                        .annotate(
+                            total_adjustment_fee=Sum(
+                                Func(
+                                    F("quantity") * F("seller_rate"),
+                                    2,
+                                    function="ROUND",
+                                    output_field=DecimalField(),
+                                )
+                            )
+                        )
+                        .values("total_adjustment_fee")[:1]
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
+                )
+                + Coalesce(
+                    Subquery(
+                        OrderInsurance.objects.filter(order=OuterRef("pk"))
+                        .values("order")
+                        .annotate(
+                            total_insurance_fee=Sum(
+                                Func(
+                                    F("quantity") * F("seller_rate"),
+                                    2,
+                                    function="ROUND",
+                                    output_field=DecimalField(),
+                                )
+                            )
+                        )
+                        .values("total_insurance_fee")[:1]
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
                 ),
                 seller_location_sends_invoices=F(
                     "order_group__seller_product_seller_location__seller_location__sends_invoices"
