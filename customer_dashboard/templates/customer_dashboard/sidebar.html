@@ -67,7 +67,7 @@
         </li>
       {% endif %}
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_locations' %} active{% endif %}" href="{% url 'customer_locations' %}"><i class="fas fa-map-marker-alt"></i><span>Locations</span></a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_locations' %} active{% endif %}" href="{% url 'customer_locations' %}"><i class="fas fa-map-marked-alt"></i><span>Locations</span></a>
       </li>
       <li class="nav-item">
         <a class="nav-link{% if request.resolver_match.url_name == 'customer_users' %} active{% endif %}" href="{% url 'customer_users' %}"><i class="fas fa-user-friends"></i><span>Users</span></a>
