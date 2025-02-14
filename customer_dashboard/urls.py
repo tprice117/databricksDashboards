@@ -42,6 +42,11 @@ urlpatterns = [
         name="customer_order_group_removal",
     ),
     path(
+        "customer/booking/<uuid:order_group_id>/notes/",
+        views.order_group_notes,
+        name="customer_order_group_notes",
+    ),
+    path(
         "customer/booking/<uuid:order_group_id>/attachments/edit/",
         views.edit_attachments,
         name="customer_order_group_edit_attachments",
@@ -283,5 +288,10 @@ urlpatterns = [
         "customer/lead/<int:lead_id>/",
         views.lead_detail,
         name="customer_lead_detail",
+    ),
+    path(
+        "customer/lead/<int:lead_id>/notes",
+        views.lead_notes,
+        name="customer_lead_notes",
     ),
 ]

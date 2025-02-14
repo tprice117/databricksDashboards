@@ -51,10 +51,22 @@ def downstream_naturaltime(value):
     now = timezone.now()
     if isinstance(value, datetime):
         if now - value > timedelta(days=1):
-            return value.strftime("%b %d, %Y") + " (CT)"
+            return value.strftime("%b %d, %Y @ %I:%M %p") + " (CT)"
         else:
-            return naturaltime(value) + " (CT)"
+            return naturaltime(value)
     return value
+
+
+@register.filter
+def slice_after(value, delimiter):
+    """
+    Used to get the first value after a delimiter. For instance, `{{ "notes-12-id"|slice_after:"-" }}` returns "12".
+    This is useful for extracting the id from a prefix.
+    """
+    try:
+        return value.split(delimiter, 1)[1]
+    except IndexError:
+        return value
 
 
 @register.filter(is_safe=True)
