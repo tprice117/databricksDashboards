@@ -415,7 +415,7 @@ def on_order_post_save2(sender, instance: Order, created, **kwargs):
 
             if (
                 instance.order_group.user.user_group
-                and hasattr(instance.order_group.user.user_group.billing, "billing")
+                and hasattr(instance.order_group.user.user_group, "billing")
                 and instance.order_group.user.user_group.billing
             ):
                 event_data["billing_address"] = (
