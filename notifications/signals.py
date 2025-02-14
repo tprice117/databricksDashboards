@@ -347,8 +347,8 @@ def on_order_post_save2(sender, instance: Order, created, **kwargs):
                     {
                         "id": str(order_line_item.id),
                         "type_name": order_line_item.order_line_item_type.name,
-                        "type_units": order_line_item.order_line_item_type.name,
-                        "type_code": order_line_item.order_line_item_type.name,
+                        "type_units": order_line_item.order_line_item_type.units,
+                        "type_code": order_line_item.order_line_item_type.code,
                         "stripe_tax_code_id": order_line_item.order_line_item_type.name,
                         "rate": str(order_line_item.rate),
                         "quantity": str(order_line_item.quantity),
@@ -439,3 +439,6 @@ def on_order_post_save2(sender, instance: Order, created, **kwargs):
     if settings.ENVIRONMENT == "TEST":
         p = threading.Thread(target=_send_event)
         p.start()
+
+
+# TODO: Should add post_delete signals for these models as well.
