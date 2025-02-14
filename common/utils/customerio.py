@@ -1,6 +1,7 @@
 import json
 import requests
 
+from customerio import analytics
 from django.conf import settings
 from common.utils.json_encoders import DecimalFloatEncoder
 import logging
@@ -133,3 +134,79 @@ def send_push(
         )
 
         return False, str(e)
+
+
+def update_company(
+    email: str,
+    user_group_id: str,
+    data: dict = None,
+):
+    """This creates/updates a company in Customer.io.
+    https://docs.customer.io/cdp/sources/connections/servers/python/#group
+    """
+    try:
+        analytics.write_key = settings.CUSTOMER_IO_TRACK_API_KEY
+        analytics.host = "https://cdp.customer.io"
+
+        # create or update company information
+        # analytics.identify(email)
+        analytics.group(email, user_group_id, data)
+        analytics.flush()
+        return True
+    except Exception as e:
+        logger.error(
+            f"customerid.update_company:[Error updating company] Error sending [{email}]-[{user_group_id}]-[{data}]-[{str(e)}]"
+        )
+
+        return False
+
+
+def update_person(
+    email: str,
+    data: dict = None,
+):
+    """This creates/updates a person in Customer.io.
+    https://docs.customer.io/api/track/#tag/Track-Customers
+    https://docs.customer.io/cdp/sources/connections/servers/python/#identify
+    """
+    try:
+        analytics.write_key = settings.CUSTOMER_IO_TRACK_API_KEY
+        analytics.host = "https://cdp.customer.io"
+
+        # create or update person information
+        analytics.identify(email, data)
+        analytics.flush()
+        return True
+    except Exception as e:
+        logger.error(
+            f"customerid.update_person:[Error updating person] Error sending [{email}]-[{data}]-[{str(e)}]"
+        )
+
+        return False
+
+
+def send_event(
+    email: str,
+    event_name: str,
+    data: dict = None,
+):
+    """This sends an event to Customer.io.
+    https://docs.customer.io/api/track/#operation/track
+    https://docs.customer.io/cdp/sources/connections/servers/python/#track
+    """
+    try:
+        analytics.write_key = settings.CUSTOMER_IO_TRACK_API_KEY
+        analytics.host = "https://cdp.customer.io"
+
+        # sample identify call usage:
+        # ret = analytics.identify(email)
+        # print("Identify Response:", ret)
+        analytics.track(email, event_name, data)
+        analytics.flush()
+        return True
+    except Exception as e:
+        logger.error(
+            f"customerid.send_event:[{event_name}] Error sending [{email}]-[{data}]-[{str(e)}]"
+        )
+
+        return False
