@@ -32,55 +32,6 @@ class OrderMaterialFee(OrderItem):
         verbose_name = "Transaction Material Fee"
         verbose_name_plural = "Transaction Material Fees"
 
-    @property
-    def customer_price(self):
-        """
-        The customer price is the customer rate times the quantity.
-        Unless rate_includes_quantity is True, then the customer price is the total price of all the units.
-        """
-        if self.rate_includes_quantity:
-            return self.customer_rate if self.customer_rate else None
-        else:
-            return (
-                self.customer_rate * self.quantity
-                if self.customer_rate and self.quantity
-                else None
-            )
-
-    @property
-    def seller_price(self):
-        """
-        The seller price is the seller rate times the quantity.
-        Unless rate_includes_quantity is True, then the seller price is the total price of all the units.
-        """
-        if self.rate_includes_quantity:
-            return self.seller_rate if self.seller_rate else None
-        else:
-            return (
-                self.seller_rate * self.quantity
-                if self.seller_rate and self.quantity
-                else None
-            )
-
-    @property
-    def platform_fee(self):
-        """
-        The platform fee is the difference between the customer rate and the seller rate.
-        This is the amount the platform takes from the transaction in dollars.
-        """
-        if self.rate_includes_quantity:
-            return (
-                self.customer_rate - self.seller_rate
-                if self.customer_rate and self.seller_rate
-                else None
-            )
-        else:
-            return (
-                (self.customer_rate - self.seller_rate) * self.quantity
-                if self.customer_rate and self.seller_rate
-                else None
-            )
-
 
 @receiver(pre_save, sender=OrderMaterialFee)
 def pre_save_order_material_fee(sender, instance: OrderMaterialFee, **kwargs):
@@ -94,8 +45,8 @@ def pre_save_order_material_fee(sender, instance: OrderMaterialFee, **kwargs):
         if instance.rate_includes_quantity:
             instance.rate_includes_quantity = False
             # Update customer_rate and seller_rate to be the price per unit
-            instance.customer_rate = instance.customer_rate / instance.quantity
-            instance.seller_rate = instance.seller_rate / instance.quantity
+            instance.customer_rate = instance.customer_rate / instance.quantity_decimal
+            instance.seller_rate = instance.seller_rate / instance.quantity_decimal
     else:
         # 'quantity_decimal' is not a whole number. Set 'quantity' to 1.
         instance.quantity = 1
