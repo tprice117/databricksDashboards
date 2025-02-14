@@ -1085,14 +1085,14 @@ def new_order_3(request, main_product):
         else []
     )
     context["field_icons"] = {
-        "product_waste_types": "fa-dumpster",
-        "address": "fa-map-marker-alt",
-        "shift_count": "fa-sync-alt",
-        "schedule_window": "fa-clock",
-        "delivery_date": "fa-calendar-check",
-        "removal_date": "fa-calendar-times",
-        "times_per_week": "fa-calendar-alt",
-        "quantity": "fa-boxes",
+        "product_waste_types": "fas fa-dumpster",
+        "address": "fas fa-map-marker-alt",
+        "shift_count": "fas fa-sync-alt",
+        "schedule_window": "far fa-clock",
+        "delivery_date": "far fa-calendar-check",
+        "removal_date": "far fa-calendar-times",
+        "times_per_week": "far fa-calendar-alt",
+        "quantity": "fas fa-boxes",
     }
     if request.method == "POST":
         user_address_id = request.POST.get("user_address")
