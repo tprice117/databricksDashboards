@@ -5561,10 +5561,14 @@ def notes_swap(
     )
 
     NoteFormset = inlineformset_factory(
-        model,
-        note_model,
+        parent_model=model,
+        model=note_model,
         form=form_class,
         formset=BaseNoteFormset,
+        # The field needs to be specified here, otherwise the fields from previous formsets somehow carry over;
+        # for instance, order_group will be included in the formset for leads after visiting the booking details page.
+        # I'm not sure if this is a bug or intended behavior, but dictating the fields here is an adequate workaround.
+        fields=("text",),
         extra=1,
     )
     formset = NoteFormset(
@@ -5617,8 +5621,9 @@ def notes_swap(
                     messages.info(request, "No changes detected.")
             elif action == "delete":
                 # Handle deletion
-                if lead_note := LeadNote.objects.filter(id=form.instance.id).first():
-                    lead_note.delete()
+                # This assumes there is an id field on the model and note_model
+                if note := note_model.objects.filter(id=form.instance.id).first():
+                    note.delete()
                     messages.success(request, "Notes deleted successfully.")
                 else:
                     messages.error(
