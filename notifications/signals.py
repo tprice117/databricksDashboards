@@ -16,6 +16,7 @@ from api.models import (
     OrderGroup,
     Order,
 )
+from payment_methods.models import PaymentMethod
 
 logger = logging.getLogger(__name__)
 
@@ -293,6 +294,9 @@ def on_user_group_post_save(sender, instance: UserGroup, created, *args, **kwarg
 
     def _send_event():
         try:
+            payment_method_count = PaymentMethod.objects.filter(
+                user_group_id=instance.id
+            ).count()
             # Add user attributes to CustomerIO
             event_data = {
                 "id": str(instance.id),
@@ -313,6 +317,7 @@ def on_user_group_post_save(sender, instance: UserGroup, created, *args, **kwarg
                 "stage": instance.stage,
                 "credit_limit_used": instance.credit_limit_used(),
                 "lifetime_spend": instance.lifetime_spend(),
+                "payment_method_count": payment_method_count,
             }
 
             if hasattr(instance, "legal") and instance.legal:
