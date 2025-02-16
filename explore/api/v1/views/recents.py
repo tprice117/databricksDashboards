@@ -1,30 +1,32 @@
 from django.db.models import Max
 from drf_spectacular.utils import extend_schema
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 
 from api.models import MainProduct, OrderGroup
 from api.serializers import (
     MainProductSerializer,
 )
+from common.utils.pagination import CustomLimitOffsetPagination
 
 
 # Explore page
-class RecentsView(APIView):
+class RecentsView(ListAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = MainProductSerializer
+    pagination_class = CustomLimitOffsetPagination
 
     @extend_schema(
         responses={
-            200: MainProductSerializer(),
+            200: MainProductSerializer(many=True),
         },
     )
-    def get(self, request):
+    def get_queryset(self):
         """Gets the most recently ordered products from the request User."""
         # Get the most recent orders for the user (staff gets all orders)
         most_recent_orders = (
-            OrderGroup.objects.filter(user=request.user).distinct()
-            if not request.user.is_staff
+            OrderGroup.objects.filter(user=self.request.user).distinct()
+            if not self.request.user.is_staff
             else OrderGroup.objects.all()
         )
 
@@ -51,9 +53,4 @@ class RecentsView(APIView):
         main_products = MainProduct.objects.filter(id__in=main_product_ids)
         main_products = sorted(main_products, key=lambda x: preserved_order[x.id])
 
-        # Serialize the main products
-        data = MainProductSerializer(
-            main_products,
-            many=True,
-        ).data
-        return Response(data)
+        return main_products
