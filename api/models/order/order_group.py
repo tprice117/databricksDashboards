@@ -41,6 +41,7 @@ from common.utils import DistanceUtils
 from common.utils.file_field.get_uuid_file_path import get_uuid_file_path
 from common.utils.generate_code import save_unique_code
 from matching_engine.matching_engine import MatchingEngine
+from pricing_engine.pricing_engine import PricingEngine
 
 logger = logging.getLogger(__name__)
 
@@ -173,6 +174,12 @@ class OrderGroup(BaseModel):
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
     estimated_end_date = models.DateField(blank=True, null=True)
+    estimated_value = models.DecimalField(
+        blank=True,
+        null=True,
+        max_digits=18,
+        decimal_places=2,
+    )
     take_rate = models.DecimalField(max_digits=18, decimal_places=2, default=30)
     tonnage_quantity = models.IntegerField(blank=True, null=True)
     times_per_week = models.DecimalField(
@@ -791,6 +798,15 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
 
         # Convert any Leads that are associated with this OrderGroup's UserAddress.
         LeadUtils.convert_customer_leads(instance.user_address)
+
+        instance.estimated_value = PricingEngine.get_price(
+            user_address=instance.user_address,
+            seller_product_seller_location=instance.seller_product_seller_location,
+            waste_type=instance.waste_type,
+            start_date=instance.start_date,
+            end_date=instance.end_date or instance.estimated_end_date,
+            shift_count=instance.shift_count,
+        )
 
     # Generate agreement for the OrderGroup if:
     # 1) The agreement_signed_by or agreement_signed_on is None.
