@@ -11,6 +11,7 @@ from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
 )
 from pricing_engine.pricing_engine import PricingEngine
 from common.utils.json_encoders import DecimalFloatEncoder
+from cart.utils import QuoteUtils
 
 
 class SellerProductSellerLocationPricingView(APIView):
@@ -61,5 +62,23 @@ class SellerProductSellerLocationPricingView(APIView):
         data = PricingEngineResponseSerializer(
             pricing_line_item_groups,
         ).data
+        seller_product_seller_location = serializer.validated_data[
+            "seller_product_seller_location"
+        ]
+        main_product = (
+            seller_product_seller_location.seller_product.product.main_product
+        )
+        price_breakdown = QuoteUtils.get_price_breakdown(
+            data,
+            seller_product_seller_location,
+            main_product,
+            user_group=request.user.user_group,
+        )
+
+        data["breakdown"] = {
+            "other": price_breakdown["other"],
+            "one_time": price_breakdown["one_time"],
+            "rental": price_breakdown["rental_breakdown"],
+        }
 
         return JsonResponse(data, encoder=DecimalFloatEncoder, safe=False)

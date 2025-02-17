@@ -358,6 +358,14 @@
                     <h6 class="text-muted card-subtitle mb-2 mt-2">You will need to pick up this item yourself.</h6>
                 </div>
             </div>
+        {% elif contains_return_order %}
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-body">
+                    <h4 class="card-title">Return Orders<button class="btn btn-link float-end" type="button" data-bs-target="#checkout-orders-modal" data-bs-toggle="modal">Details</button></h4>
+                    <i class="fas fa-exclamation-triangle text-danger">This order contains a RETURN ORDER!</i>
+                    <h6 class="text-muted card-subtitle mb-2 mt-2">You will need to return this item yourself.</h6>
+                </div>
+            </div>
         {% endif %}
         <div class="card" style="margin-top: 20px;">
             <div class="card-body">
@@ -538,9 +546,13 @@
                             </div>
                         </div>
                     </div>
-                    {% if contains_pickup_order %}
+                    {% if contains_pickup_order or contains_return_order %}
                         <hr />
-                        <p>These orders will not be shipped. They will be available for pickup.</p>
+                        {% if contains_return_order %}
+                            <p>These orders will not be picked up. You will need to return them directly to the seller.</p>
+                        {% else %}
+                            <p>These orders will not be shipped. They will be available for pickup.</p>
+                        {% endif %}
                         <div class="card" style="background: var(--bs-card-cap-bg);">
                             <div class="card-body">
                                 <div class="row">
@@ -574,7 +586,11 @@
                                                         {% endif %}
                                                         <p class="mb-1">Service date: {{ item.order.end_date }}</p>
                                                         <p class="mb-1">Order Type: {{ item.order_type }}</p>
-                                                        <p class="mb-1">Pickup at: <a class="card-link" href="https://www.google.com/maps/place/{{ item.order_group.seller_product_seller_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ item.order_group.seller_product_seller_location.seller_location.formatted_address }}</a></p>
+                                                        {% if contains_return_order %}
+                                                            <p class="mb-1">Return to: <a class="card-link" href="https://www.google.com/maps/place/{{ item.order_group.seller_product_seller_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ item.order_group.seller_product_seller_location.seller_location.formatted_address }}</a></p>
+                                                        {% else %}
+                                                            <p class="mb-1">Pickup at: <a class="card-link" href="https://www.google.com/maps/place/{{ item.order_group.seller_product_seller_location.seller_location.formatted_address|urlencode }}" target="_blank">{{ item.order_group.seller_product_seller_location.seller_location.formatted_address }}</a></p>
+                                                        {% endif %}
                                                         {% if user.is_staff %}
                                                             <p class="mb-1">Created by: {% if item.order.created_by %}{{ item.order.created_by.full_name }}{% else %}N/A{% endif%} on {{ item.order.created_on|timezone:"America/Chicago" }} (CT)</p>
                                                         {% endif %}

@@ -8,6 +8,33 @@ from pricing_engine.api.v1.serializers.response.pricing_line_item_group import (
 from pricing_engine.models import PricingLineItem, PricingLineItemGroup
 
 
+class RentalBreakdownPartSerializer(serializers.Serializer):
+    base = serializers.FloatField()
+    rpp_fee = serializers.FloatField(allow_null=True)
+    fuel_fees = serializers.FloatField()
+    estimated_taxes = serializers.FloatField(allow_null=True)
+    subtotal = serializers.FloatField()
+    total = serializers.FloatField()
+
+
+class RentalBreakdownSerializer(serializers.Serializer):
+    day = RentalBreakdownPartSerializer(allow_null=True)
+    week = RentalBreakdownPartSerializer(allow_null=True)
+    month = RentalBreakdownPartSerializer(allow_null=True)
+
+
+class PriceBreakdownPart(serializers.Serializer):
+    fuel_and_environmental = serializers.FloatField()
+    tax = serializers.FloatField()
+    total = serializers.FloatField()
+
+
+class PriceBreakdown(serializers.Serializer):
+    other = PriceBreakdownPart()
+    one_time = PriceBreakdownPart()
+    rental = RentalBreakdownSerializer()
+
+
 class PricingEngineResponseSerializer(serializers.Serializer):
     service = PricingLineItemGroupSerializer(
         read_only=True,
@@ -43,6 +70,7 @@ class PricingEngineResponseSerializer(serializers.Serializer):
         max_digits=10,
         decimal_places=2,
     )
+    breakdown = PriceBreakdown(read_only=True, allow_null=True)
 
     def to_representation(
         self,
