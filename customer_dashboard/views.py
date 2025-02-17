@@ -2741,6 +2741,7 @@ def checkout(request, user_address_id):
     context["show_terms"] = False
     context["is_first_order"] = False
     context["contains_pickup_order"] = False
+    context["contains_return_order"] = False
     for order in orders:
         if order.status == Order.Status.ADMIN_APPROVAL_PENDING:
             context["needs_approval"] = True
@@ -2772,7 +2773,10 @@ def checkout(request, user_address_id):
         context["cart_count"] += 1
         order_id_lst.append(order.id)
         if not order.order_group.is_delivery:
-            context["contains_pickup_order"] = True
+            if order.order_type == Order.Type.RETURN:
+                context["contains_return_order"] = True
+            else:
+                context["contains_pickup_order"] = True
 
     context["discounts"] = context["subtotal"] - context["pre_tax_subtotal"]
     if not context["cart"]:
