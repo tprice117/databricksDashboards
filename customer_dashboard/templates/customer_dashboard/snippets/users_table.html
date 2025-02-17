@@ -81,7 +81,13 @@
                         {% endif %}
                     {% endif %}
                 {% endif %}
-                <td>{{ obj.last_active|timezone:"America/Chicago" }} (CT)</td>
+                <td>
+                    {% if obj.last_active %}
+                        {{ obj.last_active|timezone:"America/Chicago" }} (CT)
+                    {% else %}
+                        <p>Never logged in</p>
+                    {% endif %}
+                </td>
                 <td>{{ obj.date_joined|timezone:"America/Chicago" }} (CT)</td>
             </tr>
         {% endfor %}
