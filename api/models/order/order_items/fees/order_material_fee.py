@@ -62,7 +62,7 @@ def pre_save_order_material_fee(sender, instance: OrderMaterialFee, **kwargs):
     # Since the Stripe Invoice API requires 'quantity' to be an integer, we will
     # set the quantity to 1 if the quantity_decimal is not an whole number.
     instance.quantity_decimal = instance.quantity_decimal or 1
-    if not instance.quantity_decimal % 1 == 0:
+    if instance.quantity_decimal % 1 == 0:
         # 'quantity_decimal' is a whole number. Set 'quantity' to the 'quantity_decimal'
         # value converted to an integer.
         instance.quantity = int(instance.quantity_decimal)
