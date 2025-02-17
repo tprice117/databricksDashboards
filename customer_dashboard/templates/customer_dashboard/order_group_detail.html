@@ -259,9 +259,9 @@
         {% endif %}
       </div>
     </div>
-    <!-- Access Details Form -->
     <div class="row mb-3">
       <div class="col-md-6">
+        <!-- Access Details Form -->
         <div class="card content border-0 mb-3">
           <div class="card-body">
             <p class="mb-3 text-dark">
@@ -289,43 +289,96 @@
             </form>
           </div>
         </div>
-      </div>
-      <!-- Attachments -->
-      <div class="col-md-6">
-        <div class="card content border-0">
-          <div class="card-body text-dark">
-            <div class="flex-row d-flex justify-content-between">
-              <p class="text-dark mb-0">
-                <strong class="me-1">Attachments</strong>
-                {% with filecount=attachments.count %}
-                  <small class="text-subtle fw-light">(<span id="cart-attachments-{{ order_group.id }}">{{ filecount }}</span>)</small>
-                {% endwith %}
-              </p>
-              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#edit-attachments-modal">Edit</button>
-            </div>
-            <!-- Attachments Carousel -->
-            <div id="attachments-carousel" class="carousel slide flex-nowrap">
-              <div id="attachments-carousel-inner" class="carousel-inner d-flex align-items-stretch pt-3" style="padding: 0 40px; height: 142px;">
-                {% for attachment in attachments %}
-                  <div class="carousel-item d-block mx-0 px-1 {% if forloop.first %}active{% endif %}" style="min-width: 126px;">
-                    <div class="card lead-card border-0 w-100 h-100 rounded-4 hover-float">
-                      <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ attachment.file_name }}"></a>
-                      <div class="inner card-img-top d-flex flex-col justify-content-center w-100">{{ attachment.file|render_file|safe }}</div>
-                    </div>
-                  </div>
-                {% endfor %}
+        {% if request.user.is_staff %}
+          <!-- Attachments -->
+          <div class="card content border-0">
+            <div class="card-body text-dark">
+              <div class="flex-row d-flex justify-content-between">
+                <p class="text-dark mb-0">
+                  <strong class="me-1">Attachments</strong>
+                  {% with filecount=attachments.count %}
+                    <small class="text-subtle fw-light">(<span id="cart-attachments-{{ order_group.id }}">{{ filecount }}</span>)</small>
+                  {% endwith %}
+                </p>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#edit-attachments-modal">Edit</button>
               </div>
-              <button class="carousel-control-prev text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
-                <i class="far fa-arrow-left"></i>
-                <span class="visually-hidden">Previous</span>
-              </button>
-              <button class="carousel-control-next text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
-                <i class="far fa-arrow-right"></i>
-                <span class="visually-hidden">Next</span>
-              </button>
+              <!-- Attachments Carousel -->
+              <div id="attachments-carousel" class="carousel slide flex-nowrap">
+                <div id="attachments-carousel-inner" class="carousel-inner d-flex align-items-stretch pt-3" style="padding: 0 40px; height: 142px;">
+                  {% for attachment in attachments %}
+                    <div class="carousel-item d-block mx-0 px-1 {% if forloop.first %}active{% endif %}" style="min-width: 126px;">
+                      <div class="card lead-card border-0 w-100 h-100 rounded-4 hover-float">
+                        <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ attachment.file_name }}"></a>
+                        <div class="inner card-img-top d-flex flex-col justify-content-center w-100">{{ attachment.file|render_file|safe }}</div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+                <button class="carousel-control-prev text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
+                  <i class="fas fa-arrow-left"></i>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
+                  <i class="fas fa-arrow-right"></i>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        {% endif %}
+      </div>
+      <div class="col-md-6">
+        {% if request.user.is_staff %}
+          <!-- Notes -->
+          <div class="card content border-0 mb-3">
+            <div class="card-body" style="max-height: 50vh;">
+              <p class="mb-3 text-dark">
+                <strong>Booking Notes</strong>
+              </p>
+              <div hx-get="{% url 'customer_order_group_notes' order_group.id %}" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#htmx-notes-initial">
+                <div id="htmx-notes-initial" class="htmx-indicator d-flex w-100 justify-content-center">
+                  <div class="spinner-border text-primary m-3" role="status"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <!-- Attachments -->
+          <div class="card content border-0">
+            <div class="card-body text-dark">
+              <div class="flex-row d-flex justify-content-between">
+                <p class="text-dark mb-0">
+                  <strong class="me-1">Attachments</strong>
+                  {% with filecount=attachments.count %}
+                    <small class="text-subtle fw-light">(<span id="cart-attachments-{{ order_group.id }}">{{ filecount }}</span>)</small>
+                  {% endwith %}
+                </p>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#edit-attachments-modal">Edit</button>
+              </div>
+              <!-- Attachments Carousel -->
+              <div id="attachments-carousel" class="carousel slide flex-nowrap">
+                <div id="attachments-carousel-inner" class="carousel-inner d-flex align-items-stretch pt-3" style="padding: 0 40px; height: 142px;">
+                  {% for attachment in attachments %}
+                    <div class="carousel-item d-block mx-0 px-1 {% if forloop.first %}active{% endif %}" style="min-width: 126px;">
+                      <div class="card lead-card border-0 w-100 h-100 rounded-4 hover-float">
+                        <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none text-reset overlay" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ attachment.file_name }}"></a>
+                        <div class="inner card-img-top d-flex flex-col justify-content-center w-100">{{ attachment.file|render_file|safe }}</div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+                <button class="carousel-control-prev text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
+                  <i class="fas fa-arrow-left"></i>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next text-primary bg-white" style="width: 36px; height: 36px; border-radius: 50%; top: 40%;" type="button" href="#attachments-carousel" data-bs-target="#attachments-carousel">
+                  <i class="fas fa-arrow-right"></i>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        {% endif %}
       </div>
     </div>
     <!-- Related Bookings Table -->

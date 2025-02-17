@@ -44,33 +44,33 @@
     <hr class="sidebar-divider my-0" />
     <ul class="navbar-nav text-light" id="accordionSidebar">
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_home' %} active{% endif %}" href="{% url 'customer_home' %}"><i class="far fa-globe-americas"></i><span>Explore</span></a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_home' %} active{% endif %}" href="{% url 'customer_home' %}"><i class="fas fa-globe-americas"></i><span>Explore</span></a>
       </li>
       {% if request.user.is_staff %}
         <li class="nav-item">
-          <a class="nav-link{% if request.resolver_match.url_name == 'customer_leads' %} active{% endif %}" href="{% url 'customer_leads' %}"><i class="far fa-magic"></i><span>Leads</span></a>
+          <a class="nav-link{% if request.resolver_match.url_name == 'customer_leads' %} active{% endif %}" href="{% url 'customer_leads' %}"><i class="fas fa-magic"></i><span>Leads</span></a>
         </li>
       {% endif %}
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_cart' %} active{% endif %}" href="{% url 'customer_cart' %}"><i class="far fa-shopping-cart"></i><span>Cart</span></a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_cart' %} active{% endif %}" href="{% url 'customer_cart' %}"><i class="fas fa-shopping-cart"></i><span>Cart</span></a>
       </li>
       <li class="nav-item"></li>
       <li class="nav-item">
         <a class="nav-link{% if 'booking' in request.path %} active{% endif %}" href="{% url 'customer_order_groups' %}"><i class="far fa-calendar-check"></i><span>Bookings</span></a>
       </li>
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_invoices' %} active{% endif %}" href="{% url 'customer_invoices' %}"><i class="far fa-file-invoice-dollar"></i><span>Invoices</span></a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_invoices' %} active{% endif %}" href="{% url 'customer_invoices' %}"><i class="fas fa-file-invoice-dollar"></i><span>Invoices</span></a>
       </li>
       {% if request.user.is_staff %}
         <li class="nav-item">
-          <a class="nav-link{% if request.resolver_match.url_name == 'customer_companies' %} active{% endif %}" href="{% url 'customer_companies' %}"><i class="far fa-university"></i><span>Companies</span></a>
+          <a class="nav-link{% if request.resolver_match.url_name == 'customer_companies' %} active{% endif %}" href="{% url 'customer_companies' %}"><i class="fas fa-university"></i><span>Companies</span></a>
         </li>
       {% endif %}
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_locations' %} active{% endif %}" href="{% url 'customer_locations' %}"><i class="far fa-map"></i><span>Locations</span></a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_locations' %} active{% endif %}" href="{% url 'customer_locations' %}"><i class="fas fa-map-marked-alt"></i><span>Locations</span></a>
       </li>
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_users' %} active{% endif %}" href="{% url 'customer_users' %}"><i class="far fa-user-friends"></i><span>Users</span></a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_users' %} active{% endif %}" href="{% url 'customer_users' %}"><i class="fas fa-user-friends"></i><span>Users</span></a>
       </li>
       {% if request.user.is_staff %}
         <li class="nav-item">
@@ -78,7 +78,7 @@
         </li>
       {% endif %}
       <li class="nav-item">
-        <a class="nav-link{% if request.resolver_match.url_name == 'customer_reports' %} active{% endif %}" href="{% url 'customer_reports' %}"><i class="far fa-chart-line"></i><span>Reports</span></a>
+        <a class="nav-link{% if request.resolver_match.url_name == 'customer_reports' %} active{% endif %}" href="{% url 'customer_reports' %}"><i class="fas fa-chart-line"></i><span>Reports</span></a>
       </li>
       {% if user.type == 'ADMIN' and user_group %}
         {% url 'customer_company' as customer_company %}
