@@ -12,16 +12,22 @@ class OrderMaterialFee(OrderItem):
     # as a decimal number. This field is used to store the quantity as a decimal number
     # since the Stripe Invoice API requires the 'quantity' field to be an integer.
     quantity_decimal = models.DecimalField(
+        null=True,
+        blank=True,
         max_digits=18,
         decimal_places=4,
         help_text="The quantity of the material fee.",
     )
     customer_rate_decimal = models.DecimalField(
+        null=True,
+        blank=True,
         max_digits=18,
         decimal_places=2,
         help_text="The rate the customer is charged for this item (ex: 25.00)",
     )
     seller_rate_decimal = models.DecimalField(
+        null=True,
+        blank=True,
         max_digits=18,
         decimal_places=2,
         help_text="The rate the seller is paid for this item (ex: 20.00)",
