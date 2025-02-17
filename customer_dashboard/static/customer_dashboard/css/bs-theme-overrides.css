@@ -77,3 +77,10 @@
   --bs-btn-disabled-border-color: #044162;
 }
 
+.pagination {
+  --bs-pagination-color: rgb(var(--bs-primary-rgb));
+  --bs-pagination-hover-color: #016F6E;
+  --bs-pagination-focus-color: #016967;
+  --bs-pagination-active-bg: #016967;
+  --bs-pagination-active-border-color: #016967;
+}
