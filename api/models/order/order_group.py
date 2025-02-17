@@ -42,9 +42,6 @@ from common.utils.file_field.get_uuid_file_path import get_uuid_file_path
 from common.utils.generate_code import save_unique_code
 from matching_engine.matching_engine import MatchingEngine
 from pricing_engine.pricing_engine import PricingEngine
-from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
-    PricingEngineResponseSerializer,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -801,6 +798,9 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
 
         # Convert any Leads that are associated with this OrderGroup's UserAddress.
         LeadUtils.convert_customer_leads(instance.user_address)
+        from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+            PricingEngineResponseSerializer,
+        )
 
         if instance.end_date or instance.estimated_end_date:
             estimated_value = PricingEngine.get_price(
