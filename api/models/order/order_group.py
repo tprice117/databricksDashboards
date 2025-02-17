@@ -42,6 +42,9 @@ from common.utils.file_field.get_uuid_file_path import get_uuid_file_path
 from common.utils.generate_code import save_unique_code
 from matching_engine.matching_engine import MatchingEngine
 from pricing_engine.pricing_engine import PricingEngine
+from pricing_engine.api.v1.serializers.response.pricing_engine_response import (
+    PricingEngineResponseSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -799,14 +802,18 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
         # Convert any Leads that are associated with this OrderGroup's UserAddress.
         LeadUtils.convert_customer_leads(instance.user_address)
 
-        instance.estimated_value = PricingEngine.get_price(
-            user_address=instance.user_address,
-            seller_product_seller_location=instance.seller_product_seller_location,
-            waste_type=instance.waste_type,
-            start_date=instance.start_date,
-            end_date=instance.end_date or instance.estimated_end_date,
-            shift_count=instance.shift_count,
-        )
+        if instance.end_date or instance.estimated_end_date:
+            estimated_value = PricingEngine.get_price(
+                user_address=instance.user_address,
+                seller_product_seller_location=instance.seller_product_seller_location,
+                waste_type=instance.waste_type,
+                start_date=instance.start_date,
+                end_date=instance.end_date or instance.estimated_end_date,
+                shift_count=instance.shift_count,
+            )
+            instance.estimated_value = PricingEngineResponseSerializer(
+                estimated_value
+            ).data["total"]
 
     # Generate agreement for the OrderGroup if:
     # 1) The agreement_signed_by or agreement_signed_on is None.
