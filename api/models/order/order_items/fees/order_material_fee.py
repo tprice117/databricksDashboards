@@ -59,6 +59,8 @@ def pre_save_order_material_fee(sender, instance: OrderMaterialFee, **kwargs):
         # 'quantity_decimal' is a whole number. Set 'quantity' to the 'quantity_decimal'
         # value converted to an integer.
         instance.quantity = int(instance.quantity_decimal)
+        instance.customer_rate = instance.customer_rate_decimal
+        instance.seller_rate = instance.seller_rate_decimal
     else:
         # 'quantity_decimal' is not a whole number. Set 'quantity' to 1.
         instance.quantity = 1
@@ -68,4 +70,4 @@ def pre_save_order_material_fee(sender, instance: OrderMaterialFee, **kwargs):
         instance.customer_rate = (
             instance.customer_rate_decimal * instance.quantity_decimal
         )
-        instance.seller_rate = instance.seller_rate_decimal * instance.quantity_decima
+        instance.seller_rate = instance.seller_rate_decimal * instance.quantity_decimal
