@@ -1,2 +1,0 @@
-from .email_notification import EmailNotificationAdmin
-from .push_notification import PushNotificationAdmin

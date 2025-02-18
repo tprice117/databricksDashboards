@@ -1,8 +1,0 @@
-{% for seller in sellers %}
-    <tr>
-        <td>{{ seller.name }}</td>
-        <td>
-            <span id="accept-button-container"><a class="btn btn-success" href="{% url 'supplier_impersonation_start' %}?seller_id={{ seller.id }}">Select</a></span>
-        </td>
-    </tr>
-{% endfor %}

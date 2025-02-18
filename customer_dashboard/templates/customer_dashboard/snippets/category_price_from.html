@@ -1,8 +1,0 @@
-{% load humanize %}
-<p style="margin-bottom: 0px;">
-    {% if price_from %}
-        Starting at <strong>${{ price_from|stringformat:'.2f'|intcomma }}</strong>
-    {% else %}
-        Starting at <strong>$225.00</strong>
-    {% endif %}
-</p>

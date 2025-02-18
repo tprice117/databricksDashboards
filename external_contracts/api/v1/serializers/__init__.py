@@ -1,2 +1,0 @@
-from .external_contract import ExternalContractSerializer
-from .external_contract_attachment import ExternalContractAttachmentSerializer
