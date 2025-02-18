@@ -68,7 +68,6 @@ def process_webhook_event(event: stripe.Event):
 def stripe_webhook(request):
     # You can find your endpoint's secret in your webhook settings
     # endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
-    payload = request.body
     # sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
 
     payload = request.body
