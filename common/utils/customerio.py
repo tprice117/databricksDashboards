@@ -308,7 +308,7 @@ def customerio_webhook(request):
         event = json.loads(request_data)
         logger.info(f"customerid.webhook:[{event}]")
         if event["object_type"] == "push":
-            email = event["identifiers"]["email"]
+            email = event["data"]["identifiers"]["email"]
             user = User.objects.filter(email=email).first()
             if not user:
                 logger.error(
