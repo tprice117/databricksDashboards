@@ -1,12 +1,30 @@
 import json
 import requests
 
+from django.http import HttpResponse
+from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
 from customerio import analytics
 from django.conf import settings
 from common.utils.json_encoders import DecimalFloatEncoder
+from api.models import User
+from notifications.models import PushNotification, PushNotificationTo
 import logging
 
 logger = logging.getLogger(__name__)
+
+CUSTOMERIO_WHITE_LISTED_IPS = [
+    "35.188.196.183",
+    "104.198.177.219",
+    "104.154.232.87",
+    "130.211.229.195",
+    "104.198.221.24",
+    "104.197.27.15",
+    "35.194.9.154",
+    "104.154.144.51",
+    "104.197.210.12",
+    "35.225.6.73",
+]
 
 
 def send_email(
@@ -210,3 +228,76 @@ def send_event(
         )
 
         return False
+
+
+@csrf_exempt
+def customerio_webhook(request):
+    """This processes a webhook event from Customer.io.
+    https://customer.io/docs/api/webhooks/
+    https://docs.customer.io/api/webhooks/#operation/reportingWebhook
+    """
+    try:
+        # Get requesting IP
+        # REMOTE_ADDR: will be the load balancer, If using load balancer use HTTP_X_CLUSTER_CLIENT_IP
+        ipaddress = request.META.get("REMOTE_ADDR", "0.0.0.0")
+        # remote_ip = request.META.get("HTTP_X_FORWARDED_FOR", None)
+        if ipaddress not in CUSTOMERIO_WHITE_LISTED_IPS:
+            logger.error(
+                f"customerid.webhook:[Error processing webhook] Unauthorized IP [{ipaddress}]"
+            )
+            return HttpResponse(status=401)
+        # process event
+        event = json.loads(request.body)
+        # TODO: Add/Update data (PushNotification) in the database based on the event.
+        logger.info(f"customerid.webhook:[{event}]")
+        email = event["identifiers"]["email"]
+        user = User.objects.filter(email=email).first()
+        if not user:
+            logger.error(
+                f"customerid.customerio_webhook:[Error processing webhook] User not found [{email}]"
+            )
+            return HttpResponse(status=200)
+        delivery_id = event["delivery_id"]
+        # if delivery_id:
+        #     # Update the PushNotification with the delivery_id.
+        #     PushNotificationTo.objects.update_or_create(
+        #         delivery_id=delivery_id,
+        #         defaults={
+        #             "delivery_id": delivery_id,
+        #             "send_error": event.get("send_error"),
+        #             "is_read": event.get("is_read"),
+        #             "read_at": event.get("read_at"),
+        #         },
+        #     )
+        #     push_notification_to = PushNotificationTo.objects.filter(
+        #         delivery_id=delivery_id
+        #     )
+        #     if push_notification_to.exists():
+        #         push_notification_to = push_notification_to.first()
+        #         # push_notification_to.read()
+        #     else:
+        #         with transaction.atomic():
+        #             # Create PushNotification and PushNotificationTo
+        #             push_notification = PushNotification.objects.create(
+        #                 title=event.get("title"),
+        #                 message=event.get("message"),
+        #                 template_id=event["data"].get("broadcast_id"),
+        #                 image=event.get("image"),
+        #                 link=event.get("link"),
+        #                 sent_at=event.get("timestamp"),
+        #             )
+        #             push_notification_to = PushNotificationTo.objects.create(
+        #                 push_notification=push_notification,
+        #                 user_id=event.get("user_id"),
+        #                 delivery_id=delivery_id,
+        #                 send_error=event.get("send_error"),
+        #                 is_read=event.get("is_read"),
+        #                 read_at=event.get("read_at"),
+        #             )
+        return HttpResponse(status=200)
+    except Exception as e:
+        logger.error(
+            f"customerid.customerio_webhook:[Error processing webhook] Error sending [{event}]-[{str(e)}]"
+        )
+
+        return HttpResponse(status=500)

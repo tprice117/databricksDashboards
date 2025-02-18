@@ -185,6 +185,8 @@ urlpatterns = [
     path("billing/", include("billing.urls")),
     # API App URLs.
     path("api/", include("api.urls")),
+    # Common App URLs.
+    path("common/", include("common.urls")),
     # Checkout.
     path("notifications/", include("notifications.urls")),
     # Dashboard URLs.
