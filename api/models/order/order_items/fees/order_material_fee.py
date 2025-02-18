@@ -12,22 +12,16 @@ class OrderMaterialFee(OrderItem):
     # as a decimal number. This field is used to store the quantity as a decimal number
     # since the Stripe Invoice API requires the 'quantity' field to be an integer.
     quantity_decimal = models.DecimalField(
-        null=True,
-        blank=True,
         max_digits=18,
         decimal_places=4,
         help_text="The quantity of the material fee.",
     )
     customer_rate_decimal = models.DecimalField(
-        null=True,
-        blank=True,
         max_digits=18,
         decimal_places=2,
         help_text="The rate the customer is charged for this item (ex: 25.00)",
     )
     seller_rate_decimal = models.DecimalField(
-        null=True,
-        blank=True,
         max_digits=18,
         decimal_places=2,
         help_text="The rate the seller is paid for this item (ex: 20.00)",
@@ -61,9 +55,6 @@ class OrderMaterialFee(OrderItem):
 def pre_save_order_material_fee(sender, instance: OrderMaterialFee, **kwargs):
     # Since the Stripe Invoice API requires 'quantity' to be an integer, we will
     # set the quantity to 1 if the quantity_decimal is not an whole number.
-    instance.quantity_decimal = instance.quantity_decimal or 1
-    instance.customer_rate_decimal = instance.customer_rate_decimal or 0
-    instance.seller_rate_decimal = instance.seller_rate_decimal or 0
     if instance.quantity_decimal % 1 == 0:
         # 'quantity_decimal' is a whole number. Set 'quantity' to the 'quantity_decimal'
         # value converted to an integer.
