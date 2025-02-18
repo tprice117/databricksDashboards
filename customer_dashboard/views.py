@@ -1738,7 +1738,7 @@ def cart(request):
                                     request.POST.get("removal_date"),
                                     "%Y-%m-%d",
                                 ).date()
-                                order_group.end_date = removal_date
+                                order_group.estimated_end_date = removal_date
                             else:
                                 raise Exception(
                                     "Removal date is required for multi-step rentals."
