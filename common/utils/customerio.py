@@ -337,13 +337,17 @@ def customerio_webhook(request):
                         title = content["android"]["message"]["data"]["title"]
                         message = content["android"]["message"]["data"]["body"]
                         image = content["android"]["message"]["data"]["image"]
+                        custom_data = {}
+                        if image:
+                            custom_data["image"] = image
                         link = content["android"]["message"]["data"]["link"]
                         push_notification = PushNotification.objects.create(
                             title=title,
                             message=message,
                             template_id=template_id,
-                            image=image,
+                            # image=image,
                             link=link,
+                            custom_data=json.dumps(custom_data),
                             sent_at=timezone.make_aware(
                                 timezone.datetime.fromtimestamp(event.get("timestamp"))
                             ),
