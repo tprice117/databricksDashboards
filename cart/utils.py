@@ -928,6 +928,7 @@ class CartUtils:
             }
         )
 
+        # TODO: Look into using union(), intersection(), or | here
         # Process each order
         for order in chain(
             parent_orders,

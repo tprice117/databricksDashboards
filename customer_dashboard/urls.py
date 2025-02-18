@@ -135,7 +135,11 @@ urlpatterns = [
         views.company_new_user,
         name="customer_new_company_user",
     ),
+    ## INVOICES ##
     path("customer/invoices/", views.invoices, name="customer_invoices"),
+    path(
+        "customer/invoices/chart/", views.invoices_chart, name="customer_invoices_chart"
+    ),
     path(
         "customer/invoice/<uuid:invoice_id>/",
         views.invoice_detail,

@@ -5,6 +5,7 @@ import json
 import logging
 import time
 import uuid
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 from functools import wraps
 from typing import List, Union
@@ -38,7 +39,7 @@ from django.db.models import (
     Count,
     Max,
 )
-from django.db.models.functions import Concat, Round, Coalesce
+from django.db.models.functions import Concat, Round, Coalesce, TruncMonth
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -232,6 +233,82 @@ def get_dashboard_chart_data(data_by_month: List[int]):
         },
     }
     return dashboard_chart
+
+
+def get_invoice_chart_data(
+    invoices,
+    num_months=6,
+):
+    today = timezone.now()
+    month_formatter = "%B, %Y"
+
+    # Get Chart Data
+    past_six_months = [
+        (today - relativedelta(months=i)).strftime(month_formatter)
+        for i in range(num_months - 1, -1, -1)
+    ]
+    # Colors of each bar in the chart
+    colors = ["#D0E8FFB3", "#FFE9D0B3", "#FED0EEB3"]
+    datasets = [
+        {
+            "label": category,
+            "backgroundColor": colors.pop(0),
+            "data": [
+                {
+                    month.strftime(month_formatter): total
+                    # Iterate over query results
+                    for month, total in invoices.filter(
+                        status=Invoice.Status.OPEN,
+                        due_date__lte=(today - datetime.timedelta(days=days)),
+                        due_date__gt=today - datetime.timedelta(days=days + 30)
+                        if category != "61+"
+                        else Q(),
+                    )
+                    .annotate(month=TruncMonth("due_date"))
+                    .values("month")
+                    .filter(month__gte=today - relativedelta(months=num_months))
+                    .annotate(total=Sum("amount_due"))
+                    .order_by("month")
+                    .values_list("month", "total")
+                }.get(month, 0)
+                for month in past_six_months
+            ],
+        }
+        for category, days in [("0-30 Days", 0), ("31-60", 30), ("61+", 60)]
+    ]
+
+    chart_data = {
+        "type": "bar",
+        "data": {
+            "labels": past_six_months,
+            "datasets": datasets,
+        },
+        "options": {
+            "title": {
+                "display": True,
+                "text": "AR Aging",
+                "fontStyle": "bold",
+            },
+            "barValueSpacing": 20,
+            "scales": {
+                "yAxes": [
+                    {
+                        "scaleLabel": {
+                            "display": True,
+                            "labelString": "Total Amount Due",
+                        },
+                        "ticks": {
+                            "beginAtZero": True,
+                        },
+                    }
+                ]
+            },
+            "responsive": True,
+            "maintainAspectRatio": False,
+        },
+    }
+
+    return chart_data
 
 
 def is_impersonating(request: HttpRequest) -> bool:
@@ -4307,10 +4384,25 @@ def new_user(request):
 
 
 @login_required(login_url="/admin/login/")
+def invoices_chart(request):
+    if request.headers.get("HX-Request"):
+        context = get_user_context(request)
+        invoices = get_invoice_objects(
+            request, context["user"], context["user_group"]
+        ).filter(
+            status=Invoice.Status.OPEN,
+        )
+        context["chart_data"] = get_invoice_chart_data(invoices)
+        return render(request, "customer_dashboard/snippets/chart.html", context)
+    else:
+        return HttpResponse(status=404)
+
+
+@login_required(login_url="/admin/login/")
 @catch_errors()
 def invoices(request):
     context = get_user_context(request)
-    pagination_limit = 100
+    pagination_limit = 50
     page_number = 1
     if request.GET.get("p", None) is not None:
         page_number = request.GET.get("p")
@@ -4318,12 +4410,15 @@ def invoices(request):
     location_id = request.GET.get("location_id", None)
     query_params = request.GET.copy()
     search_q = request.GET.get("q", None)
+    start_date = request.GET.get("start_date", None)
+    end_date = request.GET.get("end_date", None)
     # This is an HTMX request, so respond with html snippet
     if request.headers.get("HX-Request"):
         tab = request.GET.get("tab", None)
         context["tab"] = tab
 
         invoices = get_invoice_objects(request, context["user"], context["user_group"])
+        invoices.select_related("user_address")
         if location_id:
             invoices = invoices.filter(user_address_id=location_id)
         if date:
@@ -4340,8 +4435,14 @@ def invoices(request):
                 | Q(user_address__postal_code__icontains=search_q)
                 | Q(user_address__project_id__icontains=search_q)
             )
+        if start_date:
+            invoices = invoices.filter(due_date__date__gte=start_date)
+        if end_date:
+            invoices = invoices.filter(due_date__date__lte=end_date)
         invoices = invoices.order_by(F("due_date").desc(nulls_last=True))
+
         today = timezone.now().today().date()
+
         if tab:
             if tab == "past_due":
                 # Get all invoices that are past due.
@@ -4357,25 +4458,6 @@ def invoices(request):
                     )
                 else:
                     invoices = invoices.filter(status=tab)
-        else:
-            # Get all invoices. Calculate the total paid, past due, and total open invoices.
-            context["total_paid"] = 0
-            context["past_due"] = 0
-            context["total_open"] = 0
-            for invoice in invoices:
-                amount_paid = invoice.amount_paid
-                amount_remaining = invoice.amount_remaining
-                # Manually setting Stripe invoice to paid does not update the amount_paid, so assume it is paid.
-                if (
-                    invoice.status == Invoice.Status.PAID
-                    or invoice.status == Invoice.Status.VOID
-                ):
-                    amount_paid = invoice.total
-                    amount_remaining = 0
-                context["total_paid"] += amount_paid
-                context["total_open"] += amount_remaining
-                if invoice.due_date and invoice.due_date.date() < today:
-                    context["past_due"] += amount_remaining
 
         paginator = Paginator(invoices, pagination_limit)
         page_obj = paginator.get_page(page_number)

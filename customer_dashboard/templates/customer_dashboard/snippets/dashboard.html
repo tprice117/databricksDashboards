@@ -1,138 +1,136 @@
 {% load static %}
 {% load humanize %}
-{% if chart_data %}
-    {{ chart_data|json_script:'chart_data-json' }}
-{% endif %}
+{% include 'customer_dashboard/snippets/chart.html' %}
 <div class="row">
-    <div class="col-md-6 col-xl-3 mb-4">
-        <div class="card shadow border-start-info py-2">
-            <div class="card-body">
-                <div class="row align-items-center no-gutters">
-                    <div class="col me-2">
-                        <div class="text-uppercase text-info fw-bold text-xs mb-1">
-                            <span><strong><span style="color: rgb(255, 15, 0);">Spending</span></strong></span>
-                        </div>
-                        <div class="row g-0 align-items-center">
-                            <div class="col-auto">
-                                <div class="text-dark fw-bold h5 mb-0 me-3">
-                                    <span><strong>${{ earnings|stringformat:'.2f'|intcomma }}</strong></span>
-                                    <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+  <div class="col-md-6 col-xl-3 mb-4">
+    <div class="card shadow border-start-info py-2">
+      <div class="card-body">
+        <div class="row align-items-center no-gutters">
+          <div class="col me-2">
+            <div class="text-uppercase text-info fw-bold text-xs mb-1">
+              <span><strong><span style="color: rgb(255, 15, 0);">Spending</span></strong></span>
             </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3 mb-4">
-        <div class="card shadow border-start-warning py-2">
-            <div class="card-body">
-                <div class="row align-items-center no-gutters">
-                    <div class="col me-2">
-                        <div class="text-uppercase text-warning fw-bold text-xs mb-1">
-                            <span><span style="color: rgb(1, 131, 129);">Pending Requests</span></span>
-                        </div>
-                        <div class="text-dark fw-bold h5 mb-0">
-                            <span>{{ pending_count }}</span>
-                            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-exclamation fa-2x text-gray-300"></i>
-                    </div>
+            <div class="row g-0 align-items-center">
+              <div class="col-auto">
+                <div class="text-dark fw-bold h5 mb-0 me-3">
+                  <span><strong>${{ earnings|stringformat:'.2f'|intcomma }}</strong></span>
+                  <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                 </div>
+              </div>
             </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+          </div>
         </div>
+      </div>
     </div>
-    <div class="col-md-6 col-xl-3 mb-4">
-        <div class="card shadow border-start-success py-2">
-            <div class="card-body">
-                <div class="row align-items-center no-gutters">
-                    <div class="col me-2">
-                        <div class="text-uppercase text-success fw-bold text-xs mb-1">
-                            <span><strong><span style="color: rgb(152, 45, 148);">Locations</span></strong></span>
-                        </div>
-                        <div class="text-dark fw-bold h5 mb-0">
-                            <span>{{ location_count }}</span>
-                            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-dumpster fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+  </div>
+  <div class="col-md-6 col-xl-3 mb-4">
+    <div class="card shadow border-start-warning py-2">
+      <div class="card-body">
+        <div class="row align-items-center no-gutters">
+          <div class="col me-2">
+            <div class="text-uppercase text-warning fw-bold text-xs mb-1">
+              <span><span style="color: rgb(1, 131, 129);">Pending Requests</span></span>
             </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3 mb-4">
-        <div class="card shadow border-start-primary py-2">
-            <div class="card-body">
-                <div class="row align-items-center no-gutters">
-                    <div class="col me-2">
-                        <div class="text-uppercase text-primary fw-bold text-xs mb-1">
-                            <span>Users</span>
-                        </div>
-                        <div class="text-dark fw-bold h5 mb-0">
-                            <span>{{ user_count }}</span>
-                            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-user-friends fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+            <div class="text-dark fw-bold h5 mb-0">
+              <span>{{ pending_count }}</span>
+              <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
             </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-exclamation fa-2x text-gray-300"></i>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+  <div class="col-md-6 col-xl-3 mb-4">
+    <div class="card shadow border-start-success py-2">
+      <div class="card-body">
+        <div class="row align-items-center no-gutters">
+          <div class="col me-2">
+            <div class="text-uppercase text-success fw-bold text-xs mb-1">
+              <span><strong><span style="color: rgb(152, 45, 148);">Locations</span></strong></span>
+            </div>
+            <div class="text-dark fw-bold h5 mb-0">
+              <span>{{ location_count }}</span>
+              <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-dumpster fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-3 mb-4">
+    <div class="card shadow border-start-primary py-2">
+      <div class="card-body">
+        <div class="row align-items-center no-gutters">
+          <div class="col me-2">
+            <div class="text-uppercase text-primary fw-bold text-xs mb-1">
+              <span>Users</span>
+            </div>
+            <div class="text-dark fw-bold h5 mb-0">
+              <span>{{ user_count }}</span>
+              <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-user-friends fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="row">
-    <div class="col-lg-12 col-xl-12 col-xxl-12">
-        <div class="card shadow mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="text-primary fw-bold m-0">Spending by Month</h6>
-                <div class="dropdown no-arrow">
-                    <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-ellipsis-v text-gray-400"></i></button>
-                    <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
-                        <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
-                        <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    {% comment %} <canvas data-bss-chart="{{ chart_data|escape }}"></canvas> {% endcomment %}
-                    {% if chart_data %}
-                        <canvas id="myChart"></canvas>
-                    {% else %}
-                        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                    {% endif %}
-                </div>
-            </div>
+  <div class="col-lg-12 col-xl-12 col-xxl-12">
+    <div class="card shadow mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="text-primary fw-bold m-0">Spending by Month</h6>
+        <div class="dropdown no-arrow">
+          <button class="btn btn-link btn-sm dropdown-toggle" aria-expanded="false" data-bs-toggle="dropdown" type="button"><i class="fas fa-ellipsis-v text-gray-400"></i></button>
+          <div class="dropdown-menu shadow dropdown-menu-end animated--fade-in">
+            <p class="text-center dropdown-header">dropdown header:</p><a class="dropdown-item" href="#">&nbsp;Action</a><a class="dropdown-item" href="#">&nbsp;Another action</a>
+            <div class="dropdown-divider"></div><a class="dropdown-item" href="#">&nbsp;Something else here</a>
+          </div>
         </div>
+      </div>
+      <div class="card-body">
+        <div class="chart-area">
+          {% comment %} <canvas data-bss-chart="{{ chart_data|escape }}"></canvas> {% endcomment %}
+          {% if chart_data %}
+            <canvas id="myChart"></canvas>
+          {% else %}
+            <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+          {% endif %}
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 <div class="row">
-    <div class="col-lg-12 col-xxl-12 mb-4">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="text-primary fw-bold m-0">Spending by Category</h6>
-            </div>
-            <div class="card-body">
-                <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
-                {% for category, earning in earnings_by_category.items %}
-                    <h4 class="small fw-bold">{{ category }}<span class="float-end">${{ earning.amount|stringformat:'.2f'|intcomma }}</span></h4>
-                    <div class="progress mb-4">
-                        <div class="progress-bar {% cycle 'bg-danger' 'bg-warning' 'bg-primary' 'bg-info' 'bg-success' %}" aria-valuenow="{{ earning.percent }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ earning.percent }}%;">{{ earning.percent }}%</div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="card shadow mb-4">
-            <ul class="list-group list-group-flush"></ul>
-        </div>
+  <div class="col-lg-12 col-xxl-12 mb-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="text-primary fw-bold m-0">Spending by Category</h6>
+      </div>
+      <div class="card-body">
+        <span class="htmx-indicator" id="htmx-indicator-loading-status"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
+        {% for category, earning in earnings_by_category.items %}
+          <h4 class="small fw-bold">{{ category }}<span class="float-end">${{ earning.amount|stringformat:'.2f'|intcomma }}</span></h4>
+          <div class="progress mb-4">
+            <div class="progress-bar {% cycle 'bg-danger' 'bg-warning' 'bg-primary' 'bg-info' 'bg-success' %}" aria-valuenow="{{ earning.percent }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ earning.percent }}%;">{{ earning.percent }}%</div>
+          </div>
+        {% endfor %}
+      </div>
     </div>
+    <div class="card shadow mb-4">
+      <ul class="list-group list-group-flush"></ul>
+    </div>
+  </div>
 </div>

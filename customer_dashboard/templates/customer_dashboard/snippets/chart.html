@@ -1,0 +1,3 @@
+{% if chart_data %}
+  {{ chart_data|json_script:'chart_data-json' }}
+{% endif %}
