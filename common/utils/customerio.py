@@ -347,7 +347,7 @@ def customerio_webhook(request):
                             template_id=template_id,
                             # image=image,
                             link=link,
-                            custom_data=json.dumps(custom_data),
+                            custom_data=custom_data,
                             sent_at=timezone.make_aware(
                                 timezone.datetime.fromtimestamp(event.get("timestamp"))
                             ),
