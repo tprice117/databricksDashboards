@@ -24,11 +24,10 @@
                     <th>Percentage</th>
                 {% else %}
                     <th>Last Order</th>
-                    <th class="header-sort-icon-down">Created</th>
                 {% endif %}
-            {% else %}
-                <th>Created</th>
             {% endif %}
+            <th class="header-sort-icon-down">Last Active</th>
+            <th class="header-sort-icon-down">Created</th>
         </tr>
     </thead>
     <tbody>
@@ -80,11 +79,16 @@
                                 <span class="htmx-indicator"><img class="svg-loader" src="{% static 'supplier_dashboard/svg-loaders/bars-blue.svg' %}" /></span>
                             </td>
                         {% endif %}
-                        <td>{{ obj.date_joined|timezone:"America/Chicago" }} (CT)</td>
                     {% endif %}
-                {% else %}
-                    <td>{{ obj.date_joined|timezone:"America/Chicago" }} (CT)</td>
                 {% endif %}
+                <td>
+                    {% if obj.last_active %}
+                        {{ obj.last_active|timezone:"America/Chicago" }} (CT)
+                    {% else %}
+                        <p>Never logged in</p>
+                    {% endif %}
+                </td>
+                <td>{{ obj.date_joined|timezone:"America/Chicago" }} (CT)</td>
             </tr>
         {% endfor %}
     </tbody>
