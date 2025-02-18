@@ -7,10 +7,11 @@ import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import pre_delete, post_delete, post_save
+from django.db.models.signals import post_delete, post_save
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.db import transaction
 
 from api.managers import OrderManager
 from api.models.disposal_location.disposal_location import DisposalLocation
@@ -806,6 +807,22 @@ class Order(BaseModel):
         if self.code is None:
             save_unique_code(self)
 
+    def delete(self, using=None, keep_parents=False):
+        # Wrap in atomic transaction so that if any part fails, then the deletion fails.
+        with transaction.atomic():
+            # Set OrderGroup end_date to null if this Order was a removal.
+            if (
+                self.order_type == Order.Type.REMOVAL
+                or self.order_type == Order.Type.RETURN
+                or self.order_type == Order.Type.ONE_TIME
+            ):
+                # If this order was a removal, then reset order_group.end_date to null
+                # Check for one time because on removal, the order type will come back as that.
+                self.order_group.end_date = None
+                self.order_group.save()
+
+            return super().delete(using, keep_parents)
+
     @staticmethod
     def post_save(sender, instance: "Order", created, **kwargs):
         # Import here to avoid circular import.
@@ -827,18 +844,6 @@ class Order(BaseModel):
             else:
                 instance.order_group.end_date = instance.order_group.start_date
                 instance.order_group.save()
-
-    @staticmethod
-    def pre_delete(sender, instance: "Order", **kwargs):
-        if (
-            instance.order_type == Order.Type.REMOVAL
-            or instance.order_type == Order.Type.RETURN
-            or instance.order_type == Order.Type.ONE_TIME
-        ):
-            # If this order was a removal, then reset order_group.end_date to null
-            # Check for one time because on removal, the order type will come back as that.
-            instance.order_group.end_date = None
-            instance.order_group.save()
 
     @staticmethod
     def post_delete(sender, instance: "Order", **kwargs):
@@ -1549,4 +1554,3 @@ class Order(BaseModel):
 
 post_save.connect(Order.post_save, sender=Order)
 post_delete.connect(Order.post_delete, sender=Order)
-pre_delete.connect(Order.pre_delete, sender=Order)
