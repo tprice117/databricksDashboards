@@ -4387,7 +4387,7 @@ def new_user(request):
 def invoices_chart(request):
     if request.headers.get("HX-Request"):
         context = get_user_context(request)
-        invoices = invoices = get_invoice_objects(
+        invoices = get_invoice_objects(
             request, context["user"], context["user_group"]
         ).filter(
             status=Invoice.Status.OPEN,

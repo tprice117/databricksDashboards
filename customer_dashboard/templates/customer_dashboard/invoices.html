@@ -57,7 +57,7 @@
 {% block content %}
   <div class="container-fluid">
     <h3 class="title text-dark mb-2 fw-bolder">Invoice List</h3>
-    <div class="row g-4 mb-4">
+    <div class="row gx-5 mb-4">
       <div class="col {% if user_group %}col-md-6{% endif %} mb-3">
         <div class="htmx-indicator" id="chart-loading-status">
           <div class="d-flex justify-content-center align-items-center h-100">
@@ -133,7 +133,6 @@
             <input id="invoice-end-date" class="form-control text-dark border-dark" type="date" name="end_date" />
           </div>
         </div>
-
         <div class="col text-nowrap" style="min-width: 160px; max-width: 500px;">
           <label for="invoice-search-filter" class="mb-1"><small>Search</small></label>
           <div class="input-group border border-dark rounded-2">
