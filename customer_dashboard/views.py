@@ -1732,6 +1732,17 @@ def cart(request):
                         # This means that we never set the removal date on the OrderGroup when creating it.
                         # if removal_date:
                         #     order_group.end_date = removal_date
+                        if main_product.has_rental_multi_step:
+                            if request.POST.get("removal_date"):
+                                removal_date = datetime.datetime.strptime(
+                                    request.POST.get("removal_date"),
+                                    "%Y-%m-%d",
+                                ).date()
+                                order_group.end_date = removal_date
+                            else:
+                                raise Exception(
+                                    "Removal date is required for multi-step rentals."
+                                )
                         if seller_product_location.delivery_fee and is_delivery:
                             order_group.delivery_fee = (
                                 seller_product_location.delivery_fee
