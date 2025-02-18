@@ -317,7 +317,7 @@ def customerio_webhook(request):
                 return HttpResponse(status=200)
             # Update the PushNotification with the delivery_id.
             push_notification_to = PushNotificationTo.objects.filter(
-                delivery_id=event["delivery_id"]
+                delivery_id=event["data"]["delivery_id"]
             )
             if push_notification_to.exists():
                 push_notification_to = push_notification_to.first()
@@ -351,7 +351,7 @@ def customerio_webhook(request):
                         push_notification_to = PushNotificationTo(
                             push_notification=push_notification,
                             user=user,
-                            delivery_id=event["delivery_id"],
+                            delivery_id=event["data"]["delivery_id"],
                         )
                         if event["metric"] in ["clicked", "opened"]:
                             push_notification_to.is_read = True
