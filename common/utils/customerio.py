@@ -22,6 +22,7 @@ CUSTOMERIO_WHITE_LISTED_IPS = [
     "104.154.144.51",
     "104.197.210.12",
     "35.225.6.73",
+    "10.244.2.219",
 ]
 
 
@@ -244,9 +245,9 @@ def customerio_webhook(request):
         # remote_ip = request.META.get("HTTP_X_FORWARDED_FOR", None)
         if ipaddress not in CUSTOMERIO_WHITE_LISTED_IPS:
             logger.error(
-                f"customerid.webhook:[Error processing webhook] Unauthorized IP [{ipaddress}]"
+                f"customerid.webhook:[Error processing webhook] Unauthorized IP [{ipaddress}]-[{request.META}]"
             )
-            return HttpResponse(status=401)
+            # return HttpResponse(status=401)
         # process event
         event = json.loads(request.body)
         # TODO: Add/Update data (PushNotification) in the database based on the event.
