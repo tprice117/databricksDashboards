@@ -814,6 +814,7 @@ def post_save(sender, instance: OrderGroup, created, **kwargs):
             instance.estimated_value = PricingEngineResponseSerializer(
                 estimated_value
             ).data["total"]
+            instance.save()
 
     # Generate agreement for the OrderGroup if:
     # 1) The agreement_signed_by or agreement_signed_on is None.
