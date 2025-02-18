@@ -7,8 +7,6 @@ from django.views.decorators.csrf import csrf_exempt
 from customerio import analytics
 from django.conf import settings
 from common.utils.json_encoders import DecimalFloatEncoder
-from api.models import User
-from notifications.models import PushNotification, PushNotificationTo
 import logging
 
 logger = logging.getLogger(__name__)
@@ -237,6 +235,9 @@ def customerio_webhook(request):
     https://docs.customer.io/api/webhooks/#operation/reportingWebhook
     """
     try:
+        from api.models import User
+        from notifications.models import PushNotification, PushNotificationTo
+
         # Get requesting IP
         # REMOTE_ADDR: will be the load balancer, If using load balancer use HTTP_X_CLUSTER_CLIENT_IP
         ipaddress = request.META.get("REMOTE_ADDR", "0.0.0.0")
