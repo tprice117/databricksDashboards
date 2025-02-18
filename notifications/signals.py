@@ -332,7 +332,7 @@ def on_user_group_post_save(sender, instance: UserGroup, created, *args, **kwarg
                 event_data["legal_industry"] = instance.legal.industry
                 event_data["legal_address"] = instance.legal.formatted_address
             if hasattr(instance, "billing") and instance.billing:
-                event_data["billing_name"] = instance.billing.name
+                event_data["billing_email"] = instance.billing.email
                 event_data["billing_address"] = instance.billing.formatted_address
                 event_data["billing_tax_id"] = instance.billing.tax_id
 
