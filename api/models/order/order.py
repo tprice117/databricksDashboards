@@ -7,7 +7,7 @@ import mailchimp_transactional as MailchimpTransactional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import pre_delete, post_delete, post_save
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
@@ -829,11 +829,8 @@ class Order(BaseModel):
                 instance.order_group.save()
 
     @staticmethod
-    def post_delete(sender, instance: "Order", **kwargs):
-        if instance.order_group.orders.count() == 0:
-            # Deletion resulted in no Orders in the OrderGroup, so delete the OrderGroup.
-            instance.order_group.delete()
-        elif (
+    def pre_delete(sender, instance: "Order", **kwargs):
+        if (
             instance.order_type == Order.Type.REMOVAL
             or instance.order_type == Order.Type.RETURN
             or instance.order_type == Order.Type.ONE_TIME
@@ -842,6 +839,12 @@ class Order(BaseModel):
             # Check for one time because on removal, the order type will come back as that.
             instance.order_group.end_date = None
             instance.order_group.save()
+
+    @staticmethod
+    def post_delete(sender, instance: "Order", **kwargs):
+        if instance.order_group.orders.count() == 0:
+            # Deletion resulted in no Orders in the OrderGroup, so delete the OrderGroup.
+            instance.order_group.delete()
 
     def admin_policy_checks(self, orders=None):
         """Check if Order violates any Admin Policies and sets the Order status to Approval if necessary.
@@ -1546,3 +1549,4 @@ class Order(BaseModel):
 
 post_save.connect(Order.post_save, sender=Order)
 post_delete.connect(Order.post_delete, sender=Order)
+pre_delete.connect(Order.pre_delete, sender=Order)
