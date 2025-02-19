@@ -102,6 +102,9 @@ gmv = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].apply(
     lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']) * (1 + float(row['orderline_platform_fee_percent']) * 0.01), axis=1
 ).sum()
 
+#net Revenue
+net_revenue = filtered_data['order_line_total'].sum() - filtered_data['supplier_amount'].sum() if 'supplier_amount' in filtered_data.columns else filtered_data['order_line_total'].sum()
+
 # Calculate the sum of total_line_amount
 total_line_amount_sum = filtered_data['order_line_total'].sum()
 
@@ -114,9 +117,13 @@ average_order_value = filtered_data.groupby('order_id').apply(
 ).mean()
 
 #Calculate Take Rate
-customer_amount = filtered_data['order_line_total'].sum()
-supplier_amount = filtered_data['supplier_amount'].sum() if 'supplier_amount' in filtered_data.columns else 0
-take_rate = float((customer_amount - supplier_amount) / customer_amount) if customer_amount != 0 else 0
+customer_amount = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].apply(
+    lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']) * (1 + float(row['orderline_platform_fee_percent']) * 0.01), axis=1
+).sum()
+supplier_amount_complete = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].apply(
+    lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']), axis=1
+).sum()
+take_rate = float((customer_amount - supplier_amount_complete) / customer_amount) if customer_amount != 0 else 0
 
 #Net Revenue Complete: 
 # Calculate Net Revenue Complete
@@ -209,8 +216,12 @@ with col2:
     )
 
     # Calculate Take Rate for the filtered data
-    customer_amount_filtered = filtered_data['order_line_total'].sum()
-    supplier_amount_filtered = filtered_data['supplier_amount'].sum() if 'supplier_amount' in filtered_data.columns else 0
+    customer_amount_filtered = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].apply(
+        lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']) * (1 + float(row['orderline_platform_fee_percent']) * 0.01), axis=1
+    ).sum()
+    supplier_amount_filtered = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].apply(
+        lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']), axis=1
+    ).sum()
     take_rate_filtered = float((customer_amount_filtered - supplier_amount_filtered) / customer_amount_filtered) if customer_amount_filtered != 0 else 0
 
     # Create a card for Take Rate
@@ -237,71 +248,91 @@ with col2:
     )
 
 with col3:
-    # Group the data by month
+    # Prepare data for the combo line bar chart
     filtered_data['order_end_date'] = pd.to_datetime(filtered_data['order_end_date'])
     filtered_data['month'] = filtered_data['order_end_date'].dt.to_period('M')
+
     monthly_data = filtered_data.groupby('month').agg({
         'order_line_total': 'sum',
-        'order_id': 'nunique'
-    }).reset_index()
+        }).reset_index()
+    
+    if 'supplier_amount' in filtered_data.columns:
+        monthly_data['supplier_amount'] = filtered_data.groupby('month')['supplier_amount'].sum()
+    else:
+        monthly_data['supplier_amount'] = 0
 
-    # Create a combo chart using Altair
-    base = alt.Chart(monthly_data).encode(
-        alt.X('month:T', title='Order Month')
-    )
+    monthly_data['net_revenue'] = monthly_data['order_line_total'] - monthly_data['supplier_amount']
+    monthly_data['gmv'] = monthly_data['order_line_total']
 
-    bar = base.mark_bar(color='blue').encode(
-        alt.Y('order_line_total:Q', title='Total Line Amount')
-    )
+    # Define the ECharts combo line bar chart options
+    combo_chart_options = {
+        "title": {"text": "Monthly GMV and Net Revenue", "left": "center"},
+        "tooltip": {"trigger": "axis"},
+        "legend": {"data": ["GMV", "Net Revenue", "Target"], "left": "left"},
+        "xAxis": {
+            "type": "category",
+            "data": monthly_data['month'].astype(str).tolist()
+        },
+        "yAxis": [
+            {"type": "value", "name": "Amount"},
+            {"type": "value", "name": "Target", "position": "right", "offset": 80}
+        ],
+        "series": [
+            {
+                "name": "GMV",
+                "type": "bar",
+                "data": monthly_data['gmv'].tolist()
+            },
+            {
+                "name": "Net Revenue",
+                "type": "bar",
+                "data": monthly_data['net_revenue'].tolist()
+            },
+            {
+                "name": "Target",
+                "type": "line",
+                "yAxisIndex": 1,
+                "data": [50000] * len(monthly_data)  # Example target line
+            }
+        ]
+    }
 
-    line = base.mark_line(color='red').encode(
-        alt.Y('order_line_total:Q', title='Average Order Value')
-    )
-
-    combo_chart = alt.layer(bar, line).resolve_scale(
-        y='independent'
-    ).properties(
-        width=600,
-        height=400,
-        title='Total Line Amount and Average Order Value Over Time'
-    )
-
-    st.altair_chart(combo_chart, use_container_width=True)
+    # Render the ECharts combo line bar chart
+    st_echarts(options=combo_chart_options, height="400px")
 
 
 # Create a row that spans both columns for the Sankey diagram and nested pie chart
 col2_3 = st.columns([2, 2])
 with col2_3[0]:
     # Define the ECharts nested pie chart options
+    # Prepare data for the nested pie chart
+    gmv_data = filtered_data.groupby('main_product_category').apply(
+        lambda x: (x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum()
+    ).reset_index(name='gmv')
+
+    net_revenue_data = filtered_data.groupby('main_product_category').apply(
+        lambda x: x['order_line_total'].sum() - x['supplier_amount'].sum() if 'supplier_amount' in x.columns else x['order_line_total'].sum()
+    ).reset_index(name='net_revenue')
+
     nested_pie_options = {
         "title": {"text": "Sales Distribution", "left": "center"},
         "tooltip": {"trigger": "item"},
         "series": [
             {
-                "name": "Sales",
+                "name": "Net Revenue",
                 "type": "pie",
                 "selectedMode": "single",
                 "radius": [0, '50%'],
                 "label": {"position": "inner"},
-                "data": [
-                    {"value": 335, "name": "Category A"},
-                    {"value": 679, "name": "Category B"},
-                    {"value": 1548, "name": "Category C"},
-                ],
+                "data": [{"value": row['net_revenue'], "name": row['main_product_category']} for _, row in net_revenue_data.iterrows()],
             },
             {
-                "name": "Products",
+                "name": "GMV",
                 "type": "pie",
                 "radius": ['60%', '75%'],
-                "labelLine": {"length": 30},
-                "label": {"formatter": '{b}: {c} ({d}%)'},
-                "data": [
-                    {"value": 335, "name": "Product A1"},
-                    {"value": 310, "name": "Product A2"},
-                    {"value": 234, "name": "Product B1"},
-                    {"value": 135, "name": "Product C1"},
-                    {"value": 1048, "name": "Product C2"},
-                ],
+                "labelLine": {"length": 10, "length2": 10},
+                "label": {"formatter": '{b}: {c} ({d}%)', "overflow": "truncate", "width": 100},
+                "data": [{"value": row['gmv'], "name": row['main_product_category']} for _, row in gmv_data.iterrows()],
             },
         ],
     }
@@ -351,7 +382,7 @@ with col1_2[0]:
         "tooltip": {"trigger": "item"},
         "visualMap": {
             "min": 0,
-            "max": 1000,
+            "max": 100,
             "left": "left",
             "top": "bottom",
             "text": ["High", "Low"],
@@ -369,19 +400,14 @@ with col1_2[0]:
         "series": [
             {
                 "name": "Sales",
-                "type": "map",
-                "mapType": "USA",
-                "roam": False,
-                "label": {
-                    "normal": {"show": True},
-                    "emphasis": {"show": True}
-                },
+                "type": "heatmap",
+                "coordinateSystem": "geo",
                 "data": [
-                    {"name": "California", "value": 1000},
-                    {"name": "Texas", "value": 800},
-                    {"name": "New York", "value": 600},
-                    {"name": "Florida", "value": 400},
-                    {"name": "Illinois", "value": 200},
+                    {"name": "California", "value": 100},
+                    {"name": "Texas", "value": 80},
+                    {"name": "New York", "value": 60},
+                    {"name": "Florida", "value": 40},
+                    {"name": "Illinois", "value": 20}
                 ]
             }
         ]
