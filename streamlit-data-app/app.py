@@ -3,23 +3,33 @@ from databricks import sql
 from databricks.sdk.core import Config
 import streamlit as st
 import pandas as pd
-# --uncomment to run locally
-from dotenv import load_dotenv 
+
+from dotenv import load_dotenv
+# uncomment to run locally
+
 from datetime import datetime, timedelta
 from streamlit_date_picker import date_range_picker, date_picker, PickerType
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SQLContext
 import altair as alt
-import decimal
 from streamlit_echarts import st_echarts
 
-load_dotenv(dotenv_path='.databricks/.databricks.env') 
-# uncomment to run locally
+
+dotenv_path = '.databricks/.databricks.env'
+
+os.makedirs(os.path.dirname(dotenv_path), exist_ok=True)
+
+if not os.path.exists(dotenv_path):
+    with open(dotenv_path, 'w') as file:
+        file.write('DATABRICKS_WAREHOUSE_ID=d34494d1343c5722\n')
+
+# Load the .env file
+load_dotenv(dotenv_path=dotenv_path)
 
 # Ensure environment variable is set correctly (running locally)
 warehouse_id = os.getenv('DATABRICKS_WAREHOUSE_ID')
 print(f"DATABRICKS_WAREHOUSE_ID: {warehouse_id}")
-# assert warehouse_id, "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
+assert warehouse_id, "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
 
 # Ensure environment variable is set correctly (run in databricks)
 assert os.getenv('DATABRICKS_WAREHOUSE_ID'), "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
@@ -118,7 +128,7 @@ net_revenue_complete = customer_amount_complete - supplier_amount_complete
 col1, col2, col3 = st.columns([1, 1, 2])
 with col1:
     st.markdown("Select Date Range")
-    default_start, default_end = datetime.now() - timedelta(days=1), datetime.now()
+    default_start, default_end = datetime.now() - timedelta(days=365), datetime.now()
         
     date_range_string = date_range_picker(picker_type=PickerType.date,
                                         start=default_start, end=default_end,
@@ -143,7 +153,7 @@ with col1:
         f"""
         <div class="card">
             <div class="card-title" style="color: {text_color};">Total Line Amount</div>
-            <div class="card-amount" style="color: {text_color};">${total_line_amount_sum:,.2f}</div>
+            <div class="card-amount" style="color: {text_color};">$</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -227,9 +237,17 @@ with col2:
     )
 
 with col3:
+    # Group the data by month
+    filtered_data['order_end_date'] = pd.to_datetime(filtered_data['order_end_date'])
+    filtered_data['month'] = filtered_data['order_end_date'].dt.to_period('M')
+    monthly_data = filtered_data.groupby('month').agg({
+        'order_line_total': 'sum',
+        'order_id': 'nunique'
+    }).reset_index()
+
     # Create a combo chart using Altair
-    base = alt.Chart(filtered_data).encode(
-        alt.X('order_created_on:T', title='Order Date')
+    base = alt.Chart(monthly_data).encode(
+        alt.X('month:T', title='Order Month')
     )
 
     bar = base.mark_bar(color='blue').encode(
