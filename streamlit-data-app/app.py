@@ -135,8 +135,8 @@ net_revenue_complete = customer_amount_complete - supplier_amount_complete
 col1, col2, col3 = st.columns([1, 1, 2])
 with col1:
     st.markdown("Select Date Range")
-    default_start, default_end = datetime.now() - timedelta(days=365), datetime.now()
-        
+    default_start = datetime.now().replace(year=datetime.now().year - 1, day=1)  # Start of the previous year's current calendar month
+    default_end = datetime.now()
     date_range_string = date_range_picker(picker_type=PickerType.date,
                                         start=default_start, end=default_end,
                                         key='date_range_picker')
@@ -160,7 +160,7 @@ with col1:
         f"""
         <div class="card">
             <div class="card-title" style="color: {text_color};">Total Line Amount</div>
-            <div class="card-amount" style="color: {text_color};">$</div>
+            <div class="card-amount" style="color: {text_color};">${filtered_data['order_line_total'].sum():,.2f}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -261,8 +261,13 @@ with col3:
     else:
         monthly_data['supplier_amount'] = 0
 
-    monthly_data['net_revenue'] = monthly_data['order_line_total'] - monthly_data['supplier_amount']
-    monthly_data['gmv'] = monthly_data['order_line_total']
+    monthly_data['net_revenue'] = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].groupby('month').apply(
+        lambda x: x['order_line_total'].sum() - x['supplier_amount'].sum() if 'supplier_amount' in x.columns else x['order_line_total'].sum()
+    ).reset_index(drop=True).round(2)
+    monthly_data['gmv'] = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].groupby('month').apply(
+        lambda x: (x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum()
+    ).reset_index(drop=True).round(2)
+    monthly_data = monthly_data.fillna(0)
 
     # Define the ECharts combo line bar chart options
     combo_chart_options = {
@@ -291,8 +296,7 @@ with col3:
             {
                 "name": "Target",
                 "type": "line",
-                "yAxisIndex": 1,
-                "data": [50000] * len(monthly_data)  # Example target line
+                "data": (monthly_data['gmv'] * 1.1).tolist()  # Target line 10% higher than GMV as PLACEHOLDER
             }
         ]
     }
@@ -373,48 +377,121 @@ with col2_3[1]:
     # Render the ECharts Sankey diagram
     st_echarts(options=sankey_options, height="400px")
     
-# Create a row that spans both columns for the USA heatmap
+    
 col1_2 = st.columns([2, 2])
 with col1_2[0]:
-    # Define the ECharts USA heatmap options
-    usa_heatmap_options = {
-        "title": {"text": "Sales Heatmap", "left": "center"},
-        "tooltip": {"trigger": "item"},
-        "visualMap": {
-            "min": 0,
-            "max": 100,
-            "left": "left",
-            "top": "bottom",
-            "text": ["High", "Low"],
-            "calculable": True
-        },
-        "geo": {
-            "map": "USA",
-            "label": {"emphasis": {"show": False}},
-            "roam": True,
-            "itemStyle": {
-                "normal": {"areaColor": "#323c48", "borderColor": "#111"},
-                "emphasis": {"areaColor": "#2a333d"}
-            }
-        },
+    # Placeholder for USA heatmap
+    st.markdown(
+        """
+        <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+            <p style="color: #888;">USA Heatmap Placeholder</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col1_2[1]:
+    # Define the ECharts radial gauge options for GMV
+    gmv_gauge_options = {
+        "title": {"text": "GMV Gauge", "left": "center"},
+        "tooltip": {"formatter": "{a} <br/>{b} : {c}%"},
         "series": [
             {
-                "name": "Sales",
-                "type": "heatmap",
-                "coordinateSystem": "geo",
-                "data": [
-                    {"name": "California", "value": 100},
-                    {"name": "Texas", "value": 80},
-                    {"name": "New York", "value": 60},
-                    {"name": "Florida", "value": 40},
-                    {"name": "Illinois", "value": 20}
-                ]
+                "name": "GMV",
+                "type": "gauge",
+                "detail": {"formatter": "{value}%"},
+                "data": [{"value": gmv_filtered / 1000, "name": "GMV"}],  # Example value
+                "axisLine": {
+                    "lineStyle": {
+                        "width": 10,
+                        "color": [[0.2, '#FF6F61'], [0.8, '#FFEB3B'], [1, '#4CAF50']]
+                    }
+                }
             }
         ]
     }
 
-    # Render the ECharts USA heatmap
-    st_echarts(options=usa_heatmap_options, height="400px")
+    # Render the ECharts radial gauge for GMV
+    st_echarts(options=gmv_gauge_options, height="400px")
+
+    # Define the ECharts radial gauge options for Net Revenue
+    net_revenue_gauge_options = {
+        "title": {"text": "Net Revenue Gauge", "left": "center"},
+        "tooltip": {"formatter": "{a} <br/>{b} : {c}%"},
+        "series": [
+            {
+                "name": "Net Revenue",
+                "type": "gauge",
+                "detail": {"formatter": "{value}%"},
+                "data": [{"value": net_revenue_complete_filtered / 1000, "name": "Net Revenue"}],  # Example value
+                "axisLine": {
+                    "lineStyle": {
+                        "width": 10,
+                        "color": [[0.2, '#FF6F61'], [0.8, '#FFEB3B'], [1, '#4CAF50']]
+                    }
+                }
+            }
+        ]
+    }
+
+    # Render the ECharts radial gauge for Net Revenue
+    st_echarts(options=net_revenue_gauge_options, height="400px")
     
+# Prepare data for the line charts
+
+
+monthly_avg_order_value = filtered_data.groupby('month').apply(
+    lambda x: round(x['order_line_total'].sum() / x['order_id'].nunique(), 2) if x['order_id'].nunique() != 0 else 0
+).reset_index(name='avg_order_value')
+
+monthly_avg_order_value['avg_order_value'] = monthly_avg_order_value['avg_order_value'].apply(lambda x: round(x, 2))
+
+monthly_avg_take_rate = filtered_data.groupby('month').apply(
+    lambda x: round((
+        x.apply(lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']) * (1 + float(row['orderline_platform_fee_percent']) * 0.01), axis=1).sum() -
+        x.apply(lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']), axis=1).sum()
+    ) / x.apply(lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']) * (1 + float(row['orderline_platform_fee_percent']) * 0.01), axis=1).sum() if x.shape[0] > 0 else 0, 2)
+).reset_index(name='avg_take_rate')
+
+col1_2 = st.columns([2, 2])
+with col1_2[0]:
+    # Define the ECharts line chart options for Avg Take Rate by Month
+    avg_take_rate_options = {
+        "title": {"text": "Avg Take Rate by Month", "left": "center"},
+        "tooltip": {"trigger": "axis", "formatter": "{a} <br/>{b} : {c}%"},
+        "xAxis": {"type": "category", "data": monthly_avg_take_rate['month'].astype(str).tolist()},
+        "yAxis": {"type": "value", "axisLabel": {"formatter": "{value}%"}},
+        "series": [
+            {
+                "name": "Avg Take Rate",
+                "type": "line",
+                "data": (monthly_avg_take_rate['avg_take_rate'] * 100).tolist()
+            }
+        ]
+    }
+
+    # Render the ECharts line chart for Avg Take Rate by Month
+    st_echarts(options=avg_take_rate_options, height="400px")
+
+with col1_2[1]:
+    # Define the ECharts line chart options for Avg Order Value by Month
+    avg_order_value_options = {
+        "title": {"text": "Avg Order Value by Month", "left": "center"},
+        "tooltip": {"trigger": "axis"},
+        "xAxis": {"type": "category", "data": monthly_avg_order_value['month'].astype(str).tolist()},
+        "yAxis": {"type": "value"},
+        "series": [
+            {
+                "name": "Avg Order Value",
+                "type": "line",
+                "data": monthly_avg_order_value['avg_order_value'].tolist()
+            }
+        ]
+    }
+
+    # Render the ECharts line chart for Avg Order Value by Month
+    st_echarts(options=avg_order_value_options, height="400px")
+
+
 
 st.dataframe(data=cli, height=600, use_container_width=True)

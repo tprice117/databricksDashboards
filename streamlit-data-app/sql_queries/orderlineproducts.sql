@@ -22,6 +22,8 @@ og.id as ordergroup_id
 ,o.schedule_window as order_schedule_window
 ,o.status as order_status
 ,o.submitted_on as order_submitted_on
+,o.created_by_id as order_created_by
+,o.submitted_by_id as submitted_by_id
 --order line items
 ,oli.id as orderline_id
 ,oli.backbill as orderline_backbill
@@ -32,6 +34,7 @@ og.id as ordergroup_id
 ,oli.rate * oli.quantity as order_line_total
 ,oli.platform_fee_percent as orderline_platform_fee_percent
 ,oli.tax as orderline_tax
+,oli.stripe_invoice_line_item_id as stripe_invoice_line_item_id
 
 --main product
 ,mp.name as main_product
@@ -40,6 +43,9 @@ og.id as ordergroup_id
 
 --user address 
 ,ua.state as user_address_state
+
+--user
+,u.is_staff as user_is_staff
 
 from bronze_prod.postgres_prod_restricted_bronze_public.api_orderlineitem oli
 left join bronze_prod.postgres_prod_restricted_bronze_public.api_order o 
