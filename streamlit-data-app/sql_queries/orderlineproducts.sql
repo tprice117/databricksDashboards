@@ -47,6 +47,12 @@ og.id as ordergroup_id
 --user
 ,u.is_staff as user_is_staff
 
+--industry
+,i.name as industry_name
+
+--user group
+,ug.name as user_group_name
+
 from bronze_prod.postgres_prod_restricted_bronze_public.api_orderlineitem oli
 left join bronze_prod.postgres_prod_restricted_bronze_public.api_order o 
   on oli.order_id = o.id
@@ -64,3 +70,9 @@ left join bronze_prod.postgres_prod_restricted_bronze_public.api_mainproductcate
   on mp.main_product_category_id = mpc.id
 left join bronze_prod.postgres_prod_restricted_bronze_public.api_useraddress ua
   on og.user_address_id = ua.id
+left join bronze_prod.postgres_prod_restricted_bronze_public.api_user u
+  on o.created_by_id = u.id
+left join bronze_prod.postgres_prod_restricted_bronze_public.api_usergroup ug
+  on u.user_group_id = ug.id
+left join bronze_prod.postgres_prod_restricted_bronze_public.api_industry i
+  on ug.industry_id = i.id

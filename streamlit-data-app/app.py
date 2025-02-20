@@ -72,17 +72,27 @@ with open('css/style.css') as f:
 # Determine text color based on theme
 text_color = "white" if is_dark_mode() else "black"
 
-# Extract distinct values of mainproductcategory
-distinct_categories = ['All Categories'] + cli['main_product_category'].dropna().unique().tolist()
+# Extract distinct values of main_product_category
+distinct_categories = cli['main_product_category'].dropna().unique().tolist()
 
-# Add a selectbox for mainproductcategory
-selected_category = st.selectbox("Select Main Product Category", options=distinct_categories)
+# Add a button to select all categories
+if st.button("Select All Categories"):
+    st.session_state.selected_categories = distinct_categories
 
-# Filter data based on the selected category
-if selected_category == 'All Categories':
+# Add a multiselect box for main_product_category
+selected_categories = st.multiselect("Select Main Product Categories", options=distinct_categories, default=distinct_categories, key='selected_categories')
+
+# Filter data based on the selected categories
+if 'All Categories' in selected_categories or not selected_categories:
     filtered_data = cli
 else:
-    filtered_data = cli[cli['main_product_category'] == selected_category].copy()
+    filtered_data = cli[cli['main_product_category'].isin(selected_categories)].copy()
+
+# Filter data based on the selected categories
+if 'All Categories' in selected_categories or not selected_categories:
+    filtered_data = cli
+else:
+    filtered_data = cli[cli['main_product_category'].isin(selected_categories)].copy()
 
 # Ensure 'order_line_total', 'supplier_amount', 'orderline_rate', 'orderline_quantity', and 'orderline_platform_fee_percent' are numeric
 filtered_data.loc[:, 'order_line_total'] = pd.to_numeric(filtered_data['order_line_total'], errors='coerce')
@@ -345,6 +355,15 @@ with col2_3[0]:
     st_echarts(options=nested_pie_options, height="400px")
 
 with col2_3[1]:
+    # Prepare data for the Sankey diagram
+    sankey_data = filtered_data.groupby(['main_product', 'main_product_category']).apply(
+        lambda x: (x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum()
+    ).reset_index(name='gmv')
+
+    # Filter out small values to reduce clutter
+    threshold = sankey_data['gmv'].quantile(0.90)  # Keep only the top 10% of values
+    sankey_data_filtered = sankey_data[sankey_data['gmv'] >= threshold]
+
     # Define the ECharts Sankey diagram options
     sankey_options = {
         "title": {"text": "Sales Flow", "left": "center"},
@@ -353,23 +372,16 @@ with col2_3[1]:
             {
                 "type": "sankey",
                 "layout": "none",
-                "data": [
-                    {"name": "Category A"},
-                    {"name": "Category B"},
-                    {"name": "Category C"},
-                    {"name": "Product A1"},
-                    {"name": "Product A2"},
-                    {"name": "Product B1"},
-                    {"name": "Product C1"},
-                    {"name": "Product C2"},
-                ],
+                "data": [{"name": name} for name in pd.concat([sankey_data_filtered['main_product'], sankey_data_filtered['main_product_category']]).unique()],
                 "links": [
-                    {"source": "Category A", "target": "Product A1", "value": 10},
-                    {"source": "Category A", "target": "Product A2", "value": 15},
-                    {"source": "Category B", "target": "Product B1", "value": 25},
-                    {"source": "Category C", "target": "Product C1", "value": 20},
-                    {"source": "Category C", "target": "Product C2", "value": 30},
+                    {"source": row['main_product'], "target": row['main_product_category'], "value": row['gmv']}
+                    for _, row in sankey_data_filtered.iterrows()
                 ],
+                "label": {"show": True},  # Show labels to reduce clutter
+                "emphasis": {
+                    "focus": "adjacency",
+                    "label": {"show": True, "position": "right"}  # Show labels on hover
+                }
             }
         ],
     }
@@ -391,16 +403,21 @@ with col1_2[0]:
     )
 
 with col1_2[1]:
-    # Define the ECharts radial gauge options for GMV
-    gmv_gauge_options = {
-        "title": {"text": "GMV Gauge", "left": "center"},
+    # Calculate the percentage of orders made by non-staff users
+    total_orders = filtered_data['order_id'].nunique()
+    non_staff_orders = filtered_data[filtered_data['user_is_staff'] == False]['order_id'].nunique()
+    non_staff_order_percentage = (non_staff_orders / total_orders) * 100 if total_orders != 0 else 0
+
+    # Define the ECharts radial gauge options for Non-Staff Orders
+    non_staff_orders_gauge_options = {
+        "title": {"text": "Non-Staff Orders", "left": "center"},
         "tooltip": {"formatter": "{a} <br/>{b} : {c}%"},
         "series": [
             {
-                "name": "GMV",
+                "name": "Non-Staff Orders",
                 "type": "gauge",
                 "detail": {"formatter": "{value}%"},
-                "data": [{"value": gmv_filtered / 1000, "name": "GMV"}],  # Example value
+                "data": [{"value": round(non_staff_order_percentage, 2), "name": "Non-Staff Orders"}],
                 "axisLine": {
                     "lineStyle": {
                         "width": 10,
@@ -411,31 +428,8 @@ with col1_2[1]:
         ]
     }
 
-    # Render the ECharts radial gauge for GMV
-    st_echarts(options=gmv_gauge_options, height="400px")
-
-    # Define the ECharts radial gauge options for Net Revenue
-    net_revenue_gauge_options = {
-        "title": {"text": "Net Revenue Gauge", "left": "center"},
-        "tooltip": {"formatter": "{a} <br/>{b} : {c}%"},
-        "series": [
-            {
-                "name": "Net Revenue",
-                "type": "gauge",
-                "detail": {"formatter": "{value}%"},
-                "data": [{"value": net_revenue_complete_filtered / 1000, "name": "Net Revenue"}],  # Example value
-                "axisLine": {
-                    "lineStyle": {
-                        "width": 10,
-                        "color": [[0.2, '#FF6F61'], [0.8, '#FFEB3B'], [1, '#4CAF50']]
-                    }
-                }
-            }
-        ]
-    }
-
-    # Render the ECharts radial gauge for Net Revenue
-    st_echarts(options=net_revenue_gauge_options, height="400px")
+    # Render the ECharts radial gauge for Non-Staff Orders
+    st_echarts(options=non_staff_orders_gauge_options, height="400px")
     
 # Prepare data for the line charts
 
@@ -492,6 +486,110 @@ with col1_2[1]:
     # Render the ECharts line chart for Avg Order Value by Month
     st_echarts(options=avg_order_value_options, height="400px")
 
+col3_4 = st.columns([2, 2])
+with col3_4[0]:
+    # Placeholder for a new chart or visualization
+    st.markdown(
+        """
+        <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+            <p style="color: #888;">New Chart Placeholder</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col3_4[1]:
+    # Placeholder for another new chart or visualization
+    st.markdown(
+        """
+        <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+            <p style="color: #888;">Another New Chart Placeholder</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+col_full = st.columns([1])
+with col_full[0]:
+    # Placeholder for a full-width chart or visualization
+    st.markdown(
+        """
+        <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+            <p style="color: #888;">Full-Width Chart Placeholder</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+col_full_2 = st.columns([1])
+with col_full_2[0]:
+    # Prepare data for the treemap
+    treemap_data = filtered_data.groupby('industry_name').agg({
+        'orderline_rate': 'sum',
+        'orderline_quantity': 'sum',
+        'orderline_platform_fee_percent': 'mean'
+    }).reset_index()
+
+    treemap_data['gmv'] = treemap_data.apply(
+        lambda row: round(row['orderline_rate'] * row['orderline_quantity'] * (1 + row['orderline_platform_fee_percent'] * 0.01), 2), axis=1
+    )
+
+    treemap_options = {
+        "title": {"text": "Total GMV by Industry", "left": "center"},
+        "tooltip": {"trigger": "item", "formatter": "{b}: ${c:,.2f}"},
+        "series": [
+            {
+                "type": "treemap",
+                "data": [{"name": row['industry_name'], "value": row['gmv']} for _, row in treemap_data.iterrows()],
+                "label": {"show": True, "formatter": "{b}\n${c:,.2f}"}
+            }
+        ]
+    }
 
 
+    st_echarts(options=treemap_options, height="800px", key="treemap-container")
+    
+
+col_new = st.columns([2, 2])
+with col_new[0]:
+    # Prepare data for the bubble chart
+    bubble_data = filtered_data.groupby('main_product_category').agg({
+        'order_id': 'nunique',
+        'orderline_rate': 'sum',
+        'orderline_quantity': 'sum',
+        'orderline_platform_fee_percent': 'mean'
+    }).reset_index()
+
+    bubble_data['gmv'] = bubble_data.apply(
+        lambda row: round(row['orderline_rate'] * row['orderline_quantity'] * (1 + row['orderline_platform_fee_percent'] * 0.01), 2), axis=1
+    )
+
+    bubble_chart_options = {
+        "title": {"text": "Total GMV vs User Count", "left": "center"},
+        "tooltip": {"trigger": "item", "formatter": "{a} <br/>{b} : {c}"},
+        "xAxis": {"type": "category", "data": bubble_data['main_product_category'].tolist()},
+        "yAxis": {"type": "value", "name": "Total GMV"},
+        "series": [
+            {
+                "name": "GMV vs User Count",
+                "type": "scatter",
+                "symbolSize": 20,
+                "data": bubble_data.apply(lambda row: [row['main_product_category'], row['gmv'], row['order_id']], axis=1).tolist()
+            }
+        ]
+    }
+
+    # Render the ECharts bubble chart
+    st_echarts(options=bubble_chart_options, height="400px")
+
+with col_new[1]:
+    # Placeholder for another new chart or visualization
+    st.markdown(
+        """
+        <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+            <p style="color: #888;">Another New Chart Placeholder</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 st.dataframe(data=cli, height=600, use_container_width=True)
