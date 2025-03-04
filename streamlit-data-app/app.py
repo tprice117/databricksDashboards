@@ -3,8 +3,6 @@ from databricks import sql as databricks_sql
 from databricks.sdk.core import Config
 import streamlit as st
 import pandas as pd
-
-
 from datetime import datetime, timedelta
 from streamlit_date_picker import date_range_picker, date_picker, PickerType
 from pyspark import SparkConf, SparkContext
@@ -39,6 +37,7 @@ def getData():
 cli = getData()
 
 st.header("Sales Performance Dashboard")
+
 
 # Function to detect dark mode
 def is_dark_mode():
