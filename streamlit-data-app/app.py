@@ -1,11 +1,9 @@
 import os
-from databricks import sql
+from databricks import sql as databricks_sql
 from databricks.sdk.core import Config
 import streamlit as st
 import pandas as pd
 
-from dotenv import load_dotenv
-# uncomment to run locally
 
 from datetime import datetime, timedelta
 from streamlit_date_picker import date_range_picker, date_picker, PickerType
@@ -15,32 +13,13 @@ import altair as alt
 from streamlit_echarts import st_echarts
 
 
-dotenv_path = '.databricks/.databricks.env'
-
-os.makedirs(os.path.dirname(dotenv_path), exist_ok=True)
-
-if not os.path.exists(dotenv_path):
-    with open(dotenv_path, 'w') as file:
-        file.write('DATABRICKS_WAREHOUSE_ID=d34494d1343c5722\n')
-
-# Load the .env file
-load_dotenv(dotenv_path=dotenv_path)
-
-# Ensure environment variable is set correctly (running locally)
-warehouse_id = os.getenv('DATABRICKS_WAREHOUSE_ID')
-print(f"DATABRICKS_WAREHOUSE_ID: {warehouse_id}")
-assert warehouse_id, "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
-
-# Ensure environment variable is set correctly (run in databricks)
-assert os.getenv('DATABRICKS_WAREHOUSE_ID'), "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
-
 def read_sql_file(filepath: str)-> str:
     with open(filepath, 'r') as file:
         return file.read()
     
 def sqlQuery(query: str) -> pd.DataFrame:
     cfg = Config() # Pull environment variables for auth
-    with sql.connect(
+    with databricks_sql.connect(
         server_hostname=cfg.host,
         http_path=f"/sql/1.0/warehouses/{os.getenv('DATABRICKS_WAREHOUSE_ID')}",
         credentials_provider=lambda: cfg.authenticate
@@ -80,7 +59,12 @@ if st.button("Select All Categories"):
     st.session_state.selected_categories = distinct_categories
 
 # Add a multiselect box for main_product_category
-selected_categories = st.multiselect("Select Main Product Categories", options=distinct_categories, default=distinct_categories, key='selected_categories')
+selected_categories = st.multiselect(
+    "Select Main Product Categories",
+    options=distinct_categories,
+    default=distinct_categories,
+    key='selected_categories'
+)
 
 # Filter data based on the selected categories
 if 'All Categories' in selected_categories or not selected_categories:
@@ -314,7 +298,7 @@ with col3:
     # Render the ECharts combo line bar chart
     st_echarts(options=combo_chart_options, height="400px")
 
-
+# sort by group
 # Create a row that spans both columns for the Sankey diagram and nested pie chart
 col2_3 = st.columns([2, 2])
 with col2_3[0]:
@@ -524,7 +508,7 @@ with col_full[0]:
 col_full_2 = st.columns([1])
 with col_full_2[0]:
     # Prepare data for the treemap
-    treemap_data = filtered_data.groupby('industry_name').agg({
+    treemap_data = filtered_data.groupby('main_product_category').agg({
         'orderline_rate': 'sum',
         'orderline_quantity': 'sum',
         'orderline_platform_fee_percent': 'mean'
@@ -534,20 +518,24 @@ with col_full_2[0]:
         lambda row: round(row['orderline_rate'] * row['orderline_quantity'] * (1 + row['orderline_platform_fee_percent'] * 0.01), 2), axis=1
     )
 
+    # Define the ECharts treemap options
     treemap_options = {
-        "title": {"text": "Total GMV by Industry", "left": "center"},
-        "tooltip": {"trigger": "item", "formatter": "{b}: ${c:,.2f}"},
+        "title": {"text": "GMV by Product Category", "left": "center"},
+        "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
         "series": [
             {
                 "type": "treemap",
-                "data": [{"name": row['industry_name'], "value": row['gmv']} for _, row in treemap_data.iterrows()],
-                "label": {"show": True, "formatter": "{b}\n${c:,.2f}"}
+                "data": [
+                    {"name": category, "value": gmv}
+                    for category, gmv in treemap_data[['main_product_category', 'gmv']].values
+                ],
+                "label": {"show": True, "formatter": "{b}: {c}"}
             }
         ]
     }
 
-
-    st_echarts(options=treemap_options, height="800px", key="treemap-container")
+    # Render the ECharts treemap
+    st_echarts(options=treemap_options, height="400px")
     
 
 col_new = st.columns([2, 2])
