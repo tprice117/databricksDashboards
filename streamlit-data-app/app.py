@@ -10,6 +10,8 @@ from pyspark.sql import SQLContext
 import altair as alt
 from streamlit_echarts import st_echarts
 
+
+os.environ["DATABRICKS_SQL_DISABLE_CLOUD_FETCH"] = "true"
 os.environ['DBSQL_SSLMODE'] = 'disable'  # Disable SSL verification will Disable 
 
 def read_sql_file(filepath: str)-> str:
