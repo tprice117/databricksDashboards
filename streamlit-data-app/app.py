@@ -19,7 +19,7 @@ def read_sql_file(filepath: str)-> str:
 def sqlQuery(query: str) -> pd.DataFrame:
     cfg = Config() # Pull environment variables for auth
     with databricks_sql.connect(
-        server_hostname=cfg.host,
+        server_hostname="https://dbc-ba6afab8-5aa2.cloud.databricks.com/",
         http_path=f"/sql/1.0/warehouses/d34494d1343c5722",
         access_token="dapi9eb2aa13aaca8feb78326574100b4ac6"
     ) as connection:
