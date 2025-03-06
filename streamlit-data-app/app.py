@@ -385,7 +385,7 @@ with col2_3[1]:
     st_echarts(options=sankey_options, height="400px")
 col1_2 = st.columns([2, 2])
 with col1_2[0]:
-    # Placeholder for USA heatmap
+    # Placeholder for the USA heatmap
     st.markdown(
         """
         <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
@@ -482,6 +482,8 @@ with col1_2[1]:
 col3_4 = st.columns([2, 2])
 with col3_4[0]:
     # Prepare data for the combination bar chart
+    filtered_data['month'] = filtered_data['order_end_date'].dt.to_period('M')
+
     monthly_avg_gmv = filtered_data.groupby('month').apply(
         lambda x: round((x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum() / x['order_id'].nunique(), 2) if x['order_id'].nunique() != 0 else 0
     ).reset_index(name='avg_gmv')
@@ -518,20 +520,21 @@ with col3_4[0]:
     st_echarts(options=combo_bar_chart_options, height="400px")
 
 with col3_4[1]:
-    # Prepare data for the combination bar chart for active seller location type
-    filtered_data['location_type'] = filtered_data['seller_location_name']  # Assuming 'seller_location_name' is the location type
+    # Ensure 'month' column is in period format
+    filtered_data['month'] = filtered_data['order_end_date'].dt.to_period('M')
 
-    monthly_avg_gmv_seller = filtered_data.groupby(['month', 'location_type']).apply(
+    # Group data by month and calculate average GMV and Net Revenue
+    monthly_avg_gmv_seller = filtered_data.groupby('month').apply(
         lambda x: round((x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum() / x['order_id'].nunique(), 2) if x['order_id'].nunique() != 0 else 0
     ).reset_index(name='avg_gmv')
 
-    monthly_avg_net_revenue_seller = filtered_data.groupby(['month', 'location_type']).apply(
+    monthly_avg_net_revenue_seller = filtered_data.groupby('month').apply(
         lambda x: round((x['order_line_total'].sum() - x['supplier_amount'].sum()) / x['order_id'].nunique(), 2) if 'supplier_amount' in x.columns and x['order_id'].nunique() != 0 else round(x['order_line_total'].sum() / x['order_id'].nunique(), 2) if x['order_id'].nunique() != 0 else 0
     ).reset_index(name='avg_net_revenue')
 
-    # Define the ECharts combination bar chart options for active seller location type
+    # Define the ECharts combination bar chart options for active seller locations
     combo_bar_chart_options_seller = {
-        "title": {"text": "Avg GMV and Net Revenue per Active Seller Location Type by Month", "left": "center"},
+        "title": {"text": "Avg GMV and Net Revenue per Active Seller Location by Month", "left": "center"},
         "tooltip": {"trigger": "axis"},
         "legend": {"data": ["Avg GMV", "Avg Net Revenue"], "left": "left"},
         "xAxis": {
@@ -553,7 +556,7 @@ with col3_4[1]:
         ]
     }
 
-    # Render the ECharts combination bar chart for active seller location type
+    # Render the ECharts combination bar chart for active seller locations
     st_echarts(options=combo_bar_chart_options_seller, height="400px")
 
 col_full = st.columns([1])
@@ -562,7 +565,7 @@ with col_full[0]:
     st.markdown(
         """
         <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
-            <p style="color: #888;">Full-Width Chart Placeholder</p>
+            <p style="color: #888;">Order.AutoOrderType Chart Placeholder</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -594,12 +597,44 @@ with col_full_2[0]:
     # Define the ECharts treemap options
     treemap_options = {
         "title": {"text": "GMV by Industry and Product Category", "left": "center"},
-        "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
+        "tooltip": {"trigger": "item", "formatter": "{b}: ${c}"},
         "series": [
             {
                 "type": "treemap",
                 "data": treemap_data_final,
-                "label": {"show": True, "formatter": "{b}: {c}"}
+                "label": {
+                    "show": True,
+                    "formatter": "{b}",
+                    "fontSize": 16  # Increase the font size for better readability
+                },
+                "upperLabel": {
+                    "show": True,
+                    "height": 30
+                },
+                "levels": [
+                    {
+                        "itemStyle": {
+                            "borderColor": "#555",
+                            "borderWidth": 4,
+                            "gapWidth": 4
+                        }
+                    },
+                    {
+                        "colorSaturation": [0.3, 0.6],
+                        "itemStyle": {
+                            "borderColorSaturation": 0.7,
+                            "gapWidth": 2,
+                            "borderWidth": 2
+                        }
+                    },
+                    {
+                        "colorSaturation": [0.3, 0.5],
+                        "itemStyle": {
+                            "borderColorSaturation": 0.6,
+                            "gapWidth": 1
+                        }
+                    }
+                ]
             }
         ]
     }
@@ -763,26 +798,68 @@ with col_new_row[2]:
     
 col_last_row = st.columns([1, 1])
 with col_last_row[0]:
-    # Placeholder for the fourth visual
-    st.markdown(
-        """
-        <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
-            <p style="color: #888;">Fourth Visual Placeholder</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Prepare data for the bar chart showcasing GMV per sales-rep month by month
+    gmv_per_sales_rep = filtered_data.groupby(['month', 'account_owner_first_name', 'account_owner_last_name']).apply(
+        lambda x: (x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum()
+    ).reset_index(name='gmv')
+
+    # Combine first and last names to create full names
+    gmv_per_sales_rep['full_name'] = gmv_per_sales_rep['account_owner_first_name'] + ' ' + gmv_per_sales_rep['account_owner_last_name']
+
+    # Define the ECharts bar chart options
+    bar_chart_options_sales_rep = {
+        "title": {"text": "GMV per Sales-Rep Month by Month", "left": "center", "top": "5%"},
+        "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}},
+        "legend": {"data": gmv_per_sales_rep['full_name'].unique().tolist(), "left": "left"},
+        "xAxis": {
+            "type": "category",
+            "data": gmv_per_sales_rep['month'].astype(str).unique().tolist()
+        },
+        "yAxis": {"type": "value", "name": "GMV"},
+        "series": [
+            {
+                "name": sales_rep,
+                "type": "bar",
+                "stack": "total",
+                "data": gmv_per_sales_rep[gmv_per_sales_rep['full_name'] == sales_rep]['gmv'].round(2).tolist()
+            } for sales_rep in gmv_per_sales_rep['full_name'].unique()
+        ]
+    }
+
+    # Render the ECharts bar chart
+    st_echarts(options=bar_chart_options_sales_rep, height="400px")
 
 with col_last_row[1]:
-    # Placeholder for the fifth visual
-    st.markdown(
-        """
-        <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
-            <p style="color: #888;">Fifth Visual Placeholder</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Prepare data for the bar chart showcasing Net Revenue per sales-rep month by month
+    net_revenue_per_sales_rep = filtered_data.groupby(['month', 'account_owner_first_name', 'account_owner_last_name']).apply(
+        lambda x: x['order_line_total'].sum() - x['supplier_amount'].sum() if 'supplier_amount' in x.columns else x['order_line_total'].sum()
+    ).reset_index(name='net_revenue')
+
+    # Combine first and last names to create full names
+    net_revenue_per_sales_rep['full_name'] = net_revenue_per_sales_rep['account_owner_first_name'] + ' ' + net_revenue_per_sales_rep['account_owner_last_name']
+
+    # Define the ECharts bar chart options
+    bar_chart_options_net_revenue = {
+        "title": {"text": "Net Revenue per Sales-Rep Month by Month", "left": "center", "top": "5%"},
+        "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}},
+        "legend": {"data": net_revenue_per_sales_rep['full_name'].unique().tolist(), "left": "left"},
+        "xAxis": {
+            "type": "category",
+            "data": net_revenue_per_sales_rep['month'].astype(str).unique().tolist()
+        },
+        "yAxis": {"type": "value", "name": "Net Revenue"},
+        "series": [
+            {
+                "name": sales_rep,
+                "type": "bar",
+                "stack": "total",
+                "data": net_revenue_per_sales_rep[net_revenue_per_sales_rep['full_name'] == sales_rep]['net_revenue'].round(2).tolist()
+            } for sales_rep in net_revenue_per_sales_rep['full_name'].unique()
+        ]
+    }
+
+    # Render the ECharts bar chart
+    st_echarts(options=bar_chart_options_net_revenue, height="400px")
 # Limit the number of rows displayed in the DataFrame
 st.dataframe(data=cli.head(1000), height=600, use_container_width=True)
 

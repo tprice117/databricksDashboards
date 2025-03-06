@@ -51,12 +51,19 @@ select
 
   --user
   u.is_staff as user_is_staff,
+  u.first_name as user_first_name,
+  u.last_name as user_last_name,
 
   --industry
   i.name as industry_name,
 
   --user group
   ug.name as user_group_name,
+  ug.account_owner_id as user_group_account_owner_id,
+
+  -- account owner
+  uo.first_name as account_owner_first_name,
+  uo.last_name as account_owner_last_name,
 
   --seller
   s.name as seller_name,
@@ -90,13 +97,15 @@ left join bronze_prod.postgres_prod_restricted_bronze_public.api_user u
   on o.created_by_id = u.id
 left join bronze_prod.postgres_prod_restricted_bronze_public.api_usergroup ug
   on u.user_group_id = ug.id
-left join bronze_prod.postgres_prod_restricted_bronze_public.api_industry i
-  on ug.industry_id = i.id
 left join bronze_prod.postgres_prod_restricted_bronze_public.api_seller s
   on sp.seller_id = s.id
-left join bronze_prod.postgres_prod_restricted_bronze_public.api_sellerlocation sl
-  on spsl.seller_location_id = sl.id
 left join bronze_prod.postgres_prod_restricted_bronze_public.api_usergroup ug_seller
   on s.id = ug_seller.seller_id
+left join bronze_prod.postgres_prod_restricted_bronze_public.api_user uo
+  on ug.account_owner_id = uo.id
+left join bronze_prod.postgres_prod_restricted_bronze_public.api_industry i
+  on ug.industry_id = i.id
+left join bronze_prod.postgres_prod_restricted_bronze_public.api_sellerlocation sl
+  on spsl.seller_location_id = sl.id
 left join bronze_prod.postgres_prod_restricted_bronze_public.api_orderlineitemtype olit
   on oli.order_line_item_type_id = olit.id
