@@ -1,5 +1,5 @@
 import os
-from databricks import sql as databricks_sql
+from databricks import sql 
 from databricks.sdk.core import Config
 import streamlit as st
 import pandas as pd
@@ -18,12 +18,15 @@ def read_sql_file(filepath: str)-> str:
     with open(filepath, 'r') as file:
         return file.read()
     
+# Ensure environment variable is set correctly
+assert os.getenv('DATABRICKS_WAREHOUSE_ID'), "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
+
 def sqlQuery(query: str) -> pd.DataFrame:
     cfg = Config() # Pull environment variables for auth
-    with databricks_sql.connect(
-        server_hostname="https://dbc-ba6afab8-5aa2.cloud.databricks.com/",
-        http_path=f"/sql/1.0/warehouses/d34494d1343c5722",
-        access_token="dapi9eb2aa13aaca8feb78326574100b4ac6"
+    with sql.connect(
+        server_hostname=cfg.host,
+        http_path=f"/sql/1.0/warehouses/{os.getenv('DATABRICKS_WAREHOUSE_ID')}",
+        credentials_provider=lambda: cfg.authenticate
     ) as connection:
         with connection.cursor() as cursor:
             cursor.execute(query)
