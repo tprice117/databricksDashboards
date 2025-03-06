@@ -27,6 +27,11 @@ def sqlQuery(query: str) -> pd.DataFrame:
         server_hostname=cfg.host,
         http_path=f"/sql/1.0/warehouses/{os.getenv('DATABRICKS_WAREHOUSE_ID')}",
         credentials_provider=lambda: cfg.authenticate
+        
+        # Local Host Connection Format
+        # server_hostname=cfg.host,
+        # http_path=f"/sql/1.0/warehouses/d34494d1343c5722",
+        # access_token="dapi9eb2aa13aaca8feb78326574100b4ac6"
     ) as connection:
         with connection.cursor() as cursor:
             cursor.execute(query)
@@ -388,7 +393,7 @@ with col1_2[0]:
     # Placeholder for the USA heatmap
     st.markdown(
         """
-        <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+        <div style="height: 400px; display: flex; align-items: center; justify-content: center;">
             <p style="color: #888;">USA Heatmap Placeholder</p>
         </div>
         """,
@@ -564,13 +569,12 @@ with col_full[0]:
     # Placeholder for a full-width chart or visualization
     st.markdown(
         """
-        <div style="height: 400px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd;">
+        <div style="height: 400px; display: flex; align-items: center; justify-content: center;">
             <p style="color: #888;">Order.AutoOrderType Chart Placeholder</p>
         </div>
         """,
         unsafe_allow_html=True
     )
-    
 col_full_2 = st.columns([1])
 with col_full_2[0]:
     # Prepare data for the treemap
@@ -640,7 +644,7 @@ with col_full_2[0]:
     }
 
     # Render the ECharts treemap
-    st_echarts(options=treemap_options, height="400px")
+    st_echarts(options=treemap_options, height="600px")
 
 col_new = st.columns([2, 2])
 with col_new[0]:
