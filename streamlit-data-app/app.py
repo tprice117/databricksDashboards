@@ -19,19 +19,19 @@ def read_sql_file(filepath: str)-> str:
         return file.read()
     
 # Ensure environment variable is set correctly
-# assert os.getenv('DATABRICKS_WAREHOUSE_ID'), "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
+assert os.getenv('DATABRICKS_WAREHOUSE_ID'), "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
 
 def sqlQuery(query: str) -> pd.DataFrame:
     cfg = Config() # Pull environment variables for auth
     with sql.connect(
-        # server_hostname=cfg.host,
-        # http_path=f"/sql/1.0/warehouses/{os.getenv('DATABRICKS_WAREHOUSE_ID')}",
-        # credentials_provider=lambda: cfg.authenticate
+        server_hostname=cfg.host,
+        http_path=f"/sql/1.0/warehouses/{os.getenv('DATABRICKS_WAREHOUSE_ID')}",
+        credentials_provider=lambda: cfg.authenticate
         
         # Local Host Connection Format
-        server_hostname="https://dbc-ba6afab8-5aa2.cloud.databricks.com/",
-        http_path=f"/sql/1.0/warehouses/d34494d1343c5722",
-        access_token="dapi9eb2aa13aaca8feb78326574100b4ac6"
+        # server_hostname="https://dbc-ba6afab8-5aa2.cloud.databricks.com/",
+        # http_path=f"/sql/1.0/warehouses/d34494d1343c5722",
+        # access_token="dapi9eb2aa13aaca8feb78326574100b4ac6"
     ) as connection:
         with connection.cursor() as cursor:
             cursor.execute(query)
