@@ -9,12 +9,6 @@ from pyspark import SparkConf, SparkContext
 from pyspark.sql import SQLContext
 import altair as alt
 from streamlit_echarts import st_echarts
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.exceptions import InsecureRequestWarning
-
-# Disable SSL warnings
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 # os.environ["DATABRICKS_SQL_DISABLE_CLOUD_FETCH"] = "true"
@@ -35,7 +29,7 @@ def sqlQuery(query: str) -> pd.DataFrame:
         # credentials_provider=lambda: cfg.authenticate
         
         # Local Host Connection Format
-        server_hostname=cfg.host,
+        server_hostname="https://dbc-ba6afab8-5aa2.cloud.databricks.com/",
         http_path=f"/sql/1.0/warehouses/d34494d1343c5722",
         access_token="dapi9eb2aa13aaca8feb78326574100b4ac6"
     ) as connection:
