@@ -49,7 +49,7 @@ cli = getData()
 
 st.header("Sales Performance Dashboard")
 
-
+'''
 # Function to detect dark mode
 def is_dark_mode():
     return st.get_option("theme.base") == "dark"
@@ -864,6 +864,7 @@ with col_last_row[1]:
 
     # Render the ECharts bar chart
     st_echarts(options=bar_chart_options_net_revenue, height="400px")
+'''
 # Limit the number of rows displayed in the DataFrame
 st.dataframe(data=cli.head(1000), height=600, use_container_width=True)
 
