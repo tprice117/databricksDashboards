@@ -62,7 +62,7 @@ with open('css/style.css') as f:
 text_color = "white" if is_dark_mode() else "black"
 
 # Extract distinct values of main_product_category
-distinct_categories = cli['main_product_category'].dropna().unique().tolist()
+distinct_categories = ["Roll Off Dumpsters", "Scissor Lifts"]#cli['main_product_category'].dropna().unique().tolist()
 
 # Add a button to select all categories
 if st.button("Select All Categories"):

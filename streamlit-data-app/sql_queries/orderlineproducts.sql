@@ -109,3 +109,5 @@ left join bronze_prod.postgres_prod_restricted_bronze_public.api_sellerlocation 
   on spsl.seller_location_id = sl.id
 left join bronze_prod.postgres_prod_restricted_bronze_public.api_orderlineitemtype olit
   on oli.order_line_item_type_id = olit.id
+
+LIMIT 3000
