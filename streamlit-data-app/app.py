@@ -12,14 +12,24 @@ from streamlit_echarts import st_echarts
 
 
 # Ensure environment variable is set correctly
-assert os.getenv('DATABRICKS_WAREHOUSE_ID'), "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
+assert "DATABRICKS_SERVER_HOSTNAME" in st.secrets, "DATABRICKS_SERVER_HOSTNAME must be set"
+assert "DATABRICKS_HTTP_PATH" in st.secrets, "DATABRICKS_HTTP_PATH must be set"
+assert "DATABRICKS_ACCESS_TOKEN" in st.secrets, "DATABRICKS_ACCESS_TOKEN must be set"
+assert "DATABRICKS_WAREHOUSE_ID" in st.secrets, "DATABRICKS_WAREHOUSE_ID must be set"
 
 def sqlQuery(query: str) -> pd.DataFrame:
+    # Fetch credentials from Streamlit secrets
+    warehouse_id = st.secrets["DATABRICKS_WAREHOUSE_ID"]
+    server_hostname = st.secrets["DATABRICKS_SERVER_HOSTNAME"]
+    http_path = st.secrets["DATABRICKS_HTTP_PATH"]
+    access_token = st.secrets["DATABRICKS_ACCESS_TOKEN"]
+
     cfg = Config() # Pull environment variables for auth
+
     with sql.connect(
-        server_hostname=cfg.host,
-        http_path=f"/sql/1.0/warehouses/{os.getenv('DATABRICKS_WAREHOUSE_ID')}",
-        credentials_provider=lambda: cfg.authenticate
+        server_hostname=server_hostname,
+        http_path=http_path,
+        access_token=access_token
     ) as connection:
         with connection.cursor() as cursor:
             cursor.execute(query)
