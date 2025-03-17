@@ -18,23 +18,28 @@ assert "DATABRICKS_ACCESS_TOKEN" in st.secrets, "DATABRICKS_ACCESS_TOKEN must be
 assert "DATABRICKS_WAREHOUSE_ID" in st.secrets, "DATABRICKS_WAREHOUSE_ID must be set"
 
 def sqlQuery(query: str) -> pd.DataFrame:
+    """Runs a SQL query on Databricks and returns the result as a Pandas DataFrame."""
+
     # Fetch credentials from Streamlit secrets
-    warehouse_id = st.secrets["DATABRICKS_WAREHOUSE_ID"]
     server_hostname = st.secrets["DATABRICKS_SERVER_HOSTNAME"]
     http_path = st.secrets["DATABRICKS_HTTP_PATH"]
     access_token = st.secrets["DATABRICKS_ACCESS_TOKEN"]
 
-    cfg = Config() # Pull environment variables for auth
+    try:
+        with sql.connect(
+            server_hostname=server_hostname,
+            http_path=http_path,
+            access_token=access_token
+        ) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                return cursor.fetchall_arrow().to_pandas()
 
-    with sql.connect(
-        server_hostname=server_hostname,
-        http_path=http_path,
-        access_token=access_token
-    ) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(query)
-            return cursor.fetchall_arrow().to_pandas()
+    except Exception as e:
+        st.error(f"Databricks connection error: {e}")
+        return pd.DataFrame()
 
+# Streamlit App UI
 st.set_page_config(layout="wide")
 
 @st.cache_data(ttl=30)  # only re-query if it's been 30 seconds
