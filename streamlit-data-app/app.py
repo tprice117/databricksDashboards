@@ -11,13 +11,6 @@ import altair as alt
 from streamlit_echarts import st_echarts
 
 
-# os.environ["DATABRICKS_SQL_DISABLE_CLOUD_FETCH"] = "true"
-# os.environ['DBSQL_SSLMODE'] = 'disable'  # Disable SSL verification will Disable 
-
-def read_sql_file(filepath: str)-> str:
-    with open(filepath, 'r') as file:
-        return file.read()
-    
 # Ensure environment variable is set correctly
 assert os.getenv('DATABRICKS_WAREHOUSE_ID'), "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
 
@@ -27,11 +20,6 @@ def sqlQuery(query: str) -> pd.DataFrame:
         server_hostname=cfg.host,
         http_path=f"/sql/1.0/warehouses/{os.getenv('DATABRICKS_WAREHOUSE_ID')}",
         credentials_provider=lambda: cfg.authenticate
-        
-        # Local Host Connection Format
-        # server_hostname="https://dbc-ba6afab8-5aa2.cloud.databricks.com/",
-        # http_path=f"/sql/1.0/warehouses/d34494d1343c5722",
-        # access_token="dapi9eb2aa13aaca8feb78326574100b4ac6"
     ) as connection:
         with connection.cursor() as cursor:
             cursor.execute(query)
@@ -41,14 +29,128 @@ st.set_page_config(layout="wide")
 
 @st.cache_data(ttl=30)  # only re-query if it's been 30 seconds
 def getData():
-    #return sqlQuery("SELECT * FROM nyctaxi.taxi_parquet LIMIT 1000")
-    query=read_sql_file("sql_queries/orderlineproducts.sql")
-    return sqlQuery(query)
+    start_date = "2025-01-01"
+    end_date = datetime.now().strftime('%Y-%m-%d')
+    
+    query = f"""
+        select 
+            ug.id as user_group_id,
+            og.id as ordergroup_id,
+            og.project_id,
+            og.agreement as order_group_agreement,
+            og.code as order_group_code,
+            og.end_date as order_group_end_date,
+            og.is_delivery as order_group_is_delivery,
+            og.placement_details as order_group_placement_details,
+            og.removal_fee as order_group_removal_fee,
+            og.shift_count as order_group_shift_count,
+            og.start_date as order_group_start_date,
 
+            --order
+            o.id as order_id,
+            o.accepted_on as order_accepted_on,
+            o.billing_comments_internal_use as order_billing_comments_internal_use,
+            o.code as order_code,
+            o.completed_on as order_completed_on,
+            o.created_on as order_created_on,
+            o.end_date as order_end_date,
+            o.schedule_window as order_schedule_window,
+            o.status as order_status,
+            o.submitted_on as order_submitted_on,
+            o.created_by_id as order_created_by,
+            o.submitted_by_id as submitted_by_id,
+
+            --orderline
+            oli.id as orderline_id,
+            oli.backbill as orderline_backbill,
+            oli.is_flat_rate as orderline_is_flat_rate,
+            oli.paid as orderline_paid,
+            oli.quantity as orderline_quantity,
+            oli.rate as orderline_rate,
+            oli.rate * oli.quantity as order_line_total,
+            oli.platform_fee_percent as orderline_platform_fee_percent,
+            oli.tax as orderline_tax,
+            oli.stripe_invoice_line_item_id as stripe_invoice_line_item_id,
+            oli.order_line_item_type_id as orderline_type,
+
+            --main product
+            mp.name as main_product,
+            --main product category
+            mpc.name as main_product_category,
+
+            --main product category group
+            mpcg.name as main_product_category_group,
+
+            --user address 
+            ua.state as user_address_state,
+
+            --user
+            u.is_staff as user_is_staff,
+            u.first_name as user_first_name,
+            u.last_name as user_last_name,
+
+            --industry
+            i.name as industry_name,
+
+            --user group
+            ug.name as user_group_name,
+            ug.account_owner_id as user_group_account_owner_id,
+
+            -- account owner
+            uo.first_name as account_owner_first_name,
+            uo.last_name as account_owner_last_name,
+
+            --seller
+            s.name as seller_name,
+
+            --seller location
+            sl.name as seller_location_name,
+
+            --orderline item type
+            olit.name as orderline_item_type_name
+
+        from bronze_prod.postgres_prod_restricted_bronze_public.api_orderlineitem oli
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_order o 
+            on oli.order_id = o.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_ordergroup og 
+            on o.order_group_id = og.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_sellerproductsellerlocation spsl
+            on og.seller_product_seller_location_id = spsl.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_sellerproduct sp
+            on spsl.seller_product_id = sp.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_product p 
+            on sp.product_id = p.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_mainproduct mp 
+            on p.main_product_id = mp.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_mainproductcategory mpc
+            on mp.main_product_category_id = mpc.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_mainproductcategorygroup mpcg
+            on mpc.group_id = mpcg.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_useraddress ua
+            on og.user_address_id = ua.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_user u
+            on o.created_by_id = u.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_usergroup ug
+            on u.user_group_id = ug.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_seller s
+            on sp.seller_id = s.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_usergroup ug_seller
+            on s.id = ug_seller.seller_id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_user uo
+            on ug.account_owner_id = uo.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_industry i
+            on ug.industry_id = i.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_sellerlocation sl
+            on spsl.seller_location_id = sl.id
+        left join bronze_prod.postgres_prod_restricted_bronze_public.api_orderlineitemtype olit
+            on oli.order_line_item_type_id = olit.id
+        where o.end_date between '{start_date}' and '{end_date}'
+    """
+    
+    return sqlQuery(query)
 cli = getData()
 
 st.header("Sales Performance Dashboard")
-
 
 # Function to detect dark mode
 def is_dark_mode():
@@ -110,10 +212,11 @@ gmv = unique_data.loc[unique_data['order_status'] == 'COMPLETE'].apply(
 ).sum()
 
 # Net Revenue
-net_revenue = unique_data['order_line_total'].sum()
-if 'supplier_amount' in unique_data.columns:
-    net_revenue -= unique_data['supplier_amount'].sum()
-
+net_revenue = unique_data.loc[unique_data['order_status'] == 'COMPLETE'].apply(
+    lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']) * (1 + float(row['orderline_platform_fee_percent']) * 0.01), axis=1
+).sum() - unique_data.loc[unique_data['order_status'] == 'COMPLETE'].apply(
+    lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']), axis=1
+).sum()
 # Calculate the sum of total_line_amount
 total_line_amount_sum = unique_data['order_line_total'].sum()
 
@@ -135,18 +238,20 @@ supplier_amount_complete = unique_data.loc[unique_data['order_status'] == 'COMPL
 take_rate = float((customer_amount - supplier_amount_complete) / customer_amount) if customer_amount != 0 else 0
 
 # Net Revenue Complete
-customer_amount_complete = unique_data.loc[unique_data['order_status'] == 'COMPLETE', 'order_line_total'].sum()
-supplier_amount_complete = 0
-if 'supplier_amount' in unique_data.columns:
-    supplier_amount_complete = unique_data.loc[unique_data['order_status'] == 'COMPLETE', 'supplier_amount'].sum()
+customer_amount_complete = unique_data.loc[unique_data['order_status'] == 'COMPLETE'].apply(
+    lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']) * (1 + float(row['orderline_platform_fee_percent']) * 0.01), axis=1
+).sum()
+supplier_amount_complete = unique_data.loc[unique_data['order_status'] == 'COMPLETE'].apply(
+    lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']), axis=1
+).sum()
 net_revenue_complete = customer_amount_complete - supplier_amount_complete
 ##METRICS END HERE
 
 col1, col2, col3 = st.columns([1, 1, 2])
 with col1:
     st.markdown("Select Date Range")
-    default_start = datetime.now().replace(year=datetime.now().year - 1, day=1)  # Start of the previous year's current calendar month
-    default_end = datetime.now()
+    default_start = datetime(2025, 1, 1)  # Start of 2025
+    default_end = datetime.now()  # Today's date
     date_range_string = date_range_picker(picker_type=PickerType.date,
                                         start=default_start, end=default_end,
                                         key='date_range_picker')
@@ -211,8 +316,12 @@ with col2:
     
     # Create a card for Total Revenue
     # Calculate Net Revenue Complete for the filtered data
-    customer_amount_complete_filtered = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE', 'order_line_total'].sum()
-    supplier_amount_complete_filtered = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE', 'supplier_amount'].sum() if 'supplier_amount' in filtered_data.columns else 0
+    customer_amount_complete_filtered = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].apply(
+        lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']) * (1 + float(row['orderline_platform_fee_percent']) * 0.01), axis=1
+    ).sum()
+    supplier_amount_complete_filtered = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].apply(
+        lambda row: float(row['orderline_rate']) * float(row['orderline_quantity']), axis=1
+    ).sum()
     net_revenue_complete_filtered = customer_amount_complete_filtered - supplier_amount_complete_filtered
 
     st.markdown(
@@ -258,62 +367,55 @@ with col2:
     )
 
 with col3:
-    # Prepare data for the combo line bar chart
-    filtered_data['order_end_date'] = pd.to_datetime(filtered_data['order_end_date'])
+    # Prepare data for the bar chart showcasing GMV Completed and Net Revenue Completed month over month
+    filtered_data['order_end_date'] = pd.to_datetime(filtered_data['order_end_date'], errors='coerce')
     filtered_data['month'] = filtered_data['order_end_date'].dt.to_period('M')
 
-    monthly_data = filtered_data.groupby('month').agg({
-        'order_line_total': 'sum',
-        }).reset_index()
-    
-    if 'supplier_amount' in filtered_data.columns:
-        monthly_data['supplier_amount'] = filtered_data.groupby('month')['supplier_amount'].sum()
-    else:
-        monthly_data['supplier_amount'] = 0
-
-    monthly_data['net_revenue'] = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].groupby('month').apply(
-        lambda x: x['order_line_total'].sum() - x['supplier_amount'].sum() if 'supplier_amount' in x.columns else x['order_line_total'].sum()
-    ).reset_index(drop=True).round(2)
-    monthly_data['gmv'] = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].groupby('month').apply(
+    gmv_completed_monthly = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].groupby('month').apply(
         lambda x: (x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum()
-    ).reset_index(drop=True).round(2)
-    monthly_data = monthly_data.fillna(0)
+    ).reset_index(name='gmv_completed')
 
-    # Define the ECharts combo line bar chart options
-    combo_chart_options = {
-        "title": {"text": "Monthly GMV and Net Revenue", "left": "center"},
-        "tooltip": {"trigger": "axis"},
-        "legend": {"data": ["GMV", "Net Revenue", "Target"], "left": "left"},
+    net_revenue_completed_monthly = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].groupby('month').apply(
+        lambda x: (x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum() - 
+                  (x['orderline_rate'] * x['orderline_quantity']).sum()
+    ).reset_index(name='net_revenue_completed')
+
+    # Calculate target line values (10% above GMV for each month)
+    gmv_completed_monthly['target'] = gmv_completed_monthly['gmv_completed'] * 1.1
+
+    # Define the ECharts bar chart options
+    gmv_chart_combination = {
+        "title": {"text": "GMV Completed and Net Revenue Completed Month over Month", "left": "center", "top": "10%"},
+        "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}},
+        "legend": {"data": ["GMV Completed", "Net Revenue Completed", "Target"], "left": "left", "top": "20%"},
+        "grid": {"top": "35%"},
         "xAxis": {
             "type": "category",
-            "data": monthly_data['month'].astype(str).tolist()
+            "data": gmv_completed_monthly['month'].astype(str).tolist()
         },
-        "yAxis": [
-            {"type": "value", "name": "Amount"},
-            {"type": "value", "name": "Target", "position": "right", "offset": 80}
-        ],
+        "yAxis": {"type": "value", "name": "Amount"},
         "series": [
             {
-                "name": "GMV",
+                "name": "GMV Completed",
                 "type": "bar",
-                "data": monthly_data['gmv'].tolist()
+                "data": gmv_completed_monthly['gmv_completed'].tolist()
             },
             {
-                "name": "Net Revenue",
+                "name": "Net Revenue Completed",
                 "type": "bar",
-                "data": monthly_data['net_revenue'].tolist()
+                "data": net_revenue_completed_monthly['net_revenue_completed'].tolist()
             },
             {
                 "name": "Target",
                 "type": "line",
-                "data": (monthly_data['gmv'] * 1.1).tolist()  # Target line 10% higher than GMV as PLACEHOLDER
+                "data": gmv_completed_monthly['target'].tolist(),
+                "lineStyle": {"type": "solid", "color": "yellow"}
             }
         ]
     }
 
-    # Render the ECharts combo line bar chart
-    st_echarts(options=combo_chart_options, height="400px")
-
+    # Render the ECharts bar chart
+    st_echarts(options=gmv_chart_combination, height="400px")
 # sort by group
 # Create a row that spans both columns for sales dist and sales flow
 col2_3 = st.columns([2, 2])
@@ -366,8 +468,8 @@ with col2_3[1]:
 
     # Define the ECharts Sankey diagram options
     sankey_options = {
-        "title": {"text": "Sales Flow", "left": "center"},
-        "tooltip": {"trigger": "item", "triggerOn": "mousemove"},
+        "title": {"text": "Sales Flow by GMV", "left": "center"},
+        "tooltip": {"trigger": "item", "formatter": "{b}: {c}", "triggerOn": "mousemove"},
         "series": [
             {
                 "type": "sankey",
@@ -486,27 +588,37 @@ with col1_2[1]:
 
 col3_4 = st.columns([2, 2])
 with col3_4[0]:
-    # Prepare data for the combination bar chart
+    # Ensure 'month' column is in period format
     filtered_data['month'] = filtered_data['order_end_date'].dt.to_period('M')
 
-    monthly_avg_gmv = filtered_data.groupby('month').apply(
-        lambda x: round((x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum() / x['order_id'].nunique(), 2) if x['order_id'].nunique() != 0 else 0
-    ).reset_index(name='avg_gmv')
+    # Group data by month and user group to calculate GMV and Net Revenue
+    monthly_user_group_data = filtered_data.groupby(['month', 'user_group_id']).apply(
+        lambda x: pd.Series({
+            'gmv': (x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum(),
+            'net_revenue': x['order_line_total'].sum() - x['supplier_amount'].sum() if 'supplier_amount' in x.columns else x['order_line_total'].sum()
+        })
+    ).reset_index()
 
-    monthly_avg_net_revenue = filtered_data.groupby('month').apply(
-        lambda x: round((x['order_line_total'].sum() - x['supplier_amount'].sum()) / x['order_id'].nunique(), 2) if 'supplier_amount' in x.columns and x['order_id'].nunique() != 0 else round(x['order_line_total'].sum() / x['order_id'].nunique(), 2) if x['order_id'].nunique() != 0 else 0
-    ).reset_index(name='avg_net_revenue')
+    # Calculate average GMV and Net Revenue per active buyer (user group) by month
+    monthly_avg_gmv = monthly_user_group_data.groupby('month')['gmv'].mean().reset_index(name='avg_gmv')
+    monthly_avg_net_revenue = monthly_user_group_data.groupby('month')['net_revenue'].mean().reset_index(name='avg_net_revenue')
+
+    # Calculate the number of user groups per month
+    user_groups_per_month = monthly_user_group_data.groupby('month')['user_group_id'].nunique().reset_index(name='user_group_count')
 
     # Define the ECharts combination bar chart options
     combo_bar_chart_options = {
         "title": {"text": "Avg GMV and Net Revenue per Active Buyer by Month", "left": "center"},
         "tooltip": {"trigger": "axis"},
-        "legend": {"data": ["Avg GMV", "Avg Net Revenue"], "left": "left"},
+        "legend": {"data": ["Avg GMV", "Avg Net Revenue", "User Groups"], "left": "left"},
         "xAxis": {
             "type": "category",
             "data": monthly_avg_gmv['month'].astype(str).tolist()
         },
-        "yAxis": {"type": "value", "name": "Amount"},
+        "yAxis": [
+            {"type": "value", "name": "Amount"},
+            {"type": "value", "name": "User Groups", "position": "right"}
+        ],
         "series": [
             {
                 "name": "Avg GMV",
@@ -517,6 +629,12 @@ with col3_4[0]:
                 "name": "Avg Net Revenue",
                 "type": "bar",
                 "data": monthly_avg_net_revenue['avg_net_revenue'].tolist()
+            },
+            {
+                "name": "User Groups",
+                "type": "line",
+                "yAxisIndex": 1,
+                "data": user_groups_per_month['user_group_count'].tolist()
             }
         ]
     }
@@ -528,25 +646,34 @@ with col3_4[1]:
     # Ensure 'month' column is in period format
     filtered_data['month'] = filtered_data['order_end_date'].dt.to_period('M')
 
-    # Group data by month and calculate average GMV and Net Revenue
-    monthly_avg_gmv_seller = filtered_data.groupby('month').apply(
-        lambda x: round((x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum() / x['order_id'].nunique(), 2) if x['order_id'].nunique() != 0 else 0
-    ).reset_index(name='avg_gmv')
+    # Group data by month and seller location to calculate GMV and Net Revenue
+    monthly_seller_location_data = filtered_data.groupby(['month', 'seller_location_name']).apply(
+        lambda x: pd.Series({
+            'gmv': (x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum(),
+            'net_revenue': x['order_line_total'].sum() - x['supplier_amount'].sum() if 'supplier_amount' in x.columns else x['order_line_total'].sum()
+        })
+    ).reset_index()
 
-    monthly_avg_net_revenue_seller = filtered_data.groupby('month').apply(
-        lambda x: round((x['order_line_total'].sum() - x['supplier_amount'].sum()) / x['order_id'].nunique(), 2) if 'supplier_amount' in x.columns and x['order_id'].nunique() != 0 else round(x['order_line_total'].sum() / x['order_id'].nunique(), 2) if x['order_id'].nunique() != 0 else 0
-    ).reset_index(name='avg_net_revenue')
+    # Calculate average GMV and Net Revenue per active seller location by month
+    monthly_avg_gmv_seller = monthly_seller_location_data.groupby('month')['gmv'].mean().reset_index(name='avg_gmv')
+    monthly_avg_net_revenue_seller = monthly_seller_location_data.groupby('month')['net_revenue'].mean().reset_index(name='avg_net_revenue')
+
+    # Calculate the number of active seller locations per month
+    seller_locations_per_month = monthly_seller_location_data.groupby('month')['seller_location_name'].nunique().reset_index(name='seller_location_count')
 
     # Define the ECharts combination bar chart options for active seller locations
     combo_bar_chart_options_seller = {
         "title": {"text": "Avg GMV and Net Revenue per Active Seller Location by Month", "left": "center"},
         "tooltip": {"trigger": "axis"},
-        "legend": {"data": ["Avg GMV", "Avg Net Revenue"], "left": "left"},
+        "legend": {"data": ["Avg GMV", "Avg Net Revenue", "Seller Locations"], "left": "left"},
         "xAxis": {
             "type": "category",
             "data": monthly_avg_gmv_seller['month'].astype(str).tolist()
         },
-        "yAxis": {"type": "value", "name": "Amount"},
+        "yAxis": [
+            {"type": "value", "name": "Amount"},
+            {"type": "value", "name": "Seller Locations", "position": "right", "axisLabel": {"show": False}, "axisLine": {"show": False}, "axisTick": {"show": False}}
+        ],
         "series": [
             {
                 "name": "Avg GMV",
@@ -557,6 +684,13 @@ with col3_4[1]:
                 "name": "Avg Net Revenue",
                 "type": "bar",
                 "data": monthly_avg_net_revenue_seller['avg_net_revenue'].tolist()
+            },
+            {
+                "name": "Seller Locations",
+                "type": "line",
+                "yAxisIndex": 1,
+                "data": seller_locations_per_month['seller_location_count'].tolist(),
+
             }
         ]
     }
@@ -802,13 +936,14 @@ with col_new_row[2]:
     
 col_last_row = st.columns([1, 1])
 with col_last_row[0]:
-    # Prepare data for the bar chart showcasing GMV per sales-rep month by month
-    gmv_per_sales_rep = filtered_data.groupby(['month', 'account_owner_first_name', 'account_owner_last_name']).apply(
-        lambda x: (x['orderline_rate'] * x['orderline_quantity'] * (1 + x['orderline_platform_fee_percent'] * 0.01)).sum()
-    ).reset_index(name='gmv')
+    # Group by account_owner_id and year_month, then sum customer_amount_complete
+    gmv_per_sales_rep = filtered_data.loc[filtered_data['order_status'] == 'COMPLETE'].groupby(['user_group_account_owner_id', 'month'], as_index=False)['order_line_total'].sum()
 
-    # Combine first and last names to create full names
+    # Translate account_owner_id to actual name
+    gmv_per_sales_rep = gmv_per_sales_rep.merge(filtered_data[['user_group_account_owner_id', 'account_owner_first_name', 'account_owner_last_name']].drop_duplicates(), left_on='user_group_account_owner_id', right_on='user_group_account_owner_id', how='left')
     gmv_per_sales_rep['full_name'] = gmv_per_sales_rep['account_owner_first_name'] + ' ' + gmv_per_sales_rep['account_owner_last_name']
+    gmv_per_sales_rep.drop(columns=['user_group_account_owner_id', 'account_owner_first_name', 'account_owner_last_name'], inplace=True)
+    gmv_per_sales_rep.rename(columns={'order_line_total': 'gmv'}, inplace=True)
 
     # Define the ECharts bar chart options
     bar_chart_options_sales_rep = {
@@ -865,5 +1000,7 @@ with col_last_row[1]:
     # Render the ECharts bar chart
     st_echarts(options=bar_chart_options_net_revenue, height="400px")
 # Limit the number of rows displayed in the DataFrame
-st.dataframe(data=cli.head(1000), height=600, use_container_width=True)
+st.dataframe(data=cli, height=600, use_container_width=True)
+
+
 

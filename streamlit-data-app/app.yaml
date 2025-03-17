@@ -1,7 +1,11 @@
-command: ["streamlit", "run", "app.py"]
+command: [
+  "streamlit", 
+  "run",
+  "app.py"
+]
 
 env:
-  - name: "DATABRICKS_WAREHOUSE_ID" #comment out to run locally
-    valueFrom: "sql-warehouse" #comment out to run locally with dotenv instead
-  - name: "STREAMLIT_BROWSER_GATHER_USAGE_STATS"
+  - name: "DATABRICKS_WAREHOUSE_ID"
+    valueFrom: "sql-warehouse"
+  - name: STREAMLIT_BROWSER_GATHER_USAGE_STATS
     value: "false"
