@@ -174,9 +174,13 @@ st.header("Sales Performance Dashboard")
 def is_dark_mode():
     return st.get_option("theme.base") == "dark"
 
+css_file_path = os.path.join(os.path.dirname(__file__), "css/style.css")
 # Load custom CSS from file
-with open('css/style.css') as f:
-    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+if os.path.exists(css_file_path):
+    with open(css_file_path, "r") as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+else:
+    st.warning("⚠️ CSS file not found! Make sure `css/style.css` is in the correct location.")
 
 # Determine text color based on theme
 text_color = "white" if is_dark_mode() else "black"
