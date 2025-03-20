@@ -262,15 +262,24 @@ with col1:
     st.markdown("Select Date Range")
     default_start = datetime(2025, 1, 1)  # Start of 2025
     default_end = datetime.now()  # Today's date
+    if 'date_range' not in st.session_state:
+        st.session_state.date_range = (default_start, default_end)
+
     date_range_string = date_range_picker(picker_type=PickerType.date,
-                                        start=default_start, end=default_end,
-                                        key='date_range_picker')
+                                          start=st.session_state.date_range[0], 
+                                          end=st.session_state.date_range[1],
+                                          key='date_range_picker')
 
     if date_range_string:
-        start, end = date_range_string
-        filtered_data = filtered_data[(filtered_data['order_end_date'] >= pd.to_datetime(start)) & (filtered_data['order_end_date'] <= pd.to_datetime(end))]
+        st.session_state.date_range = (
+            pd.to_datetime(date_range_string[0]),
+            pd.to_datetime(date_range_string[1])
+        )
+        start, end = st.session_state.date_range
     else:
-        filtered_data = filtered_data[(filtered_data['order_end_date'] >= default_start) & (filtered_data['order_end_date'] <= default_end)]
+        start, end = st.session_state.date_range
+
+    filtered_data = filtered_data[(filtered_data['order_end_date'] >= start) & (filtered_data['order_end_date'] <= end)]
     
     # Create a card for Order Count
     st.markdown(
